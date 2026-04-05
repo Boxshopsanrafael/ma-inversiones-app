@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="M&A Inversiones">
+<meta name="theme-color" content="#d4a847">
+<title>M&A Inversiones</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090f;--bg2:#0d0d16;--bg3:#111118;--bg4:#14141e;
+  --br:#1e1e2e;--br2:#2a2a3e;
+  --go:#d4a847;--go2:#7a5c0e;
+  --tx:#e8e0d0;--tx2:#a09880;--tx3:#666;--tx4:#3a3a4a;
+  --bl:#3b82f6;--gn:#10b981;--am:#f59e0b;--rd:#ef4444;--pu:#8b5cf6;
+}
+body{background:var(--bg);color:var(--tx);font-family:'Courier Prime',monospace;min-height:100vh;font-size:14px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--go2)}
+nav{background:var(--bg2);border-bottom:1px solid var(--br);padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.logo{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;letter-spacing:3px;color:var(--go);padding:12px 0 2px}
+.sub{font-size:9px;letter-spacing:3px;color:var(--tx4);padding-bottom:10px}
+.navlinks{display:flex;flex-wrap:wrap}
+.nb{background:none;border:none;cursor:pointer;padding:9px 11px;font-family:inherit;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);border-bottom:2px solid transparent;transition:.15s}
+.nb:hover{color:var(--go)}.nb.on{color:var(--go);border-bottom-color:var(--go)}
+#app{max-width:1280px;margin:0 auto;padding:20px}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:8px;flex-wrap:wrap}
+.pt{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:#c8bfa8}
+.ps{font-size:10px;letter-spacing:2px;color:var(--tx4);margin-top:2px;text-transform:uppercase}
+.card{background:var(--bg3);border:1px solid var(--br);padding:20px}
+.csm{background:var(--bg3);border:1px solid var(--br);padding:16px}
+.btn{cursor:pointer;font-family:inherit;letter-spacing:1px;text-transform:uppercase;font-size:11px;border:none;padding:9px 18px;transition:.15s}
+.bg{background:linear-gradient(135deg,var(--go2),var(--go));color:#000;font-weight:700}.bg:hover{opacity:.85}
+.bo{background:none;border:1px solid var(--br2);color:var(--tx3)}.bo:hover{border-color:var(--go);color:var(--go)}
+.bd{background:none;border:1px solid #4a1a1a;color:var(--rd)}.bd:hover{background:#1a0808}
+.bs{background:none;border:1px solid #1a4a2a;color:var(--gn)}.bs:hover{background:#081a0e}
+.bsm{padding:6px 13px;font-size:10px}.bxs{padding:3px 9px;font-size:9px}
+.fg{display:grid;gap:10px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+.lb{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--tx4);margin-bottom:5px}
+input,select,textarea{background:var(--bg);border:1px solid var(--br);color:var(--tx);padding:9px 12px;font-family:inherit;font-size:13px;width:100%;outline:none;transition:.2s}
+input:focus,select:focus,textarea:focus{border-color:var(--go)}
+input::placeholder,textarea::placeholder{color:var(--tx4)}
+select option{background:var(--bg2)}
+textarea{resize:vertical;min-height:50px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--tx4);padding:7px 10px;text-align:left;border-bottom:1px solid var(--br);background:var(--bg2);white-space:nowrap}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--bg2);font-size:13px}
+.tbl tr:hover td{background:var(--bg4)}.tbl tr.ck{cursor:pointer}
+.bdg{display:inline-block;padding:3px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto}
+.modal{background:var(--bg2);border:1px solid var(--br2);padding:22px;width:100%;max-width:720px;margin-top:6px}
+.mhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.mtt{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:#c8bfa8}
+.mft{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.sv{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--go);line-height:1}
+.sl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin-top:2px}
+.stl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--tx4);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--br)}
+.grid{display:grid;gap:11px}
+.fb{display:flex;justify-content:space-between;align-items:center}
+.fx{display:flex}.g8{gap:8px}.g12{gap:12px}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+.tg{color:var(--go)}.tgr{color:var(--gn)}.tr{color:var(--rd)}.ta{color:var(--am)}.wf{width:100%}
+.serif{font-family:'Cormorant Garamond',serif}
+.srch{position:relative;margin-bottom:14px}
+.srch span{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx4);pointer-events:none}
+.srch input{padding-left:28px}
+.pb{height:4px;background:var(--br);border-radius:2px;overflow:hidden}
+.pf{height:100%;background:linear-gradient(90deg,var(--go2),var(--go));transition:.4s}
+#toast{position:fixed;bottom:18px;right:18px;padding:11px 18px;font-size:12px;letter-spacing:1px;z-index:500;opacity:0;transition:.3s;pointer-events:none}
+#toast.on{opacity:1}
+.al{padding:10px 14px;font-size:12px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.al-r{background:#1a0808;border:1px solid #4a1a1a;color:var(--rd)}
+.al-a{background:#110d00;border:1px solid #3a2800;color:var(--am)}
+.tabs{display:flex;border-bottom:1px solid var(--br);margin-bottom:13px}
+.tab{background:none;border:none;padding:9px 16px;font-family:inherit;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:var(--tx4);border-bottom:2px solid transparent;transition:.15s}
+.tab:hover{color:var(--go)}.tab.on{color:var(--go);border-bottom-color:var(--go)}
+.cc{background:var(--bg3);border:1px solid var(--br);padding:18px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
+.cc:hover{border-color:var(--br2);transform:translateY(-1px)}
+.cc .ac{position:absolute;top:0;left:0;width:3px;height:100%}
+.chip-c{background:#0a1a2e;border:1px solid #1a3a5e;color:var(--bl)}
+.chip-ok{background:#081a0e;border:1px solid #1a4a2a;color:var(--gn)}
+.chip-v{background:#1a0808;border:1px solid #4a1a1a;color:var(--rd)}
+.pvbox{background:var(--bg4);border:1px solid var(--br2);padding:12px;margin-top:10px}
+.pvr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--br);font-size:13px;align-items:center}
+.pvr:last-child{border:none;padding-top:6px;font-weight:700}
+.pvr .lk{color:var(--tx3);font-size:11px;letter-spacing:0px}
+.fz{border:1px dashed var(--br2);padding:16px;text-align:center;cursor:pointer;transition:.15s;color:var(--tx4);font-size:11px}
+.fz:hover{border-color:var(--go);background:var(--bg4)}
+.dst-pago{background:#081a0e;border:1px solid #1a4a2a;color:var(--gn)}
+.dst-efectivo{background:#0a0a1e;border:1px solid #1a1a4a;color:var(--bl)}
+.dst-endoso{background:#100a1a;border:1px solid #2a1a4a;color:var(--pu)}
+.dst-otro{background:#111100;border:1px solid #3a3a00;color:var(--am)}
+</style></head><body>
+<nav id="nav">
+  <div><div class="logo">◈ M&A INVERSIONES</div><div class="sub">Gestión de Inversiones</div></div>
+  <div class="navlinks" id="navlinks"></div>
+</nav>
+<div id="app"></div>
+<div id="toast"></div>
+<div id="ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;overflow-y:auto;padding:14px;flex-direction:column;align-items:center" onclick="if(event.target===this)cerrar()"></div>
+<script>
+const fmt=n=>new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0}).format(n||0);
+const fD=d=>d?new Date(d+'T00:00:00').toLocaleDateString('es-AR'):'—';
+const hoy=()=>new Date().toISOString().split('T')[0];
+const dds=(a,b)=>Math.max(0,Math.round((new Date(a)-new Date(b))/864e5));
+let nid=300;const uid=()=>++nid;
+
+function calcC(cap,t,p){
+  const it=cap*(t/100)*p,tp=cap+it;
+  return{it:Math.round(it),tp:Math.round(tp),cuota:Math.round(tp/p)};
+}
+function genQ(cap,t,p,fi){
+  const{cuota}=calcC(cap,t,p);
+  const s=new Date(fi);
+  return Array.from({length:p},(_,i)=>{
+    const d=new Date(s);d.setMonth(d.getMonth()+i+1);
+    return{num:i+1,vto:d.toISOString().split('T')[0],monto:cuota,paga:false};
+  });
+}
+function calcCh(m,td,d,ip,ga){
+  const int2=Math.round(m*(td/100)*d),imp=Math.round(m*(ip/100)),g=Math.round(ga||0);
+  return{interes:int2,impuesto:imp,gastos:g,neto:m-int2-imp-g,ganancia:int2+imp};
+}
+
+const S={
+  scr:'dash',srch:'',opsTab:'prestamo',
+  cfg:{
+    tasas:[
+      {id:1,type:'prestamo',label:'Préstamo Personal',rate:5,color:'#3b82f6'},
+      {id:2,type:'hipotecario',label:'Hipotecario',rate:3,color:'#10b981'},
+      {id:3,type:'prendario',label:'Prendario',rate:4,color:'#8b5cf6'},
+      {id:4,type:'descuento',label:'Desc. Cheque',rate:0.3,color:'#f59e0b'},
+    ],
+    impCh:1.2,
+    logo:null,
+  },
+  clientes:[
+    {id:1,name:'María González',dni:'28.456.789',phone:'2604-123456',email:'maria@email.com',address:'Rivadavia 450',score:'bueno'},
+    {id:2,name:'Carlos Pérez',dni:'32.111.222',phone:'2604-654321',email:'carlos@email.com',address:'Belgrano 123',score:'regular'},
+    {id:3,name:'Ana Rodríguez',dni:'25.999.888',phone:'2604-789012',email:'ana@email.com',address:'San Martín 800',score:'bueno'},
+  ],
+  cajas:[
+    {id:1,name:'Caja Principal',type:'efectivo',balance:850000,color:'#d4a847',icon:'◈',currency:'ARS'},
+    {id:2,name:'Banco Nación',type:'banco',balance:2300000,color:'#3b82f6',icon:'▣',currency:'ARS'},
+    {id:3,name:'Caja 2',type:'efectivo',balance:420000,color:'#10b981',icon:'◈',currency:'ARS'},
+  ],
+  movs:[
+    {id:1,cajaId:1,tipo:'egreso',monto:150000,concepto:'Préstamo — María González',fecha:'2025-01-15'},
+    {id:2,cajaId:1,tipo:'ingreso',monto:12500,concepto:'Cuota 1 — María González',fecha:'2025-02-15'},
+  ],
+  ops:[],cheques:[],
+};
+
+(function initDemo(){
+  function mkOp(o){
+    const r={...o,neto:o.capital-o.gastosAdmin,cuotas:genQ(o.capital,o.tasa,o.plazo,o.fi)};
+    r.cuotas=r.cuotas.map((c,i)=>({...c,paga:i<(o.pg||0)}));
+    return r;
+  }
+  S.ops=[
+    mkOp({id:1,clienteId:1,tipo:'prestamo',capital:150000,tasa:5,plazo:12,fi:'2025-01-15',cajaId:1,gastosAdmin:2000,desc:'Préstamo refacción',status:'activo',vehiculo:null,pg:3}),
+    mkOp({id:2,clienteId:3,tipo:'hipotecario',capital:500000,tasa:3,plazo:24,fi:'2024-06-01',cajaId:2,gastosAdmin:5000,desc:'Hipoteca propiedad',status:'activo',vehiculo:null,pg:10}),
+    mkOp({id:3,clienteId:2,tipo:'prendario',capital:320000,tasa:4,plazo:18,fi:'2025-03-01',cajaId:1,gastosAdmin:3000,desc:'Prenda Ford Focus',status:'activo',
+      vehiculo:{marca:'Ford',modelo:'Focus',anio:'2019',patente:'AB123CD',color:'Gris',motor:'1.6',chasis:'WVW12345678',km:'85000',seguro:'La Caja',poliza:'POL-12345',vtoSeg:'2026-12-01'},pg:1}),
+  ];
+  const h=new Date(),v30=new Date(h),v15=new Date(h),v60=new Date(h);
+  v30.setDate(h.getDate()+30);v15.setDate(h.getDate()+15);v60.setDate(h.getDate()+60);
+  const ts=d=>d.toISOString().split('T')[0];
+  function mkCh(o){
+    const d=dds(o.vto,o.ing),r=calcCh(o.m,o.td,d,S.cfg.impCh,o.ga||0);
+    return{id:o.id,clienteId:o.cli,numero:o.num,banco:o.banco,monto:o.m,tasaDiaria:o.td,dias:d,
+      vencimiento:o.vto,impPct:S.cfg.impCh,gastosAdmin:o.ga||0,...r,
+      estado:o.est||'en_cartera',cajaOrigenId:o.coId,cajaTenenciaId:o.ctId,ingreso:o.ing,
+      titularCuenta:'',titularDni:'',titularTel:'',cbu:'',endoso:'',notas:'',
+      fotoF:null,fotoD:null,
+      destino:{entregadoA:'',fecha:'',motivo:'',tipo:'',comision:0,notas:''},
+    };
+  }
+  S.cheques=[
+    mkCh({id:101,cli:1,num:'00123456',banco:'Banco Nación',m:200000,td:0.3,vto:ts(v30),ing:hoy(),coId:1,ctId:1}),
+    mkCh({id:102,cli:2,num:'00789012',banco:'Banco Galicia',m:80000,td:0.3,vto:ts(v15),ing:hoy(),coId:1,ctId:1,ga:500}),
+    mkCh({id:103,cli:3,num:'00345678',banco:'BBVA',m:150000,td:0.3,vto:ts(v60),ing:hoy(),coId:2,ctId:2,ga:1000}),
+    {...mkCh({id:104,cli:1,num:'00567890',banco:'Banco Macro',m:120000,td:0.35,vto:'2025-12-10',ing:'2025-11-01',coId:1,ctId:1}),
+      estado:'cobrado',destino:{entregadoA:'Proveedor ABC',fecha:'2025-11-05',motivo:'Pago de materiales',tipo:'pago',comision:0,notas:''}},
+  ];
+})();
+
+const cN=id=>S.clientes.find(c=>c.id===id)?.name||'—';
+const cajN=id=>S.cajas.find(c=>c.id===id)?.name||'—';
+const dR=t=>S.cfg.tasas.find(r=>r.type===t)?.rate||1;
+const tC=t=>S.cfg.tasas.find(r=>r.type===t)?.color||'#888';
+const tL=t=>S.cfg.tasas.find(r=>r.type===t)?.label||t;
+const scC=s=>s==='bueno'?'var(--gn)':s==='regular'?'var(--am)':'var(--rd)';
+const sal=op=>op.cuotas.filter(c=>!c.paga).reduce((a,c)=>a+c.monto,0);
+const vcOp=op=>op.cuotas.filter(c=>!c.paga&&new Date(c.vto)<=new Date());
+
+function toast(m,t='ok'){
+  const e=document.getElementById('toast');
+  e.textContent=(t==='err'?'✕ ':'✓ ')+m;
+  e.style.cssText=`background:${t==='err'?'#1a0808':'#081a0e'};border:1px solid ${t==='err'?'#4a1a1a':'#1a4a2a'};color:${t==='err'?'var(--rd)':'var(--gn)'};`;
+  e.classList.add('on');setTimeout(()=>e.classList.remove('on'),3000);
+}
+
+const PAGES=[['dash','Panel'],['ops','Operaciones'],['clientes','Clientes'],['cajas','Cajas'],['sim','Simulador'],['rep','Reportes'],['cfg','Config']];
+function buildNav(){
+  document.getElementById('navlinks').innerHTML=PAGES.map(([p,l])=>`<button class="nb ${S.scr===p?'on':''}" onclick="go('${p}')">${l}</button>`).join('');
+}
+function go(s){S.scr=s;S.srch='';buildNav();render();}
+
+function cerrar(){
+  const o=document.getElementById('ov');
+  if(o){o.style.display='none';o.innerHTML='';}
+}
+function abrirModal(tipo,extra){
+  let html='';
+  if(tipo==='nuevaOp')html=mNuevaOp();
+  else if(tipo==='nuevoCliente')html=mNuevoCliente();
+  else if(tipo==='nuevaCaja')html=mNuevaCaja();
+  else if(tipo==='nuevoCheque')html=mNuevoCheque();
+  else if(tipo==='transf')html=mTransf();
+  else if(tipo==='mov')html=mMov(extra?.cajaId,extra?.tipo);
+  if(!html)return;
+  const ov=document.getElementById('ov');
+  ov.innerHTML=`<div style="width:100%;max-width:720px;padding-top:4px">${html}</div>`;
+  ov.style.display='flex';
+}
+function mH(t){return`<div class="modal"><div class="mhd"><div class="mtt">${t}</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>`;}
+function rTipo(tipo){
+  const act=S.ops.filter(o=>o.status==='activo'&&o.tipo===tipo);
+  const todos=S.ops.filter(o=>o.tipo===tipo);
+  const cap=act.reduce((a,o)=>a+o.capital,0);
+  const saldo2=act.reduce((a,o)=>a+sal(o),0);
+  const cobrado2=act.reduce((a,o)=>a+o.cuotas.filter(c=>c.paga).reduce((s,c)=>s+c.monto,0),0);
+  const mora2=act.filter(o=>vcOp(o).length>0);
+  const color=tC(tipo), label=tL(tipo);
+  const q=S.srch.toLowerCase();
+  const fil=act.filter(o=>!q||cN(o.clienteId).toLowerCase().includes(q)||o.desc.toLowerCase().includes(q));
+  return`
+  <div class="ph">
+    <div><div class="pt">${label}</div><div class="ps">${act.length} activos · ${todos.length} total</div></div>
+    <div class="fx g8">
+      <button class="btn bsm bo" onclick="expTipoXls('${tipo}')">⬇ Excel</button>
+      <button class="btn bsm bo" onclick="expTipoPdf('${tipo}')">⬇ PDF</button>
+      <button class="btn bg" onclick="abrirModalTipo('${tipo}')">+ Nueva operación</button>
+    </div>
+  </div>
+  <div class="grid g4 mb12">
+    <div class="card"><div class="sv" style="color:${color}">${fmt(cap)}</div><div class="sl">Capital colocado</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${act.length} operaciones activas</div></div>
+    <div class="card"><div class="sv ta">${fmt(saldo2)}</div><div class="sl">Saldo pendiente</div></div>
+    <div class="card"><div class="sv tgr">${fmt(cobrado2)}</div><div class="sl">Total cobrado</div></div>
+    <div class="card"><div class="sv tr">${mora2.length}</div><div class="sl">En mora</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${act.length?Math.round(mora2.length/act.length*100):0}% de la cartera</div></div>
+  </div>
+  ${mora2.length?`<div class="al al-r mb12">⚠ ${mora2.length} operación${mora2.length>1?'es':''} con cuotas vencidas — ${fmt(mora2.flatMap(o=>vcOp(o)).reduce((a,c)=>a+c.monto,0))} sin cobrar</div>`:''}
+  <div class="srch"><span>⌕</span><input placeholder="Buscar cliente o descripción..." value="${S.srch}" oninput="S.srch=this.value;render()"></div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table class="tbl">
+      <thead><tr><th>Cliente</th>${tipo==='prendario'?'<th>Vehículo</th>':''}<th>Capital</th><th>Tasa</th><th>Plazo</th><th>Neto</th><th>Caja</th><th>Cuotas</th><th>Próx. vto.</th><th>Saldo</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${!fil.length?`<tr><td colspan="${tipo==='prendario'?'11':'10'}" style="text-align:center;padding:32px;color:var(--tx4)">Sin operaciones</td></tr>`:''}
+        ${fil.map(op=>{
+          const pg=op.cuotas.filter(c=>c.paga).length, sl=sal(op), vc2=vcOp(op);
+          const {cuota}=calcC(op.capital,op.tasa,op.plazo);
+          const proxVto=op.cuotas.find(c=>!c.paga);
+          const diasProx=proxVto?dds(proxVto.vto,hoy()):null;
+          return`<tr class="ck" onclick="abrirOp(${op.id})">
+            <td>
+              <div style="font-size:14px">${cN(op.clienteId)}</div>
+              <div style="font-size:14px;color:var(--tx4)">${op.desc}</div>
+            </td>
+            ${tipo==='prendario'?`<td>${op.vehiculo?`<div style="font-size:15px;color:var(--pu)">${op.vehiculo.marca} ${op.vehiculo.modelo}</div><div style="font-size:14px;color:var(--tx4)">${op.vehiculo.patente} · ${op.vehiculo.anio}</div>`:'<span style="color:var(--tx4)">—</span>'}</td>`:''}
+            <td style="color:var(--go)">${fmt(op.capital)}</td>
+            <td>${op.tasa}%</td>
+            <td>${op.plazo}m</td>
+            <td style="color:var(--tx2)">${fmt(op.neto)}</td>
+            <td style="font-size:14px;color:var(--tx3)">${cajN(op.cajaId)}</td>
+            <td style="font-size:14px">${pg}/${op.plazo} · ${fmt(cuota)}/m</td>
+            <td style="font-size:14px;color:${diasProx!==null&&diasProx<=0?'var(--rd)':diasProx!==null&&diasProx<=15?'var(--am)':'var(--tx2)'}">${proxVto?fD(proxVto.vto)+(diasProx<=0?' (VENC)':``):'Saldado'}</td>
+            <td style="color:var(--am)">${fmt(sl)}</td>
+            <td>${vc2.length?`<span class="bdg chip-v">⚠ ${vc2.length} venc.</span>`:`<span class="bdg chip-ok">Al día</span>`}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function abrirModalTipo(tipo){
+  abrirModal('nuevaOp');
+  setTimeout(()=>{
+    const sel=document.getElementById('fo-tipo');
+    if(sel){sel.value=tipo;document.getElementById('fo-r').value=dR(tipo);toggleVeh();}
+  },100);
+}
+
+function expTipoXls(tipo){
+  const ops=S.ops.filter(o=>o.tipo===tipo);
+  const wb=XLSX.utils.book_new();
+  const h=['Cliente','Capital','Tasa','Plazo','G.Admin','Neto','Caja','Inicio','Total cobrar','Cuotas pagas','Saldo'];
+  const rows=ops.map(o=>{const{tp}=calcC(o.capital,o.tasa,o.plazo);return[cN(o.clienteId),o.capital,o.tasa+'%',o.plazo,o.gastosAdmin,o.neto,cajN(o.cajaId),o.fi,tp,o.cuotas.filter(c=>c.paga).length+'/'+o.plazo,sal(o)];});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([h,...rows]),tL(tipo).substring(0,31));
+  XLSX.writeFile(wb,tipo+'s.xlsx');toast('Excel descargado');
+}
+
+function expTipoPdf(tipo){
+  const ops=S.ops.filter(o=>o.tipo===tipo);
+  expPdf(tL(tipo),[{title:'Operaciones',headers:['Cliente','Capital','Tasa','Neto','Caja','Cuotas','Saldo'],rows:ops.map(o=>[cN(o.clienteId),fmt(o.capital),o.tasa+'%',fmt(o.neto),cajN(o.cajaId),o.cuotas.filter(c=>c.paga).length+'/'+o.plazo,fmt(sal(o))])}]);
+}
+
+function render(){
+  const app=document.getElementById('app');
+  const map={dash:rDash,ops:rOps,clientes:rCli,cajas:rCajas,sim:rSim,rep:rReportes,cfg:rCfg};
+  app.innerHTML=(map[S.scr]||rDash)();
+}
+
+function rDash(){
+  const act=S.ops.filter(o=>o.status==='activo');
+  const cap=act.reduce((a,o)=>a+o.capital,0),sldo=act.reduce((a,o)=>a+sal(o),0);
+  const ars=S.cajas.filter(c=>c.currency==='ARS').reduce((a,c)=>a+c.balance,0);
+  const car=S.cheques.filter(c=>c.estado==='en_cartera');
+  const ganCh=car.reduce((a,c)=>a+c.ganancia,0);
+  const vcs=act.flatMap(o=>vcOp(o).map(c=>({...c,op:o})));
+  const lim=new Date();lim.setDate(lim.getDate()+15);
+  const prx=act.flatMap(o=>o.cuotas.filter(c=>!c.paga&&new Date(c.vto)>new Date()&&new Date(c.vto)<=lim).map(c=>({...c,op:o})));
+  const chv=car.filter(c=>dds(c.vencimiento,hoy())<=7);
+  return`
+  <div class="ph"><div><div class="pt">Panel General</div><div class="ps">${new Date().toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div></div>
+  ${vcs.length?`<div class="al al-r">⚠ ${vcs.length} cuota${vcs.length>1?'s':''} vencida — ${fmt(vcs.reduce((a,c)=>a+c.monto,0))} <button class="btn bxs bd" style="margin-left:auto" onclick="go('ops')">Ver →</button></div>`:''}
+  ${prx.length?`<div class="al al-a">🕐 ${prx.length} cuota${prx.length>1?'s':''} vence en 15 días — ${fmt(prx.reduce((a,c)=>a+c.monto,0))} <button class="btn bxs bo" style="margin-left:auto" onclick="go('ops')">Ver →</button></div>`:''}
+  ${chv.length?`<div class="al al-a">📋 ${chv.length} cheque${chv.length>1?'s':''} vence en 7 días <button class="btn bxs bo" style="margin-left:auto" onclick="go('cheques')">Ver →</button></div>`:''}
+  <div class="grid g4 mb12">
+    <div class="card"><div class="sv">${fmt(cap)}</div><div class="sl">Capital colocado</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${act.length} activas</div></div>
+    <div class="card"><div class="sv">${fmt(sldo)}</div><div class="sl">Saldo por cobrar</div></div>
+    <div class="card"><div class="sv">${fmt(ars)}</div><div class="sl">Total cajas ARS</div></div>
+    <div class="card"><div class="sv tgr">${fmt(ganCh)}</div><div class="sl">Ganancia cheques</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${car.length} en cartera</div></div>
+  </div>
+  <div class="grid g3 mb12">
+    ${['prestamo','hipotecario','prendario'].map(t=>{
+      const ops=act.filter(o=>o.tipo===t);
+      const cap2=ops.reduce((a,o)=>a+o.capital,0);
+      const saldo2=ops.reduce((a,o)=>a+sal(o),0);
+      const cobrado2=ops.reduce((a,o)=>a+o.cuotas.filter(c=>c.paga).reduce((s,c)=>s+c.monto,0),0);
+      const mora2=ops.filter(o=>vcOp(o).length>0);
+      const prox2=ops.flatMap(o=>o.cuotas.filter(c=>{const lm=new Date();lm.setDate(lm.getDate()+15);return !c.paga&&new Date(c.vto)>new Date()&&new Date(c.vto)<=lm;}));
+      return`<div class="card" style="border-top:3px solid ${tC(t)};padding:14px">
+        <div class="fb mb10">
+          <span class="bdg" style="background:${tC(t)}22;color:${tC(t)};border:1px solid ${tC(t)}44;font-size:14px">${tL(t)}</span>
+          <button class="btn bxs bg" onclick="abrirModal('nuevaOp')" style="font-size:14px">+ Nueva</button>
+        </div>
+        <div class="grid g2 mb10" style="gap:8px">
+          <div class="csm" style="padding:10px">
+            <div style="font-family:Georgia,serif;font-size:20px;color:${tC(t)}">${fmt(cap2)}</div>
+            <div style="font-size:15px;color:var(--tx4);letter-spacing:2px;margin-top:2px">CAPITAL · ${ops.length} OP${ops.length!==1?'S':''}</div>
+          </div>
+          <div class="csm" style="padding:10px">
+            <div style="font-family:Georgia,serif;font-size:20px;color:var(--am)">${fmt(saldo2)}</div>
+            <div style="font-size:15px;color:var(--tx4);letter-spacing:2px;margin-top:2px">SALDO PENDIENTE</div>
+          </div>
+        </div>
+        ${mora2.length?`<div class="al al-r" style="padding:5px 8px;margin-bottom:8px;font-size:15px">⚠ ${mora2.length} con mora — ${fmt(mora2.flatMap(o=>vcOp(o)).reduce((a,c)=>a+c.monto,0))}</div>`:''}
+        ${prox2.length?`<div class="al al-a" style="padding:5px 8px;margin-bottom:8px;font-size:15px">🕐 ${prox2.length} cuota${prox2.length>1?'s':''} vence en 15d — ${fmt(prox2.reduce((a,c)=>a+c.monto,0))}</div>`:''}
+        <div style="max-height:160px;overflow-y:auto">
+          <table class="tbl" style="font-size:14px">
+            <thead><tr><th>Cliente</th><th>Capital</th><th>Cuotas</th><th>Saldo</th><th></th></tr></thead>
+            <tbody>
+              ${!ops.length?`<tr><td colspan="5" style="text-align:center;color:var(--tx4);padding:16px">Sin operaciones</td></tr>`:''}
+              ${ops.map(op=>{const pg=op.cuotas.filter(c=>c.paga).length,sl=sal(op),vc2=vcOp(op);
+                return`<tr class="ck" onclick="abrirOp(${op.id})">
+                  <td><div style="font-size:15px">${cN(op.clienteId)}</div>${op.tipo==='prendario'&&op.vehiculo?`<div style="font-size:14px;color:var(--pu)">${op.vehiculo.marca} ${op.vehiculo.patente}</div>`:''}</td>
+                  <td style="color:var(--go)">${fmt(op.capital)}</td>
+                  <td style="font-size:14px">${pg}/${op.plazo}</td>
+                  <td style="color:var(--am)">${fmt(sl)}</td>
+                  <td>${vc2.length?`<span class="bdg chip-v" style="font-size:15px">⚠${vc2.length}</span>`:`<span class="bdg chip-ok" style="font-size:15px">✓</span>`}</td>
+                </tr>`;}).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="fb mt8">
+          <span style="font-size:15px;color:var(--tx4)">Cobrado: ${fmt(cobrado2)}</span>
+          <button class="btn bxs bo" onclick="go('ops')">Ver todo →</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="grid g2 mb12">
+    <div class="card"><div class="stl">Cajas</div>
+      ${S.cajas.map(c=>`<div class="fb" style="padding:6px 0;border-bottom:1px solid var(--br)">
+        <div class="fx g8" style="align-items:center"><span style="color:${c.color}">${c.icon}</span>
+          <div><div style="font-size:15px">${c.name}</div><div style="font-size:14px;color:var(--tx4)">${c.type}·${c.currency}</div></div></div>
+        <div class="serif" style="font-size:16px;color:${c.color}">${c.currency==='USD'?'US$ '+c.balance.toLocaleString('es-AR'):fmt(c.balance)}</div>
+      </div>`).join('')}
+    </div>
+    <div class="card"><div class="stl">Cuotas vencidas</div>
+      ${vcs.slice(0,5).map(c=>`<div class="fb" style="padding:6px 0;border-bottom:1px solid var(--br)">
+        <div><div style="font-size:15px">${cN(c.op.clienteId)}</div><div style="font-size:14px;color:var(--tx4)">${tL(c.op.tipo)}·C${c.num}·${fD(c.vto)}</div></div>
+        <div class="tr" style="font-size:14px">${fmt(c.monto)}</div></div>`).join('')}
+      ${!vcs.length?'<div style="color:var(--gn);font-size:15px;padding:12px 0;text-align:center">✓ Sin cuotas vencidas</div>':''}
+    </div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><div class="stl">Cheques próximos a vencer</div>
+      ${car.sort((a,b)=>new Date(a.vencimiento)-new Date(b.vencimiento)).slice(0,5).map(ch=>{
+        const d=dds(ch.vencimiento,hoy());
+        return`<div class="fb ck" style="padding:6px 0;border-bottom:1px solid var(--br)" onclick="abrirCheque(${ch.id})">
+          <div><div style="font-size:15px">${ch.banco}·Nº${ch.numero}</div>
+            <div style="font-size:14px;color:var(--tx4)">${cN(ch.clienteId)}${ch.titularCuenta?' · '+ch.titularCuenta:''}</div></div>
+          <div style="text-align:right"><div class="tg" style="font-size:14px">${fmt(ch.monto)}</div>
+            <div style="font-size:14px;color:${d<=7?'var(--rd)':d<=15?'var(--am)':'var(--tx4)'}">${d}d·${fD(ch.vencimiento)}</div></div>
+        </div>`;}).join('')}
+      ${!car.length?'<div style="color:var(--tx4);font-size:15px;padding:12px 0;text-align:center">Sin cheques en cartera</div>':''}
+    </div>
+    <div class="card"><div class="stl">Últimas operaciones</div>
+      ${S.ops.slice(-5).reverse().map(op=>`<div class="fb ck" style="padding:6px 0;border-bottom:1px solid var(--br)" onclick="abrirOp(${op.id})">
+        <div><div class="serif" style="font-size:14px">${cN(op.clienteId)}</div><div style="font-size:14px;color:var(--tx4)">${tL(op.tipo)}·${cajN(op.cajaId)}</div></div>
+        <div style="text-align:right"><div class="tg" style="font-size:14px">${fmt(op.capital)}</div><div style="font-size:14px;color:var(--tx4)">${op.tasa}%</div></div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function rOps(){
+  const tab=S.opsTab||'prestamo';
+  return`
+  <div class="ph">
+    <div><div class="pt">Operaciones</div><div class="ps">${S.ops.length} registradas en total</div></div>
+    <div class="fx g8">
+      <button class="btn bsm bo" onclick="expOpsXls()">⬇ Excel</button>
+      <button class="btn bsm bo" onclick="expOpsPdf()">⬇ PDF</button>
+      <button class="btn bg" onclick="abrirModalTipo(S.opsTab||'prestamo')">+ Nueva</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab ${tab==='prestamo'?'on':''}" onclick="S.opsTab='prestamo';S.srch='';render()">Préstamos Personales</button>
+    <button class="tab ${tab==='hipotecario'?'on':''}" onclick="S.opsTab='hipotecario';S.srch='';render()">Hipotecarios</button>
+    <button class="tab ${tab==='prendario'?'on':''}" onclick="S.opsTab='prendario';S.srch='';render()">Prendarios</button>
+    <button class="tab ${tab==='cheques'?'on':''}" onclick="S.opsTab='cheques';S.srch='';render()">Cheques</button>
+  </div>
+  ${tab==='cheques' ? rChInline() : rTipoInline(tab)}
+  `;
+}
+
+function rTipoInline(tipo){
+  const act=S.ops.filter(o=>o.status==='activo'&&o.tipo===tipo);
+  const cap=act.reduce((a,o)=>a+o.capital,0);
+  const saldo2=act.reduce((a,o)=>a+sal(o),0);
+  const cobrado2=act.reduce((a,o)=>a+o.cuotas.filter(c=>c.paga).reduce((s,c)=>s+c.monto,0),0);
+  const mora2=act.filter(o=>vcOp(o).length>0);
+  const color=tC(tipo);
+  const q=S.srch.toLowerCase();
+  const fil=act.filter(o=>!q||cN(o.clienteId).toLowerCase().includes(q)||o.desc.toLowerCase().includes(q));
+  return`
+  <div class="grid g4 mb12">
+    <div class="card"><div class="sv" style="color:${color}">${fmt(cap)}</div><div class="sl">Capital colocado</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${act.length} activas</div></div>
+    <div class="card"><div class="sv ta">${fmt(saldo2)}</div><div class="sl">Saldo pendiente</div></div>
+    <div class="card"><div class="sv tgr">${fmt(cobrado2)}</div><div class="sl">Total cobrado</div></div>
+    <div class="card"><div class="sv tr">${mora2.length}</div><div class="sl">En mora</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${act.length?Math.round(mora2.length/act.length*100):0}% cartera</div></div>
+  </div>
+  ${mora2.length?`<div class="al al-r mb12">⚠ ${mora2.length} con mora — ${fmt(mora2.flatMap(o=>vcOp(o)).reduce((a,c)=>a+c.monto,0))} sin cobrar</div>`:''}
+  <div class="srch"><span>⌕</span><input placeholder="Buscar cliente o descripción..." value="${S.srch}" oninput="S.srch=this.value;render()"></div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table class="tbl">
+      <thead><tr><th>Cliente</th>${tipo==='prendario'?'<th>Vehículo</th>':''}<th>Capital</th><th>Tasa</th><th>Plazo</th><th>G.Admin</th><th>Neto</th><th>Caja</th><th>Cuotas</th><th>Próx. vto.</th><th>Saldo</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${!fil.length?`<tr><td colspan="${tipo==='prendario'?12:11}" style="text-align:center;padding:32px;color:var(--tx4)">Sin operaciones — <button class="btn bxs bg" onclick="abrirModalTipo('${tipo}')">+ Crear primera</button></td></tr>`:''}
+        ${fil.map(op=>{
+          const pg=op.cuotas.filter(c=>c.paga).length,sl=sal(op),vc2=vcOp(op);
+          const {cuota}=calcC(op.capital,op.tasa,op.plazo);
+          const proxVto=op.cuotas.find(c=>!c.paga);
+          const diasProx=proxVto?dds(proxVto.vto,hoy()):null;
+          return`<tr class="ck" onclick="abrirOp(${op.id})">
+            <td><div style="font-size:14px">${cN(op.clienteId)}</div><div style="font-size:14px;color:var(--tx4)">${op.desc}</div></td>
+            ${tipo==='prendario'?`<td>${op.vehiculo?`<div style="font-size:15px;color:var(--pu)">${op.vehiculo.marca} ${op.vehiculo.modelo}</div><div style="font-size:14px;color:var(--tx4)">${op.vehiculo.patente} · ${op.vehiculo.anio}</div>`:'<span style="color:var(--tx4)">—</span>'}</td>`:''}
+            <td style="color:var(--go)">${fmt(op.capital)}</td>
+            <td>${op.tasa}%</td>
+            <td>${op.plazo}m</td>
+            <td style="color:var(--am)">${op.gastosAdmin?fmt(op.gastosAdmin):'—'}</td>
+            <td style="color:var(--tx2)">${fmt(op.neto)}</td>
+            <td style="font-size:14px;color:var(--tx3)">${cajN(op.cajaId)}</td>
+            <td style="font-size:14px">${pg}/${op.plazo} · ${fmt(cuota)}/m</td>
+            <td style="font-size:14px;color:${diasProx!==null&&diasProx<=0?'var(--rd)':diasProx!==null&&diasProx<=15?'var(--am)':'var(--tx2)'}">${proxVto?fD(proxVto.vto)+(diasProx!==null&&diasProx<=0?' ⚠':''):'✓ Saldado'}</td>
+            <td style="color:var(--am)">${fmt(sl)}</td>
+            <td>${vc2.length?`<span class="bdg chip-v">⚠ ${vc2.length}</span>`:`<span class="bdg chip-ok">Al día</span>`}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function rChInline(){
+  const car=S.cheques.filter(c=>c.estado==='en_cartera');
+  const dstL={pago:'Pago deuda',efectivo:'Efectivo',endoso:'Endosado',otro:'Otro'};
+  const q=S.srch.toLowerCase();
+  const fil=S.cheques.filter(c=>!q||cN(c.clienteId).toLowerCase().includes(q)||c.numero.includes(q)||c.banco.toLowerCase().includes(q));
+  return`
+  <div class="grid g4 mb12">
+    <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Valor nominal</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${car.length} en cartera</div></div>
+    <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.neto,0))}</div><div class="sl">Neto entregado</div></div>
+    <div class="card"><div class="sv ta">${fmt(car.reduce((a,c)=>a+c.impuesto,0))}</div><div class="sl">Impuesto cobrado</div></div>
+    <div class="card"><div class="sv tgr">${fmt(car.reduce((a,c)=>a+c.ganancia,0))}</div><div class="sl">Ganancia total</div></div>
+  </div>
+  <div class="fx g8 mb12">
+    <button class="btn bsm bo" onclick="expChXls()">⬇ Excel</button>
+    <button class="btn bsm bo" onclick="expChPdf()">⬇ PDF</button>
+    <button class="btn bg" onclick="abrirModal('nuevoCheque')">+ Ingresar cheque</button>
+  </div>
+  <div class="srch"><span>⌕</span><input placeholder="Buscar número, banco, cliente..." value="${S.srch}" oninput="S.srch=this.value;render()"></div>
+  <div class="card" style="padding:0;overflow-x:auto"><table class="tbl">
+    <thead><tr><th>Número</th><th>Banco</th><th>Cliente/Titular</th><th>Nominal</th><th>Días</th><th>Interés</th><th>Imp.</th><th>Neto</th><th>Vto.</th><th>Tenencia</th><th>Destino</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${!fil.length?`<tr><td colspan="13" style="text-align:center;padding:32px;color:var(--tx4)">Sin cheques</td></tr>`:''}
+    ${fil.map(ch=>{
+      const d=dds(ch.vencimiento,hoy()),ec=ch.estado==='en_cartera';
+      const dst=ch.destino?.tipo?`<span class="bdg dst-${ch.destino.tipo}" style="font-size:15px">${dstL[ch.destino.tipo]||ch.destino.tipo}</span>`:'<span style="color:var(--tx4);font-size:15px">—</span>';
+      return`<tr class="ck" onclick="abrirCheque(${ch.id})">
+        <td style="font-size:14px">${ch.numero}</td><td style="font-size:14px">${ch.banco}</td>
+        <td><div class="serif" style="font-size:14px">${cN(ch.clienteId)}</div>${ch.titularCuenta?`<div style="font-size:14px;color:var(--am)">${ch.titularCuenta}</div>`:''}</td>
+        <td class="tg">${fmt(ch.monto)}</td><td style="font-size:14px">${ch.dias}d</td>
+        <td class="tr">${fmt(ch.interes)}</td><td class="ta">${fmt(ch.impuesto)}</td><td class="tgr">${fmt(ch.neto)}</td>
+        <td style="font-size:14px;color:${ec&&d<=7?'var(--rd)':d<=15?'var(--am)':'var(--tx2)'}">${fD(ch.vencimiento)}${ec?` (${d}d)`:''}</td>
+        <td style="font-size:14px;color:var(--tx3)">${cajN(ch.cajaTenenciaId)}</td>
+        <td>${dst}</td>
+        <td>${ec?`<span class="bdg chip-c">En cartera</span>`:ch.estado==='cobrado'?`<span class="bdg chip-ok">Cobrado</span>`:`<span class="bdg chip-v">Rechazado</span>`}</td>
+        <td>${ec?`<button class="btn bxs bs" onclick="event.stopPropagation();cobrarCh(${ch.id})">Cobrar</button>`:''}</td>
+      </tr>`;}).join('')}
+    </tbody></table></div>`;
+}
+
+
+function rCli(){
+  const q=S.srch.toLowerCase();
+  const fil=S.clientes.filter(c=>!q||c.name.toLowerCase().includes(q)||c.dni.includes(q));
+  return`<div class="ph"><div><div class="pt">Clientes</div><div class="ps">${S.clientes.length}</div></div>
+    <button class="btn bg" onclick="abrirModal('nuevoCliente')">+ Nuevo</button></div>
+  <div class="srch"><span>⌕</span><input placeholder="Nombre o DNI..." value="${S.srch}" oninput="S.srch=this.value;render()"></div>
+  <div class="grid g3">
+    ${fil.map(c=>{
+      const ops=S.ops.filter(o=>o.clienteId===c.id),sl=ops.reduce((a,o)=>a+sal(o),0),mora=ops.some(o=>vcOp(o).length>0);
+      return`<div class="cc" onclick="abrirCliente(${c.id})"><div class="ac" style="background:${scC(c.score)}"></div>
+        <div class="fx g12 mb10" style="align-items:center">
+          <div style="width:38px;height:38px;background:var(--bg2);border:1px solid var(--br2);display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:17px;color:var(--go);flex-shrink:0">${c.name.charAt(0)}</div>
+          <div><div class="serif" style="font-size:15px">${c.name}</div><div style="font-size:14px;color:var(--tx4)">DNI ${c.dni}</div></div>
+        </div>
+        <div class="fb"><div><div class="tg" style="font-size:15px">${ops.length}</div><div style="font-size:15px;color:var(--tx4)">OPS</div></div>
+          <div style="text-align:right"><div class="tg" style="font-size:14px">${fmt(sl)}</div><div style="font-size:15px;color:var(--tx4)">SALDO</div></div></div>
+        <div class="fx g8 mt8">
+          <span class="bdg" style="background:${scC(c.score)}22;color:${scC(c.score)};border:1px solid ${scC(c.score)}44;font-size:15px">${c.score.toUpperCase()}</span>
+          ${mora?'<span class="bdg chip-v" style="font-size:15px">MORA</span>':''}
+        </div>
+      </div>`;}).join('')}
+  </div>`;
+}
+
+function rCh(){
+  const car=S.cheques.filter(c=>c.estado==='en_cartera');
+  const dstL={pago:'Pago deuda',efectivo:'Efectivo',endoso:'Endosado',otro:'Otro'};
+  return`<div class="ph"><div><div class="pt">Cheques</div><div class="ps">${car.length} en cartera</div></div>
+    <div class="fx g8"><button class="btn bsm bo" onclick="expChXls()">⬇ Excel</button><button class="btn bsm bo" onclick="expChPdf()">⬇ PDF</button><button class="btn bg" onclick="abrirModal('nuevoCheque')">+ Ingresar</button></div></div>
+  <div class="grid g4 mb12">
+    <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Valor nominal</div></div>
+    <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.neto,0))}</div><div class="sl">Neto entregado</div></div>
+    <div class="card"><div class="sv ta">${fmt(car.reduce((a,c)=>a+c.impuesto,0))}</div><div class="sl">Impuesto cobrado</div></div>
+    <div class="card"><div class="sv tgr">${fmt(car.reduce((a,c)=>a+c.ganancia,0))}</div><div class="sl">Ganancia total</div></div>
+  </div>
+  <div class="card" style="padding:0;overflow-x:auto"><table class="tbl">
+    <thead><tr><th>Número</th><th>Banco</th><th>Cliente/Titular</th><th>Nominal</th><th>Días</th><th>Interés</th><th>Imp.</th><th>Neto</th><th>Vto.</th><th>Tenencia</th><th>Destino</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${S.cheques.map(ch=>{
+      const d=dds(ch.vencimiento,hoy()),ec=ch.estado==='en_cartera';
+      const dst=ch.destino?.tipo?`<span class="bdg dst-${ch.destino.tipo}" style="font-size:15px">${dstL[ch.destino.tipo]||ch.destino.tipo}</span>`:'<span style="color:var(--tx4);font-size:15px">—</span>';
+      return`<tr class="ck" onclick="abrirCheque(${ch.id})">
+        <td style="font-size:14px">${ch.numero}</td><td style="font-size:14px">${ch.banco}</td>
+        <td><div class="serif" style="font-size:14px">${cN(ch.clienteId)}</div>${ch.titularCuenta?`<div style="font-size:14px;color:var(--am)">${ch.titularCuenta}</div>`:''}</td>
+        <td class="tg">${fmt(ch.monto)}</td><td style="font-size:14px">${ch.dias}d</td>
+        <td class="tr">${fmt(ch.interes)}</td><td class="ta">${fmt(ch.impuesto)}</td><td class="tgr">${fmt(ch.neto)}</td>
+        <td style="font-size:14px;color:${ec&&d<=7?'var(--rd)':d<=15?'var(--am)':'var(--tx2)'}">${fD(ch.vencimiento)}${ec?` (${d}d)`:''}</td>
+        <td style="font-size:14px;color:var(--tx3)">${cajN(ch.cajaTenenciaId)}</td>
+        <td>${dst}</td>
+        <td>${ec?`<span class="bdg chip-c">En cartera</span>`:ch.estado==='cobrado'?`<span class="bdg chip-ok">Cobrado</span>`:`<span class="bdg chip-v">Rechazado</span>`}</td>
+        <td>${ec?`<button class="btn bxs bs" onclick="event.stopPropagation();cobrarCh(${ch.id})">Cobrar</button>`:''}</td>
+      </tr>`;}).join('')}
+    </tbody></table></div>`;
+}
+
+function rCajas(){
+  const t=S.cajas.filter(c=>c.currency==='ARS').reduce((a,c)=>a+c.balance,0);
+  return`<div class="ph"><div><div class="pt">Cajas</div><div class="ps">Total ARS: ${fmt(t)}</div></div>
+    <div class="fx g8"><button class="btn bsm bo" onclick="expCajXls()">⬇ Excel</button><button class="btn bo" onclick="abrirModal('transf')">⇄ Transferir</button><button class="btn bg" onclick="abrirModal('nuevaCaja')">+ Nueva</button></div></div>
+  <div class="grid g3 mb12">
+    ${S.cajas.map(c=>`<div class="cc" onclick="abrirCaja(${c.id})"><div class="ac" style="background:${c.color}"></div>
+      <div class="fb mb10"><span style="font-size:18px;color:${c.color}">${c.icon}</span><span class="bdg" style="background:${c.color}22;color:${c.color};border:1px solid ${c.color}44;font-size:15px">${c.type.toUpperCase()}</span></div>
+      <div style="font-size:15px;color:var(--tx2);margin-bottom:2px">${c.name}</div>
+      <div class="serif" style="font-size:22px;color:${c.color};margin:3px 0">${c.currency==='USD'?'US$ '+c.balance.toLocaleString('es-AR'):fmt(c.balance)}</div>
+      <div style="font-size:15px;color:var(--tx4);letter-spacing:2px;margin-bottom:8px">${c.currency}</div>
+      <div class="fx g8"><button class="btn bxs bs" onclick="event.stopPropagation();abrirMov(${c.id},'ingreso')">+ Ingreso</button>
+        <button class="btn bxs bd" onclick="event.stopPropagation();abrirMov(${c.id},'egreso')">- Egreso</button></div>
+    </div>`).join('')}
+  </div>
+  <div class="card"><div class="stl">Últimos movimientos</div>
+    <table class="tbl"><thead><tr><th>Fecha</th><th>Caja</th><th>Tipo</th><th>Concepto</th><th>Monto</th></tr></thead>
+    <tbody>${S.movs.slice(-20).reverse().map(m=>`<tr>
+      <td style="font-size:14px">${fD(m.fecha)}</td><td style="font-size:14px">${cajN(m.cajaId)}</td>
+      <td><span class="bdg" style="background:${m.tipo==='ingreso'?'var(--gn)22':'var(--rd)22'};color:${m.tipo==='ingreso'?'var(--gn)':'var(--rd)'};border:1px solid ${m.tipo==='ingreso'?'var(--gn)':'var(--rd)'}44">${m.tipo.toUpperCase()}</span></td>
+      <td>${m.concepto}</td><td style="color:${m.tipo==='ingreso'?'var(--gn)':'var(--rd)'}">${m.tipo==='ingreso'?'+':'-'}${fmt(m.monto)}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+function rSim(){
+  return`<div class="ph"><div class="pt">Simulador</div></div>
+  <div class="tabs"><button class="tab on" id="tc" onclick="simT('c')">Crédito</button><button class="tab" id="tch" onclick="simT('ch')">Descuento de Cheque</button></div>
+  <div id="sw-c"><div class="grid g2">
+    <div class="card"><div class="stl">Parámetros</div>
+      <div class="fg g2 mb10"><div><label class="lb">Tipo</label><select id="sc-t" onchange="document.getElementById('sc-r').value=dR(this.value)">${S.cfg.tasas.filter(x=>x.type!=='descuento').map(x=>`<option value="${x.type}">${x.label}</option>`).join('')}</select></div>
+        <div><label class="lb">Capital</label><input id="sc-c" type="number" placeholder="200000" oninput="simC()"></div></div>
+      <div class="fg g3"><div><label class="lb">Tasa mensual %</label><input id="sc-r" type="number" step="0.1" value="${dR('prestamo')}" oninput="simC()"></div>
+        <div><label class="lb">Plazo meses</label><input id="sc-p" type="number" value="12" oninput="simC()"></div>
+        <div><label class="lb">Gastos admin $</label><input id="sc-g" type="number" value="0" oninput="simC()"></div></div>
+    </div>
+    <div id="sc-res" class="card" style="display:flex;align-items:center;justify-content:center"><div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div><div style="font-size:15px;letter-spacing:2px;margin-top:5px">INGRESÁ LOS DATOS</div></div></div>
+  </div></div>
+  <div id="sw-ch" style="display:none"><div class="grid g2">
+    <div class="card"><div class="stl">Parámetros</div>
+      <div class="fg g2 mb10"><div><label class="lb">Valor nominal</label><input id="sch-m" type="number" placeholder="200000" oninput="simCh()"></div>
+        <div><label class="lb">Tasa diaria %</label><input id="sch-t" type="number" step="0.01" value="${dR('descuento')}" oninput="simCh()"></div></div>
+      <div class="fg g3 mb10"><div><label class="lb">Fecha ingreso</label><input id="sch-d" type="date" value="${hoy()}" oninput="simCh()"></div>
+        <div><label class="lb">Vencimiento</label><input id="sch-v" type="date" oninput="simCh()"></div>
+        <div><label class="lb">Días (manual)</label><input id="sch-ds" type="number" placeholder="auto" oninput="simCh()"></div></div>
+      <div class="fg g2"><div><label class="lb">Impuesto %</label><input id="sch-i" type="number" step="0.01" value="${S.cfg.impCh}" oninput="simCh()"></div>
+        <div><label class="lb">Gastos admin $</label><input id="sch-g" type="number" value="0" oninput="simCh()"></div></div>
+    </div>
+    <div id="sch-res" class="card" style="display:flex;align-items:center;justify-content:center"><div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div><div style="font-size:15px;letter-spacing:2px;margin-top:5px">INGRESÁ LOS DATOS</div></div></div>
+  </div></div>`;
+}
+function simT(t){document.getElementById('sw-c').style.display=t==='c'?'block':'none';document.getElementById('sw-ch').style.display=t==='ch'?'block':'none';document.getElementById('tc').classList.toggle('on',t==='c');document.getElementById('tch').classList.toggle('on',t==='ch');}
+function simC(){const c=parseFloat(document.getElementById('sc-c')?.value||0),r=parseFloat(document.getElementById('sc-r')?.value||0),p=parseInt(document.getElementById('sc-p')?.value||1),g=parseFloat(document.getElementById('sc-g')?.value||0);const el=document.getElementById('sc-res');if(!el)return;if(!c||!r){el.innerHTML=`<div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div></div>`;return;}const{it,tp,cuota}=calcC(c,r,p);el.innerHTML=`<div style="width:100%"><div class="stl">Sistema Directo</div><div class="pvbox" style="margin:0"><div class="pvr"><span class="lk">Capital</span><span class="tg">${fmt(c)}</span></div><div class="pvr"><span class="lk">${r}%×${p}m</span><span>${(r*p).toFixed(1)}% total</span></div><div class="pvr"><span class="lk">Interés total</span><span class="tr">${fmt(it)}</span></div>${g?`<div class="pvr"><span class="lk">Gastos admin</span><span class="ta">-${fmt(g)}</span></div>`:''}<div class="pvr"><span class="lk">Neto al cliente</span><span class="tgr">${fmt(c-g)}</span></div><div class="pvr"><span class="lk">Total a cobrar</span><span>${fmt(tp)}</span></div><div class="pvr"><span class="lk">Cuota mensual</span><span class="tg" style="font-size:17px">${fmt(cuota)}</span></div></div></div>`;}
+function simCh(){const m=parseFloat(document.getElementById('sch-m')?.value||0),t=parseFloat(document.getElementById('sch-t')?.value||0),i=parseFloat(document.getElementById('sch-i')?.value||0),g=parseFloat(document.getElementById('sch-g')?.value||0);const d1=document.getElementById('sch-d')?.value,d2=document.getElementById('sch-v')?.value,dm=parseInt(document.getElementById('sch-ds')?.value||0);const d=dm||(d1&&d2?dds(d2,d1):0);const el=document.getElementById('sch-res');if(!el)return;if(!m||!t||!d){el.innerHTML=`<div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div></div>`;return;}const r=calcCh(m,t,d,i,g);el.innerHTML=`<div style="width:100%"><div class="stl">Descuento Diario</div><div class="pvbox" style="margin:0"><div class="pvr"><span class="lk">Valor nominal</span><span class="tg">${fmt(m)}</span></div><div class="pvr"><span class="lk">${t}%×${d}d</span><span>${(t*d).toFixed(2)}% total</span></div><div class="pvr"><span class="lk">Interés</span><span class="tr">-${fmt(r.interes)}</span></div><div class="pvr"><span class="lk">Impuesto (${i}%)</span><span class="ta">-${fmt(r.impuesto)}</span></div>${g?`<div class="pvr"><span class="lk">Gastos admin</span><span style="color:var(--tx3)">-${fmt(r.gastos)}</span></div>`:''}<div class="pvr"><span class="lk">Neto a entregar</span><span class="tgr" style="font-size:17px">${fmt(r.neto)}</span></div><div class="pvr"><span class="lk">Ganancia</span><span class="tg">${fmt(r.ganancia)}</span></div></div></div>`;}
+
+function rCfg(){return`<div class="ph"><div class="pt">Configuración</div></div><div class="grid g2"><div class="card"><div class="stl">Tasas predefinidas</div>${S.cfg.tasas.map(r=>`<div class="fb" style="padding:8px 0;border-bottom:1px solid var(--br);align-items:center"><div><div style="font-size:15px">${r.label}</div><div style="font-size:14px;color:var(--tx4)">${r.type==='descuento'?'DIARIA':'MENSUAL'}</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${r.rate}" style="width:75px;text-align:center" onchange="S.cfg.tasas=S.cfg.tasas.map(t=>t.id===${r.id}?{...t,rate:parseFloat(this.value)||t.rate}:t);toast('Tasa actualizada')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div>`).join('')}<div class="fb mt12" style="align-items:center"><div><div style="font-size:15px">Impuesto al cheque</div><div style="font-size:14px;color:var(--tx4)">% sobre nominal</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${S.cfg.impCh}" style="width:75px;text-align:center" onchange="S.cfg.impCh=parseFloat(this.value)||1.2;toast('Actualizado')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div></div><div class="card"><div class="stl">Cajas</div>${S.cajas.map(c=>`<div class="fb" style="padding:7px 0;border-bottom:1px solid var(--br)"><div class="fx g8" style="align-items:center"><span style="color:${c.color}">${c.icon}</span><div><div style="font-size:15px">${c.name}</div><div style="font-size:14px;color:var(--tx4)">${c.type}·${c.currency}</div></div></div><div class="serif" style="font-size:14px;color:${c.color}">${c.currency==='USD'?'US$ '+c.balance.toLocaleString('es-AR'):fmt(c.balance)}</div></div>`).join('')}<button class="btn bo wf mt8" onclick="abrirModal('nuevaCaja')">+ Agregar caja</button></div></div>${rCfgPin()}
+  <div class="card mt16">
+    <div class="stl">Datos y backups</div>
+    <div style="font-size:15px;color:var(--tx3);margin-bottom:12px">Datos guardados en Supabase en tiempo real. Backup automatico cada 1 hora.</div>
+    <div class="fx g8 mb12">
+      <button class="btn bg" onclick="saveRemoteBackup().then(()=>toast('Backup guardado'))">Backup ahora</button>
+      <button class="btn bo" onclick="exportarJSON()">Descargar JSON</button>
+    </div>
+  </div>
+  <div class="card mt16">
+    <div class="stl">Logo personalizado</div>
+    <div class="fg g2 mt8" style="align-items:center">
+      <div id="logo-preview">${S.cfg.logo?'<img src="'+S.cfg.logo+'" style="max-height:60px;border:1px solid var(--br);padding:8px;background:white">':"<div style=\"color:var(--tx4)\">Sin logo</div>"}</div>
+      <div><label class="lb">Subir imagen PNG/JPG</label><input type="file" accept="image/*" onchange="subirLogo(this)"></div>
+    </div>
+  </div>
+  <div class="card mt16">
+    <div class="stl">Instalar como app en el celular</div>
+    <div style="font-size:15px;color:var(--tx3);margin-bottom:12px">Instala M&A Inversiones como app nativa en tu celular.</div>
+    <button class="btn bg" onclick="instalarApp()">Instalar en celular</button>
+    <div style="font-size:15px;color:var(--tx4);margin-top:8px">Si no funciona: menu del navegador > Agregar a pantalla de inicio</div>
+  </div>`+'';}
+function mNuevaOp(){
+  const co=S.cajas.map(c=>`<option value="${c.id}">${c.name} (${fmt(c.balance)})</option>`).join('');
+  const cl=S.clientes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  return`${mH('Nueva Operación')}
+    <div class="fg g2"><div><label class="lb">Cliente *</label><select id="fo-cli"><option value="">—</option>${cl}</select></div>
+      <div><label class="lb">Tipo *</label><select id="fo-tipo" onchange="document.getElementById('fo-r').value=dR(this.value);toggleVeh()"><option value="prestamo">Préstamo Personal</option><option value="hipotecario">Hipotecario</option><option value="prendario">Prendario</option></select></div></div>
+    <div class="fg g4 mt8"><div><label class="lb">Capital *</label><input id="fo-c" type="number" placeholder="0" oninput="prevOp()"></div>
+      <div><label class="lb">Tasa mensual % *</label><input id="fo-r" type="number" step="0.1" value="${dR('prestamo')}" oninput="prevOp()"></div>
+      <div><label class="lb">Plazo meses *</label><input id="fo-p" type="number" value="12" oninput="prevOp()"></div>
+      <div><label class="lb">Gastos admin $</label><input id="fo-g" type="number" value="0" oninput="prevOp()"></div></div>
+    <div class="fg g2 mt8"><div><label class="lb">Caja de origen *</label><select id="fo-caja"><option value="">—</option>${co}</select></div>
+      <div><label class="lb">Fecha inicio</label><input id="fo-fi" type="date" value="${hoy()}"></div></div>
+    <div class="mt8"><label class="lb">Descripción</label><input id="fo-desc" placeholder="Ej: Préstamo para refacción..."></div>
+    <div id="fo-prev" class="pvbox" style="display:none"></div>
+    <div id="fo-veh" style="display:none">
+      <div style="font-size:15px;letter-spacing:3px;text-transform:uppercase;color:var(--pu);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--br)">Datos del Vehículo</div>
+      <div class="fg g4"><div><label class="lb">Marca</label><input id="v-mar" placeholder="Ford"></div><div><label class="lb">Modelo</label><input id="v-mod" placeholder="Focus"></div><div><label class="lb">Año</label><input id="v-ani" placeholder="2019"></div><div><label class="lb">Patente</label><input id="v-pat" placeholder="AB123CD"></div></div>
+      <div class="fg g4 mt8"><div><label class="lb">Color</label><input id="v-col" placeholder="Gris"></div><div><label class="lb">Motor</label><input id="v-mot" placeholder="1.6"></div><div><label class="lb">Nº Chasis</label><input id="v-cha" placeholder="WVW..."></div><div><label class="lb">KM</label><input id="v-km" placeholder="85000"></div></div>
+      <div class="fg g3 mt8"><div><label class="lb">Seguro</label><input id="v-seg" placeholder="La Caja"></div><div><label class="lb">Póliza</label><input id="v-pol" placeholder="POL-123"></div><div><label class="lb">Vto. seguro</label><input id="v-vts" type="date"></div></div>
+    </div>
+    <div class="mft"><button class="btn bo" onclick="cerrar()">Cancelar</button><button class="btn bg" onclick="guardarOp()">Registrar</button></div>
+  </div>`;
+}
+function toggleVeh(){const t=document.getElementById('fo-tipo')?.value,e=document.getElementById('fo-veh');if(e)e.style.display=t==='prendario'?'block':'none';}
+function prevOp(){
+  const c=parseFloat(document.getElementById('fo-c')?.value||0),r=parseFloat(document.getElementById('fo-r')?.value||0),p=parseInt(document.getElementById('fo-p')?.value||1),g=parseFloat(document.getElementById('fo-g')?.value||0);
+  const el=document.getElementById('fo-prev');if(!el||!c||!r){if(el)el.style.display='none';return;}
+  const{it,tp,cuota}=calcC(c,r,p);
+  el.style.display='block';
+  el.innerHTML=`<div class="pvr"><span class="lk">Interés total</span><span class="tr">${fmt(it)}</span></div>${g?`<div class="pvr"><span class="lk">Gastos admin</span><span class="ta">-${fmt(g)}</span></div>`:''}<div class="pvr"><span class="lk">Neto al cliente</span><span class="tgr">${fmt(c-g)}</span></div><div class="pvr"><span class="lk">Total a cobrar</span><span>${fmt(tp)}</span></div><div class="pvr"><span class="lk">Cuota mensual</span><span class="tg" style="font-size:16px">${fmt(cuota)}</span></div>`;
+}
+function guardarOp(){
+  const clienteId=parseInt(document.getElementById('fo-cli')?.value),tipo=document.getElementById('fo-tipo')?.value;
+  const capital=parseFloat(document.getElementById('fo-c')?.value||0),tasa=parseFloat(document.getElementById('fo-r')?.value||0);
+  const plazo=parseInt(document.getElementById('fo-p')?.value||1),gastosAdmin=parseFloat(document.getElementById('fo-g')?.value||0);
+  const cajaId=parseInt(document.getElementById('fo-caja')?.value),fi=document.getElementById('fo-fi')?.value||hoy();
+  const desc=document.getElementById('fo-desc')?.value||'';
+  if(!clienteId||!capital||!tasa||!cajaId)return toast('Completá los campos requeridos','err');
+  const caja=S.cajas.find(c=>c.id===cajaId);
+  if(!caja)return toast('Caja no encontrada','err');
+  if(caja.balance<capital)return toast(`Saldo insuficiente en ${caja.name}`,'err');
+  let vehiculo=null;
+  if(tipo==='prendario'){vehiculo={marca:document.getElementById('v-mar')?.value||'',modelo:document.getElementById('v-mod')?.value||'',anio:document.getElementById('v-ani')?.value||'',patente:document.getElementById('v-pat')?.value||'',color:document.getElementById('v-col')?.value||'',motor:document.getElementById('v-mot')?.value||'',chasis:document.getElementById('v-cha')?.value||'',km:document.getElementById('v-km')?.value||'',seguro:document.getElementById('v-seg')?.value||'',poliza:document.getElementById('v-pol')?.value||'',vtoSeg:document.getElementById('v-vts')?.value||''};}
+  S.ops.push({id:uid(),clienteId,tipo,capital,tasa,plazo,fi,cajaId,gastosAdmin,desc,status:'activo',neto:capital-gastosAdmin,cuotas:genQ(capital,tasa,plazo,fi),vehiculo});
+  S.cajas=S.cajas.map(c=>c.id===cajaId?{...c,balance:c.balance-capital}:c);
+  S.movs.push({id:uid(),cajaId,tipo:'egreso',monto:capital,concepto:`${tL(tipo)} — ${cN(clienteId)}`,fecha:fi});
+  cerrar();toast(`${fmt(capital)} descontado de ${caja.name}`);render();
+}
+
+function mNuevoCliente(){
+  return`${mH('Nuevo Cliente')}
+    <div class="fg g2"><div><label class="lb">Nombre *</label><input id="fc-n" placeholder="Juan Pérez"></div><div><label class="lb">DNI *</label><input id="fc-d" placeholder="30.000.000"></div></div>
+    <div class="fg g2 mt8"><div><label class="lb">Teléfono</label><input id="fc-p" placeholder="2604-000000"></div><div><label class="lb">Email</label><input id="fc-e" placeholder="correo@email.com"></div></div>
+    <div class="mt8"><label class="lb">Dirección</label><input id="fc-a" placeholder="Av. San Martín 100"></div>
+    <div class="mt8"><label class="lb">Calificación</label><select id="fc-s"><option value="bueno">Bueno</option><option value="regular">Regular</option><option value="moroso">Moroso</option></select></div>
+    <div class="mft"><button class="btn bo" onclick="cerrar()">Cancelar</button><button class="btn bg" onclick="guardarCliente()">Agregar</button></div>
+  </div>`;
+}
+function guardarCliente(){
+  const name=document.getElementById('fc-n')?.value.trim(),dni=document.getElementById('fc-d')?.value.trim();
+  if(!name||!dni)return toast('Nombre y DNI requeridos','err');
+  S.clientes.push({id:uid(),name,dni,phone:document.getElementById('fc-p')?.value||'',email:document.getElementById('fc-e')?.value||'',address:document.getElementById('fc-a')?.value||'',score:document.getElementById('fc-s')?.value||'bueno'});
+  cerrar();toast('Cliente agregado');render();
+}
+
+function mNuevaCaja(){
+  return`${mH('Nueva Caja')}
+    <div class="fg g2"><div><label class="lb">Nombre *</label><input id="fca-n" placeholder="Caja Sucursal"></div><div><label class="lb">Tipo</label><select id="fca-t"><option value="efectivo">Efectivo</option><option value="banco">Banco</option><option value="otro">Otro</option></select></div></div>
+    <div class="fg g2 mt8"><div><label class="lb">Saldo inicial</label><input id="fca-b" type="number" value="0"></div><div><label class="lb">Moneda</label><select id="fca-c"><option value="ARS">ARS</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div></div>
+    <div class="mt8"><label class="lb">Color</label><input id="fca-col" type="color" value="#d4a847" style="height:36px;padding:3px"></div>
+    <div class="mft"><button class="btn bo" onclick="cerrar()">Cancelar</button><button class="btn bg" onclick="guardarCaja()">Crear</button></div>
+  </div>`;
+}
+function guardarCaja(){
+  const name=document.getElementById('fca-n')?.value.trim();if(!name)return toast('Nombre requerido','err');
+  const type=document.getElementById('fca-t')?.value||'efectivo';
+  S.cajas.push({id:uid(),name,type,balance:parseFloat(document.getElementById('fca-b')?.value||0),color:document.getElementById('fca-col')?.value||'#d4a847',icon:type==='banco'?'▣':'◈',currency:document.getElementById('fca-c')?.value||'ARS'});
+  cerrar();toast('Caja creada');render();
+}
+
+function mTransf(){
+  const o=S.cajas.map(c=>`<option value="${c.id}">${c.name} (${fmt(c.balance)})</option>`).join('');
+  return`${mH('Transferencia entre Cajas')}
+    <div><label class="lb">Origen *</label><select id="ft-o"><option value="">—</option>${o}</select></div>
+    <div class="mt8"><label class="lb">Destino *</label><select id="ft-d"><option value="">—</option>${o}</select></div>
+    <div class="mt8"><label class="lb">Monto *</label><input id="ft-m" type="number" placeholder="0"></div>
+    <div class="mt8"><label class="lb">Concepto</label><input id="ft-c" value="Transferencia entre cajas"></div>
+    <div class="mft"><button class="btn bo" onclick="cerrar()">Cancelar</button><button class="btn bg" onclick="guardarTransf()">Transferir</button></div>
+  </div>`;
+}
+function guardarTransf(){
+  const from=parseInt(document.getElementById('ft-o')?.value),to=parseInt(document.getElementById('ft-d')?.value);
+  const monto=parseFloat(document.getElementById('ft-m')?.value||0),conc=document.getElementById('ft-c')?.value||'Transferencia';
+  if(!from||!to||!monto)return toast('Completá todos los campos','err');
+  if(from===to)return toast('Origen y destino distintos','err');
+  const f2=S.cajas.find(c=>c.id===from);if(f2.balance<monto)return toast('Saldo insuficiente','err');
+  S.cajas=S.cajas.map(c=>c.id===from?{...c,balance:c.balance-monto}:c.id===to?{...c,balance:c.balance+monto}:c);
+  const fecha=hoy();
+  S.movs.push({id:uid(),cajaId:from,tipo:'egreso',monto,concepto:`${conc} → ${cajN(to)}`,fecha});
+  S.movs.push({id:uid(),cajaId:to,tipo:'ingreso',monto,concepto:`${conc} ← ${cajN(from)}`,fecha});
+  cerrar();toast(`${fmt(monto)} transferidos`);render();
+}
+
+function mMov(cajaId,tipo){
+  return`${mH('Registrar '+(tipo==='ingreso'?'Ingreso':'Egreso'))}
+    <div><label class="lb">Monto *</label><input id="fm-m" type="number" placeholder="0"></div>
+    <div class="mt8"><label class="lb">Concepto</label><input id="fm-c" placeholder="Descripción..."></div>
+    <div class="mt8"><label class="lb">Fecha</label><input id="fm-f" type="date" value="${hoy()}"></div>
+    <div class="mft"><button class="btn bo" onclick="cerrar()">Cancelar</button><button class="btn bg" onclick="guardarMov(${cajaId},'${tipo}')">Guardar</button></div>
+  </div>`;
+}
+function abrirMov(cajaId,tipo){cerrar();setTimeout(()=>abrirModal('mov',{cajaId,tipo}),80);}
+function guardarMov(cajaId,tipo){
+  const monto=parseFloat(document.getElementById('fm-m')?.value||0),conc=document.getElementById('fm-c')?.value||'Sin descripción',fecha=document.getElementById('fm-f')?.value||hoy();
+  if(!monto)return toast('Ingresá un monto','err');
+  S.cajas=S.cajas.map(c=>c.id===cajaId?{...c,balance:tipo==='ingreso'?c.balance+monto:c.balance-monto}:c);
+  S.movs.push({id:uid(),cajaId,tipo,monto,concepto:conc,fecha});
+  cerrar();toast(`${tipo==='ingreso'?'Ingreso':'Egreso'} registrado`);render();
+}
+
+function mNuevoCheque(){
+  const cl=S.clientes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  const cj=S.cajas.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  return`${mH('Ingresar Cheque')}
+    <div class="tabs"><button class="tab on" onclick="chTab(this,'ch-d')">Datos</button><button class="tab" onclick="chTab(this,'ch-t')">Titular/Endoso</button><button class="tab" onclick="chTab(this,'ch-dst')">Destino</button><button class="tab" onclick="chTab(this,'ch-f')">Foto</button></div>
+    <div id="ch-d">
+      <div class="fg g2"><div><label class="lb">Cliente (quién lo trajo) *</label><select id="fch-cli"><option value="">—</option>${cl}</select></div><div><label class="lb">Número *</label><input id="fch-num" placeholder="00000000"></div></div>
+      <div class="fg g3 mt8"><div><label class="lb">Banco *</label><input id="fch-ban" placeholder="Banco Nación"></div><div><label class="lb">Valor nominal *</label><input id="fch-m" type="number" placeholder="0" oninput="prevCh()"></div><div><label class="lb">Tasa diaria %</label><input id="fch-t" type="number" step="0.01" value="${dR('descuento')}" oninput="prevCh()"></div></div>
+      <div class="fg g3 mt8"><div><label class="lb">Fecha ingreso</label><input id="fch-d" type="date" value="${hoy()}" oninput="prevCh()"></div><div><label class="lb">Vencimiento *</label><input id="fch-v" type="date" oninput="prevCh()"></div><div><label class="lb">Días (auto)</label><input id="fch-ds" type="number" readonly style="color:var(--tx3)"></div></div>
+      <div class="fg g3 mt8"><div><label class="lb">Impuesto %</label><input id="fch-i" type="number" step="0.01" value="${S.cfg.impCh}" oninput="prevCh()"></div><div><label class="lb">Gastos admin $</label><input id="fch-ga" type="number" value="0" oninput="prevCh()"></div><div></div></div>
+      <div class="fg g2 mt8"><div><label class="lb">Caja origen (sale el dinero) *</label><select id="fch-or"><option value="">—</option>${cj}</select></div><div><label class="lb">Caja tenencia (donde se guarda)</label><select id="fch-ten"><option value="">—</option>${cj}</select></div></div>
+      <div id="fch-prev" class="pvbox" style="display:none;margin-top:10px"></div>
+    </div>
+    <div id="ch-t" style="display:none">
+      <p style="font-size:15px;color:var(--tx3);margin-bottom:12px">Completá si el cheque pertenece a un tercero distinto al cliente.</p>
+      <div class="fg g2"><div><label class="lb">Nombre del titular de la cuenta</label><input id="fch-tit" placeholder="Empresa SA / Juan Pérez"></div><div><label class="lb">CBU</label><input id="fch-cbu" placeholder="0000000000000000000000"></div></div>
+      <div class="fg g2 mt8"><div><label class="lb">DNI / CUIT titular</label><input id="fch-tdn" placeholder="20-12345678-1"></div><div><label class="lb">Teléfono titular</label><input id="fch-tte" placeholder="2604-000000"></div></div>
+      <div class="mt8"><label class="lb">Endoso (a quién se endosó)</label><input id="fch-end" placeholder="Nombre · CUIT ..."></div>
+      <div class="mt8"><label class="lb">Notas</label><textarea id="fch-not" placeholder="Observaciones..."></textarea></div>
+    </div>
+    <div id="ch-dst" style="display:none">
+      <p style="font-size:15px;color:var(--tx3);margin-bottom:12px">Registrá qué hiciste con este cheque: a quién se lo entregaste, por qué y cómo te impacta.</p>
+      <div class="fg g2"><div><label class="lb">Entregado a</label><input id="fch-da" placeholder="Nombre persona o empresa"></div><div><label class="lb">Fecha de entrega</label><input id="fch-df" type="date"></div></div>
+      <div class="mt8"><label class="lb">Motivo / por qué se lo entregaste</label><input id="fch-dm" placeholder="Ej: pago de materiales, cancelar deuda..."></div>
+      <div class="fg g2 mt8">
+        <div><label class="lb">Tipo de operación</label>
+          <select id="fch-dt">
+            <option value="">— Sin entregar aún —</option>
+            <option value="pago">Pago de deuda / mercadería / servicio</option>
+            <option value="efectivo">Me lo cambiaron por efectivo</option>
+            <option value="endoso">Lo endosé a un tercero</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div><label class="lb">Comisión cobrada por el efectivo ($)</label><input id="fch-dc" type="number" value="0" placeholder="0 si no te cobraron nada"></div>
+      </div>
+      <div class="mt8"><label class="lb">Notas sobre el destino</label><textarea id="fch-dn" placeholder="Detalles adicionales..."></textarea></div>
+    </div>
+    <div id="ch-f" style="display:none">
+      <div class="fg g2">
+        <div><label class="lb">Foto frente</label>
+          <div class="fz" id="fz-fr" onclick="document.getElementById('img-fr').click()">📷 Toca para subir foto del frente<br><span style="font-size:15px;color:var(--tx4)">JPG / PNG</span></div>
+          <input type="file" id="img-fr" accept="image/*" capture="environment" style="display:none" onchange="cargaFoto(this,'fz-fr','dat-ff')">
+          <input type="hidden" id="dat-ff" value="">
+        </div>
+        <div><label class="lb">Foto dorso</label>
+          <div class="fz" id="fz-do" onclick="document.getElementById('img-do').click()">📷 Toca para subir foto del dorso<br><span style="font-size:15px;color:var(--tx4)">JPG / PNG</span></div>
+          <input type="file" id="img-do" accept="image/*" capture="environment" style="display:none" onchange="cargaFoto(this,'fz-do','dat-fd')">
+          <input type="hidden" id="dat-fd" value="">
+        </div>
+      </div>
+    </div>
+    <div class="mft"><button class="btn bo" onclick="cerrar()">Cancelar</button><button class="btn bg" onclick="guardarCheque()">Registrar</button></div>
+  </div>`;
+}
+function chTab(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['ch-d','ch-t','ch-dst','ch-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';});}
+function cargaFoto(input,zoneId,hiddenId){const file=input.files[0];if(!file)return;const r=new FileReader();r.onload=e=>{const z=document.getElementById(zoneId),h=document.getElementById(hiddenId);if(z)z.innerHTML=`<img src="${e.target.result}" style="max-width:100%;max-height:150px;object-fit:contain">`;if(h)h.value=e.target.result;};r.readAsDataURL(file);}
+function prevCh(){
+  const m=parseFloat(document.getElementById('fch-m')?.value||0),t=parseFloat(document.getElementById('fch-t')?.value||0),i=parseFloat(document.getElementById('fch-i')?.value||0),ga=parseFloat(document.getElementById('fch-ga')?.value||0);
+  const d1=document.getElementById('fch-d')?.value,d2=document.getElementById('fch-v')?.value,dd=d1&&d2?dds(d2,d1):0;
+  const de=document.getElementById('fch-ds');if(de&&dd)de.value=dd;
+  const el=document.getElementById('fch-prev');if(!el||!m||!t||!dd){if(el)el.style.display='none';return;}
+  const r=calcCh(m,t,dd,i,ga);el.style.display='block';
+  el.innerHTML=`<div class="pvr"><span class="lk">Valor nominal</span><span class="tg">${fmt(m)}</span></div><div class="pvr"><span class="lk">Interés (${t}%×${dd}d)</span><span class="tr">-${fmt(r.interes)}</span></div><div class="pvr"><span class="lk">Impuesto (${i}%)</span><span class="ta">-${fmt(r.impuesto)}</span></div>${ga?`<div class="pvr"><span class="lk">Gastos admin</span><span style="color:var(--tx3)">-${fmt(r.gastos)}</span></div>`:''}<div class="pvr"><span class="lk">Neto a entregar</span><span class="tgr" style="font-size:16px">${fmt(r.neto)}</span></div><div class="pvr"><span class="lk">Ganancia</span><span class="tg">${fmt(r.ganancia)}</span></div>`;
+}
+function guardarCheque(){
+  const clienteId=parseInt(document.getElementById('fch-cli')?.value),numero=document.getElementById('fch-num')?.value.trim(),banco=document.getElementById('fch-ban')?.value.trim();
+  const monto=parseFloat(document.getElementById('fch-m')?.value||0),tasaDiaria=parseFloat(document.getElementById('fch-t')?.value||0),impPct=parseFloat(document.getElementById('fch-i')?.value||0),gastosAdmin=parseFloat(document.getElementById('fch-ga')?.value||0);
+  const vencimiento=document.getElementById('fch-v')?.value,ingreso=document.getElementById('fch-d')?.value||hoy();
+  const cajaOrigenId=parseInt(document.getElementById('fch-or')?.value)||null,cajaTenenciaId=parseInt(document.getElementById('fch-ten')?.value)||null;
+  const dd=vencimiento&&ingreso?dds(vencimiento,ingreso):0;
+  if(!clienteId||!numero||!banco||!monto||!vencimiento||!dd)return toast('Completá los campos requeridos','err');
+  const r=calcCh(monto,tasaDiaria,dd,impPct,gastosAdmin);
+  if(cajaOrigenId){const cj=S.cajas.find(c=>c.id===cajaOrigenId);if(cj&&cj.balance<r.neto)return toast(`Saldo insuficiente en ${cj.name}`,'err');S.cajas=S.cajas.map(c=>c.id===cajaOrigenId?{...c,balance:c.balance-r.neto}:c);S.movs.push({id:uid(),cajaId:cajaOrigenId,tipo:'egreso',monto:r.neto,concepto:`Cheque ${numero} — ${cN(clienteId)}`,fecha:ingreso});}
+  S.cheques.push({id:uid(),clienteId,numero,banco,monto,tasaDiaria,dias:dd,vencimiento,impPct,gastosAdmin,...r,estado:'en_cartera',cajaOrigenId,cajaTenenciaId,ingreso,
+    titularCuenta:document.getElementById('fch-tit')?.value||'',titularDni:document.getElementById('fch-tdn')?.value||'',titularTel:document.getElementById('fch-tte')?.value||'',cbu:document.getElementById('fch-cbu')?.value||'',endoso:document.getElementById('fch-end')?.value||'',notas:document.getElementById('fch-not')?.value||'',fotoF:document.getElementById('dat-ff')?.value||null,fotoD:document.getElementById('dat-fd')?.value||null,
+    destino:{entregadoA:document.getElementById('fch-da')?.value||'',fecha:document.getElementById('fch-df')?.value||'',motivo:document.getElementById('fch-dm')?.value||'',tipo:document.getElementById('fch-dt')?.value||'',comision:parseFloat(document.getElementById('fch-dc')?.value||0),notas:document.getElementById('fch-dn')?.value||''},
+  });
+  cerrar();toast('Cheque registrado');render();
+}
+function cobrarCh(id){const ch=S.cheques.find(c=>c.id===id);if(!ch)return;if(ch.cajaOrigenId){S.cajas=S.cajas.map(c=>c.id===ch.cajaOrigenId?{...c,balance:c.balance+ch.monto}:c);S.movs.push({id:uid(),cajaId:ch.cajaOrigenId,tipo:'ingreso',monto:ch.monto,concepto:`Cobro cheque ${ch.numero}`,fecha:hoy()});}S.cheques=S.cheques.map(c=>c.id===id?{...c,estado:'cobrado'}:c);toast('Cheque cobrado · '+fmt(ch.monto)+' acreditado');render();}
+
+function abrirOp(id){
+  const op=S.ops.find(o=>o.id===id);if(!op)return;
+  const cl=S.clientes.find(c=>c.id===op.clienteId);
+  const pg=op.cuotas.filter(c=>c.paga).length,sl=sal(op),{it,tp,cuota}=calcC(op.capital,op.tasa,op.plazo),pct=Math.round(pg/op.plazo*100);
+  showOv(`
+  <div class="modal"><div class="mhd"><div class="mtt">${cl?.name} — ${tL(op.tipo)}</div>
+    <div class="fx g8"><button class="btn bsm bo" onclick="generarContrato(${id})">📄 Contrato</button><button class="btn bsm bo" onclick="expOpPdf(${id})">⬇ PDF</button><button class="btn bsm bo" onclick="cerrar()">✕</button></div></div>
+  <div class="tabs"><button class="tab on" onclick="opT(this,'op-d')">Detalle</button>${op.tipo==='prendario'&&op.vehiculo?`<button class="tab" onclick="opT(this,'op-v')">Vehículo</button>`:''}<button class="tab" onclick="opT(this,'op-q')">Cuotas</button></div>
+  <div id="op-d"><div class="grid g2">
+    <div class="csm"><div class="pvbox" style="margin:0">
+      <div class="pvr"><span class="lk">Capital</span><span class="tg">${fmt(op.capital)}</span></div>
+      <div class="pvr"><span class="lk">Tasa mensual</span><span>${op.tasa}%</span></div>
+      <div class="pvr"><span class="lk">Interés total</span><span class="tr">${fmt(it)}</span></div>
+      <div class="pvr"><span class="lk">Gastos admin</span><span class="ta">${fmt(op.gastosAdmin)}</span></div>
+      <div class="pvr"><span class="lk">Neto entregado</span><span class="tgr">${fmt(op.neto)}</span></div>
+      <div class="pvr"><span class="lk">Total a cobrar</span><span>${fmt(tp)}</span></div>
+      <div class="pvr"><span class="lk">Cuota mensual</span><span class="tg">${fmt(cuota)}</span></div>
+      <div class="pvr"><span class="lk">Caja</span><span>${cajN(op.cajaId)}</span></div>
+      <div class="pvr"><span class="lk">Inicio</span><span>${fD(op.fi)}</span></div>
+    </div></div>
+    <div class="csm"><div class="stl">Progreso</div>
+      <div class="fb mb8"><span style="font-size:15px;color:var(--tx3)">${pg}/${op.plazo} cuotas</span><span style="font-size:15px;color:var(--go)">${pct}%</span></div>
+      <div class="pb" style="height:6px;margin-bottom:12px"><div class="pf" style="width:${pct}%"></div></div>
+      <div class="grid g2">
+        <div><div class="tgr" style="font-size:17px">${fmt(op.cuotas.filter(c=>c.paga).reduce((a,c)=>a+c.monto,0))}</div><div style="font-size:15px;color:var(--tx4);letter-spacing:2px">COBRADO</div></div>
+        <div><div class="ta" style="font-size:17px">${fmt(sl)}</div><div style="font-size:15px;color:var(--tx4);letter-spacing:2px">PENDIENTE</div></div>
+      </div>
+    </div>
+  </div></div>
+  ${op.tipo==='prendario'&&op.vehiculo?`<div id="op-v" style="display:none"><div class="grid g2">
+    <div class="csm"><div class="stl" style="color:var(--pu)">Vehículo</div>
+      ${[['Marca',op.vehiculo.marca],['Modelo',op.vehiculo.modelo],['Año',op.vehiculo.anio],['Patente',op.vehiculo.patente],['Color',op.vehiculo.color],['Motor',op.vehiculo.motor],['Chasis',op.vehiculo.chasis],['KM',op.vehiculo.km?op.vehiculo.km+' km':'']].filter(([,v])=>v).map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--br)"><span style="font-size:14px;color:var(--tx4)">${k}</span><span style="font-size:15px">${v}</span></div>`).join('')}
+    </div>
+    <div class="csm"><div class="stl">Seguro</div>
+      ${[['Compañía',op.vehiculo.seguro],['Póliza',op.vehiculo.poliza],['Vto.',fD(op.vehiculo.vtoSeg)]].filter(([,v])=>v).map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--br)"><span style="font-size:14px;color:var(--tx4)">${k}</span><span style="font-size:15px">${v}</span></div>`).join('')}
+    </div>
+  </div></div>`:``}
+  <div id="op-q" style="display:none"><div style="max-height:320px;overflow-y:auto">
+    <table class="tbl"><thead><tr><th>#</th><th>Vencimiento</th><th>Cuota</th><th>Estado</th></tr></thead>
+    <tbody>${op.cuotas.map(c=>{const vc2=!c.paga&&new Date(c.vto)<=new Date();return`<tr style="background:${vc2?'rgba(239,68,68,.04)':''}"><td style="color:var(--tx4)">${c.num}</td><td style="font-size:14px;color:${vc2?'var(--rd)':''}">${fD(c.vto)}</td><td class="tg">${fmt(c.monto)}</td>
+      <td><button onclick="toggleCuota(${id},${c.num})" style="background:${c.paga?'var(--gn)22':'none'};border:1px solid ${c.paga?'var(--gn)':vc2?'var(--rd)':'var(--br2)'};color:${c.paga?'var(--gn)':vc2?'var(--rd)':'var(--tx4)'};padding:2px 9px;cursor:pointer;font-family:inherit;font-size:14px;letter-spacing:1px">${c.paga?'✓ PAGA':vc2?'VENCIDA':'PENDIENTE'}</button>${c.paga?`<button onclick="generarRecibo(${id},${c.num})" style="background:none;border:1px solid var(--br2);color:var(--tx3);padding:2px 7px;cursor:pointer;font-family:inherit;font-size:14px;margin-left:4px" title="Imprimir recibo">🧾</button>`:''}</td>
+    </tr>`;}).join('')}</tbody></table>
+  </div></div>
+  <div class="mft"><button class="btn bsm bd" onclick="if(confirm('¿Cancelar?')){S.ops=S.ops.map(o=>o.id===${id}?{...o,status:'cancelado'}:o);cerrar();toast('Cancelada');render()}">Cancelar op.</button><button class="btn bo" onclick="cerrar()">Cerrar</button></div>
+  </div>`);
+}
+function opT(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['op-d','op-v','op-q'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';});}
+function toggleCuota(opId,num){
+  const op=S.ops.find(o=>o.id===opId);if(!op)return;
+  const c=op.cuotas.find(c=>c.num===num);if(!c)return;
+  const era=c.paga;c.paga=!era;
+  if(!era&&op.cajaId){S.cajas=S.cajas.map(ca=>ca.id===op.cajaId?{...ca,balance:ca.balance+c.monto}:ca);S.movs.push({id:uid(),cajaId:op.cajaId,tipo:'ingreso',monto:c.monto,concepto:`Cuota ${num} — ${cN(op.clienteId)}`,fecha:hoy()});toast(`Cuota ${num} cobrada · ${fmt(c.monto)} → ${cajN(op.cajaId)}`);}
+  else if(era&&op.cajaId){S.cajas=S.cajas.map(ca=>ca.id===op.cajaId?{...ca,balance:ca.balance-c.monto}:ca);S.movs.push({id:uid(),cajaId:op.cajaId,tipo:'egreso',monto:c.monto,concepto:`Reversión cuota ${num} — ${cN(op.clienteId)}`,fecha:hoy()});toast('Cuota desmarcada');}
+  abrirOp(opId);
+}
+
+function abrirCheque(id){
+  const ch=S.cheques.find(c=>c.id===id);if(!ch)return;
+  const ec=ch.estado==='en_cartera';
+  const dstL={pago:'Pago de deuda/mercadería/servicio',efectivo:'Cambio por efectivo',endoso:'Endosado a tercero',otro:'Otro'};
+  const dstClr={pago:'var(--gn)',efectivo:'var(--bl)',endoso:'var(--pu)',otro:'var(--am)'};
+  showOv(`
+  <div class="modal"><div class="mhd"><div class="mtt">Cheque Nº ${ch.numero}</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>
+  <div class="tabs"><button class="tab on" onclick="chkT(this,'ck-d')">Datos</button><button class="tab" onclick="chkT(this,'ck-t')">Titular/Endoso</button><button class="tab" onclick="chkT(this,'ck-dst')">Destino del cheque</button><button class="tab" onclick="chkT(this,'ck-f')">Fotos</button></div>
+  <div id="ck-d"><div class="grid g2">
+    <div class="csm"><div class="pvbox" style="margin:0">
+      <div class="pvr"><span class="lk">Banco</span><span>${ch.banco}</span></div>
+      <div class="pvr"><span class="lk">Presentado por</span><span>${cN(ch.clienteId)}</span></div>
+      ${ch.titularCuenta?`<div class="pvr"><span class="lk">Titular de la cuenta</span><span style="color:var(--am)">${ch.titularCuenta}</span></div>`:''}
+      <div class="pvr"><span class="lk">Valor nominal</span><span class="tg">${fmt(ch.monto)}</span></div>
+      <div class="pvr"><span class="lk">Tasa diaria</span><span>${ch.tasaDiaria}%</span></div>
+      <div class="pvr"><span class="lk">Días</span><span>${ch.dias}d</span></div>
+      <div class="pvr"><span class="lk">Interés</span><span class="tr">-${fmt(ch.interes)}</span></div>
+      <div class="pvr"><span class="lk">Impuesto (${ch.impPct}%)</span><span class="ta">-${fmt(ch.impuesto)}</span></div>
+      ${ch.gastosAdmin?`<div class="pvr"><span class="lk">Gastos admin</span><span style="color:var(--tx3)">-${fmt(ch.gastos)}</span></div>`:''}
+      <div class="pvr"><span class="lk">Neto entregado</span><span class="tgr">${fmt(ch.neto)}</span></div>
+      <div class="pvr"><span class="lk">Ganancia</span><span class="tg">${fmt(ch.ganancia)}</span></div>
+      <div class="pvr"><span class="lk">Vencimiento</span><span>${fD(ch.vencimiento)}${ec?` (${dds(ch.vencimiento,hoy())}d)`:''}</span></div>
+      <div class="pvr"><span class="lk">Caja origen</span><span>${cajN(ch.cajaOrigenId)}</span></div>
+      <div class="pvr"><span class="lk">Caja tenencia</span><span>${cajN(ch.cajaTenenciaId)}</span></div>
+    </div></div>
+    <div class="csm"><div class="stl">Estado</div>
+      <div style="text-align:center;padding:18px 0">
+        ${ec?`<div style="font-size:28px;color:var(--bl);margin-bottom:8px">📋</div><div class="bdg chip-c" style="font-size:14px;padding:4px 12px">En cartera</div><div style="font-size:15px;color:var(--tx3);margin-top:10px">Vence en ${dds(ch.vencimiento,hoy())} días</div><button class="btn bs wf" style="margin-top:14px" onclick="cobrarCh(${id});cerrar()">✓ Marcar como cobrado</button>`:
+        `<div style="font-size:28px;color:var(--gn);margin-bottom:8px">✓</div><div class="bdg chip-ok" style="font-size:14px;padding:4px 12px">Cobrado</div>`}
+      </div>
+    </div>
+  </div></div>
+  <div id="ck-t" style="display:none">
+    ${ch.titularCuenta||ch.cbu||ch.endoso||ch.titularDni?`<div class="pvbox" style="margin:0">
+      ${ch.titularCuenta?`<div class="pvr"><span class="lk">Titular de la cuenta</span><span>${ch.titularCuenta}</span></div>`:''}
+      ${ch.titularDni?`<div class="pvr"><span class="lk">DNI/CUIT</span><span>${ch.titularDni}</span></div>`:''}
+      ${ch.titularTel?`<div class="pvr"><span class="lk">Teléfono</span><span>${ch.titularTel}</span></div>`:''}
+      ${ch.cbu?`<div class="pvr"><span class="lk">CBU</span><span style="font-size:14px">${ch.cbu}</span></div>`:''}
+      ${ch.endoso?`<div class="pvr"><span class="lk">Endosado a</span><span style="color:var(--pu)">${ch.endoso}</span></div>`:''}
+      ${ch.notas?`<div class="pvr"><span class="lk">Notas</span><span style="font-size:14px">${ch.notas}</span></div>`:''}
+    </div>`:'<div style="color:var(--tx4);font-size:14px;padding:18px 0;text-align:center">Sin datos de titular o endoso registrados</div>'}
+  </div>
+  <div id="ck-dst" style="display:none">
+    ${ch.destino?.tipo?`
+    <div style="background:${dstClr[ch.destino.tipo]||'var(--am)'}11;border:1px solid ${dstClr[ch.destino.tipo]||'var(--am)'}33;padding:12px;margin-bottom:12px">
+      <div style="font-size:14px;letter-spacing:2px;color:${dstClr[ch.destino.tipo]||'var(--am)'};text-transform:uppercase;margin-bottom:6px">${dstL[ch.destino.tipo]||ch.destino.tipo}</div>
+    </div>
+    <div class="pvbox" style="margin:0">
+      ${ch.destino.entregadoA?`<div class="pvr"><span class="lk">Entregado a</span><span>${ch.destino.entregadoA}</span></div>`:''}
+      ${ch.destino.fecha?`<div class="pvr"><span class="lk">Fecha de entrega</span><span>${fD(ch.destino.fecha)}</span></div>`:''}
+      ${ch.destino.motivo?`<div class="pvr"><span class="lk">Motivo</span><span style="font-size:15px">${ch.destino.motivo}</span></div>`:''}
+      ${ch.destino.comision?`<div class="pvr"><span class="lk">Comisión cobrada por el efectivo</span><span class="tr">-${fmt(ch.destino.comision)}</span></div>`:''}
+      ${ch.destino.notas?`<div class="pvr"><span class="lk">Notas</span><span style="font-size:14px">${ch.destino.notas}</span></div>`:''}
+    </div>`:
+    `<div style="text-align:center;padding:20px 0;color:var(--tx4)"><div style="font-size:22px;margin-bottom:8px">📋</div><div style="font-size:15px">Este cheque aún no tiene destino registrado</div>
+    <div style="font-size:14px;margin-top:6px;color:var(--tx3)">Cuando lo usás (para pagar, cambiar por efectivo, endosar), registralo en la pestaña "Destino" al editar el cheque.</div></div>`}
+  </div>
+  <div id="ck-f" style="display:none">
+    <div class="grid g2">
+      <div><div class="stl">Frente</div>
+        ${ch.fotoF?`<img src="${ch.fotoF}" style="max-width:100%;border:1px solid var(--br);cursor:pointer" onclick="verFoto('${ch.fotoF}')">`:
+        '<div style="color:var(--tx4);font-size:15px;text-align:center;padding:30px 0;border:1px dashed var(--br2)">Sin foto</div>'}</div>
+      <div><div class="stl">Dorso</div>
+        ${ch.fotoD?`<img src="${ch.fotoD}" style="max-width:100%;border:1px solid var(--br);cursor:pointer" onclick="verFoto('${ch.fotoD}')">`:
+        '<div style="color:var(--tx4);font-size:15px;text-align:center;padding:30px 0;border:1px dashed var(--br2)">Sin foto</div>'}</div>
+    </div>
+  </div>
+  <div class="mft"><button class="btn bo" onclick="cerrar()">Cerrar</button></div>
+  </div>`);
+}
+function chkT(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['ck-d','ck-t','ck-dst','ck-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';});}
+function verFoto(src){const ov=document.getElementById('ov');const div=document.createElement('div');div.style='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:200;display:flex;align-items:center;justify-content:center;cursor:pointer';div.onclick=()=>div.remove();div.innerHTML=`<img src="${src}" style="max-width:95vw;max-height:92vh;object-fit:contain">`;document.body.appendChild(div);}
+
+function abrirCliente(id){
+  const cl=S.clientes.find(c=>c.id===id);if(!cl)return;
+  const ops=S.ops.filter(o=>o.clienteId===id),chs=S.cheques.filter(c=>c.clienteId===id);
+  const sl=ops.reduce((a,o)=>a+sal(o),0);
+  showOv(`
+  <div class="modal"><div class="mhd"><div class="mtt">${cl.name}</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>
+  <div class="grid g2 mb12">
+    <div class="csm">${[['DNI',cl.dni],['Teléfono',cl.phone],['Email',cl.email],['Dirección',cl.address]].filter(([,v])=>v).map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--br)"><span style="font-size:14px;color:var(--tx4)">${k}</span><span style="font-size:15px">${v}</span></div>`).join('')}
+      <div class="mt8"><label class="lb">Calificación</label><select onchange="S.clientes=S.clientes.map(c=>c.id===${id}?{...c,score:this.value}:c);toast('Actualizado')" style="width:auto"><option value="bueno" ${cl.score==='bueno'?'selected':''}>Bueno</option><option value="regular" ${cl.score==='regular'?'selected':''}>Regular</option><option value="moroso" ${cl.score==='moroso'?'selected':''}>Moroso</option></select></div>
+    </div>
+    <div class="csm grid g2">
+      <div><div class="sv">${ops.length}</div><div class="sl">Operaciones</div></div>
+      <div><div class="sv">${fmt(sl)}</div><div class="sl">Saldo</div></div>
+      <div><div class="sv">${chs.length}</div><div class="sl">Cheques</div></div>
+      <div><div class="sv">${fmt(chs.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Val. cheques</div></div>
+    </div>
+  </div>
+  <div class="tabs"><button class="tab on" onclick="cliT(this,'ci-o')">Operaciones</button><button class="tab" onclick="cliT(this,'ci-c')">Cheques</button></div>
+  <div id="ci-o">${!ops.length?'<p style="color:var(--tx4);font-size:15px">Sin operaciones</p>':''}
+    ${ops.map(op=>`<div class="csm mb8 ck" onclick="cerrar();setTimeout(()=>abrirOp(${op.id}),80)">
+      <div class="fb"><div>
+        <span class="bdg" style="background:${tC(op.tipo)}22;color:${tC(op.tipo)};border:1px solid ${tC(op.tipo)}44">${tL(op.tipo)}</span>
+        <div class="serif" style="font-size:20px;color:var(--go);margin:3px 0">${fmt(op.capital)}</div>
+        <div style="font-size:15px;color:var(--tx4)">${op.tasa}%·${op.plazo}m·${op.desc}</div>
+        ${op.tipo==='prendario'&&op.vehiculo?`<div style="font-size:15px;color:var(--pu);margin-top:1px">🚗 ${op.vehiculo.marca} ${op.vehiculo.modelo} ${op.vehiculo.anio}·${op.vehiculo.patente}</div>`:''}
+      </div><div style="text-align:right"><div style="font-size:15px">${op.cuotas.filter(c=>c.paga).length}/${op.plazo}</div><div style="font-size:15px;color:var(--tx4)">${fD(op.fi)}</div></div></div>
+    </div>`).join('')}
+  </div>
+  <div id="ci-c" style="display:none">${!chs.length?'<p style="color:var(--tx4);font-size:15px">Sin cheques</p>':''}
+    ${chs.map(ch=>`<div class="csm mb8 ck" onclick="cerrar();setTimeout(()=>abrirCheque(${ch.id}),80)">
+      <div class="fb"><div><div style="font-size:15px">${ch.banco}·Nº${ch.numero}</div><div style="font-size:15px;color:var(--tx4)">${ch.dias}d·${fD(ch.vencimiento)}</div></div>
+        <div style="text-align:right"><div class="tg">${fmt(ch.monto)}</div><div style="font-size:15px;color:var(--gn)">neto: ${fmt(ch.neto)}</div></div></div>
+    </div>`).join('')}
+  </div>
+  <div class="mft"><button class="btn bo" onclick="cerrar()">Cerrar</button></div>
+  </div>`);
+}
+function cliT(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['ci-o','ci-c'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';});}
+
+function abrirCaja(id){
+  const cj=S.cajas.find(c=>c.id===id);if(!cj)return;
+  const mv=S.movs.filter(m=>m.cajaId===id).slice(-20).reverse();
+  const ing=mv.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
+  const egr=mv.filter(m=>m.tipo==='egreso').reduce((a,m)=>a+m.monto,0);
+  showOv(`
+  <div class="modal"><div class="mhd"><div class="mtt" style="color:${cj.color}">${cj.icon} ${cj.name}</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>
+  <div class="grid g3 mb12">
+    <div class="csm"><div class="sv" style="color:${cj.color}">${cj.currency==='USD'?'US$ '+cj.balance.toLocaleString('es-AR'):fmt(cj.balance)}</div><div class="sl">Saldo actual</div></div>
+    <div class="csm"><div class="sv tgr">${fmt(ing)}</div><div class="sl">Ingresos (últ.20)</div></div>
+    <div class="csm"><div class="sv tr">${fmt(egr)}</div><div class="sl">Egresos (últ.20)</div></div>
+  </div>
+  <div class="fx g8 mb12">
+    <button class="btn bs bsm" onclick="cerrar();setTimeout(()=>abrirMov(${id},'ingreso'),80)">+ Ingreso</button>
+    <button class="btn bd bsm" onclick="cerrar();setTimeout(()=>abrirMov(${id},'egreso'),80)">- Egreso</button>
+  </div>
+  <div class="stl">Movimientos</div>
+  <div style="max-height:280px;overflow-y:auto">
+    <table class="tbl"><thead><tr><th>Fecha</th><th>Tipo</th><th>Concepto</th><th>Monto</th></tr></thead>
+    <tbody>${!mv.length?'<tr><td colspan="4" style="text-align:center;color:var(--tx4);padding:20px">Sin movimientos</td></tr>':''}
+    ${mv.map(m=>`<tr>
+      <td style="font-size:14px">${fD(m.fecha)}</td>
+      <td><span class="bdg" style="background:${m.tipo==='ingreso'?'var(--gn)22':'var(--rd)22'};color:${m.tipo==='ingreso'?'var(--gn)':'var(--rd)'};border:1px solid ${m.tipo==='ingreso'?'var(--gn)':'var(--rd)'}44">${m.tipo.toUpperCase()}</span></td>
+      <td>${m.concepto}</td>
+      <td style="color:${m.tipo==='ingreso'?'var(--gn)':'var(--rd)'}">${m.tipo==='ingreso'?'+':'-'}${fmt(m.monto)}</td>
+    </tr>`).join('')}</tbody></table>
+  </div>
+  <div class="mft"><button class="btn bo" onclick="cerrar()">Cerrar</button></div>
+  </div>`);
+}
+
+function showOv(html){const ov=document.getElementById('ov');ov.innerHTML=`<div style="width:100%;max-width:720px;padding-top:4px">${html}</div>`;ov.style.display='flex';}
+function expOpsXls(){const wb=XLSX.utils.book_new();const h=['Cliente','Tipo','Capital','Tasa','Plazo','G.Admin','Neto','Caja','Inicio','Total cobrar','Cuotas pagas','Saldo'];const rows=S.ops.map(o=>{const{tp}=calcC(o.capital,o.tasa,o.plazo);return[cN(o.clienteId),tL(o.tipo),o.capital,o.tasa+'%',o.plazo,o.gastosAdmin,o.neto,cajN(o.cajaId),o.fi,tp,o.cuotas.filter(c=>c.paga).length+'/'+o.plazo,sal(o)];});XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([h,...rows]),'Operaciones');XLSX.writeFile(wb,'operaciones.xlsx');toast('Excel descargado');}
+function expOpsPdf(){expPdf('Operaciones',[{title:'Operaciones',headers:['Cliente','Tipo','Capital','Tasa','Neto','Caja','Saldo'],rows:S.ops.map(o=>[cN(o.clienteId),tL(o.tipo),fmt(o.capital),o.tasa+'%',fmt(o.neto),cajN(o.cajaId),fmt(sal(o))])}]);}
+function expOpPdf(id){const op=S.ops.find(o=>o.id===id);if(!op)return;const{it,tp,cuota}=calcC(op.capital,op.tasa,op.plazo);expPdf(`Plan de Pagos — ${cN(op.clienteId)}`,[{title:'Datos',headers:['Campo','Valor'],rows:[['Cliente',cN(op.clienteId)],['Tipo',tL(op.tipo)],['Capital',fmt(op.capital)],['Tasa mensual',op.tasa+'%'],['Interés total',fmt(it)],['Gastos admin',fmt(op.gastosAdmin)],['Neto entregado',fmt(op.neto)],['Total a cobrar',fmt(tp)],['Cuota mensual',fmt(cuota)],['Caja',cajN(op.cajaId)],['Inicio',fD(op.fi)]]},{title:'Cuotas',headers:['#','Vencimiento','Monto','Estado'],rows:op.cuotas.map(c=>[c.num,fD(c.vto),fmt(c.monto),c.paga?'PAGA':'PENDIENTE'])}]);}
+function expChXls(){const wb=XLSX.utils.book_new();const h=['Número','Banco','Cliente','Titular','Nominal','Tasa/día','Días','Interés','Impuesto','G.Admin','Neto','Ganancia','Vencimiento','Caja origen','Tenencia','Destino tipo','Entregado a','Fecha entrega','Motivo','Estado'];const rows=S.cheques.map(c=>[c.numero,c.banco,cN(c.clienteId),c.titularCuenta||'',c.monto,c.tasaDiaria+'%',c.dias,c.interes,c.impuesto,c.gastosAdmin,c.neto,c.ganancia,c.vencimiento,cajN(c.cajaOrigenId),cajN(c.cajaTenenciaId),c.destino?.tipo||'',c.destino?.entregadoA||'',c.destino?.fecha||'',c.destino?.motivo||'',c.estado]);XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([h,...rows]),'Cheques');XLSX.writeFile(wb,'cheques.xlsx');toast('Excel descargado');}
+function expChPdf(){expPdf('Stock de Cheques',[{title:'Cheques',headers:['Número','Banco','Cliente','Nominal','Días','Interés','Imp.','Neto','Vencimiento','Destino','Estado'],rows:S.cheques.map(c=>[c.numero,c.banco,cN(c.clienteId),fmt(c.monto),c.dias+'d',fmt(c.interes),fmt(c.impuesto),fmt(c.neto),fD(c.vencimiento),c.destino?.tipo||'—',c.estado])}]);}
+function expCajXls(){const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Caja','Tipo','Moneda','Saldo'],...S.cajas.map(c=>[c.name,c.type,c.currency,c.balance])]),'Cajas');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Fecha','Caja','Tipo','Concepto','Monto'],...S.movs.map(m=>[m.fecha,cajN(m.cajaId),m.tipo,m.concepto,m.monto])]),'Movimientos');XLSX.writeFile(wb,'cajas.xlsx');toast('Excel descargado');}
+
+function expPdf(title,sections){
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:'Segoe UI',sans-serif;color:#111;padding:28px;max-width:960px;margin:0 auto}h1{font-size:22px;border-bottom:3px solid #8b6914;padding-bottom:7px;color:#5a3e00}h2{font-size:12px;color:#8b6914;margin:18px 0 6px;text-transform:uppercase;letter-spacing:2px}table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:18px}th{background:#5a3e00;color:#fff;padding:6px 8px;text-align:left}td{padding:5px 8px;border-bottom:1px solid #eee}tr:nth-child(even) td{background:#faf7f0}.footer{margin-top:22px;font-size:10px;color:#999;text-align:right}@media print{body{padding:12px}}</style></head><body>
+  <h1>◈ ${title}</h1><p style="color:#888;font-size:10px;margin-bottom:18px">Generado: ${new Date().toLocaleString('es-AR')}</p>
+  ${sections.map(s=>`<h2>${s.title}</h2><table><thead><tr>${s.headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${s.rows.map(r=>`<tr>${r.map(c=>`<td>${c??'—'}</td>`).join('')}</tr>`).join('')}</tbody></table>`).join('')}
+  <div class="footer">Financiera Pro · Sistema de Gestión</div>
+  <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+// ═══ PIN DE ACCESO ═══
+const PIN_KEY = 'fin_pin';
+function getPin(){ return localStorage.getItem(PIN_KEY)||null; }
+function setPin(p){ localStorage.setItem(PIN_KEY,p); }
+
+function checkPin(){
+  const pin=getPin();
+  if(!pin) return; // sin PIN configurado, pasa directo
+  const wrap=document.getElementById('wrap')||document.body;
+  const lock=document.createElement('div');
+  lock.id='lockscreen';
+  lock.style='position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px';
+  lock.innerHTML=`
+    <div style="font-family:Georgia,serif;font-size:22px;letter-spacing:4px;color:#d4a847">◈ FINANCIERA PRO</div>
+    <div style="font-size:15px;letter-spacing:4px;color:#3a3a4a;text-transform:uppercase">Ingresá tu PIN</div>
+    <div id="pin-dots" style="display:flex;gap:12px;margin:8px 0">
+      ${[0,1,2,3].map(i=>`<div id="dot${i}" style="width:12px;height:12px;border-radius:50%;border:1px solid #2a2a3e;background:#09090f"></div>`).join('')}
+    </div>
+    <div id="pin-error" style="font-size:14px;color:#ef4444;min-height:16px"></div>
+    <div style="display:grid;grid-template-columns:repeat(3,64px);gap:10px">
+      ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`<button onclick="pinPress('${k}')" style="background:#0d0d16;border:1px solid #1e1e2e;color:#e8e0d0;font-family:inherit;font-size:18px;padding:16px;cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='#d4a847'" onmouseout="this.style.borderColor='#1e1e2e'">${k}</button>`).join('')}
+    </div>`;
+  document.body.appendChild(lock);
+}
+
+let pinBuffer='';
+function pinPress(k){
+  if(k==='')return;
+  if(k==='⌫'){pinBuffer=pinBuffer.slice(0,-1);}
+  else if(pinBuffer.length<4){pinBuffer+=k;}
+  [0,1,2,3].forEach(i=>{
+    const d=document.getElementById('dot'+i);
+    if(d)d.style.background=i<pinBuffer.length?'#d4a847':'#09090f';
+  });
+  if(pinBuffer.length===4){
+    if(pinBuffer===getPin()){
+      document.getElementById('lockscreen')?.remove();
+      pinBuffer='';
+      logAcceso('Acceso correcto');
+    } else {
+      document.getElementById('pin-error').textContent='PIN incorrecto';
+      setTimeout(()=>{pinBuffer='';[0,1,2,3].forEach(i=>{const d=document.getElementById('dot'+i);if(d)d.style.background='#09090f';});document.getElementById('pin-error').textContent='';},900);
+    }
+  }
+}
+
+// ═══ LOG DE ACCESOS Y MOVIMIENTOS ═══
+const LOG_KEY='fin_log';
+function getLogs(){try{return JSON.parse(localStorage.getItem(LOG_KEY)||'[]');}catch{return[];}}
+function addLog(tipo,detalle){
+  const logs=getLogs();
+  logs.unshift({fecha:new Date().toLocaleString('es-AR'),tipo,detalle});
+  if(logs.length>200)logs.pop();
+  localStorage.setItem(LOG_KEY,JSON.stringify(logs));
+}
+function logAcceso(txt){addLog('acceso',txt);}
+function logOp(txt){addLog('operacion',txt);}
+
+// ═══ PANTALLA DE REPORTES ═══
+function rReportes(){
+  const act=S.ops.filter(o=>o.status==='activo');
+  const totalCap=act.reduce((a,o)=>a+o.capital,0);
+  const totalSaldo=act.reduce((a,o)=>a+sal(o),0);
+  const totalCobrado=act.reduce((a,o)=>a+o.cuotas.filter(c=>c.paga).reduce((s,c)=>s+c.monto,0),0);
+
+  // morosidad
+  const conMora=act.filter(o=>vcOp(o).length>0);
+  const pctMora=act.length?Math.round(conMora.length/act.length*100):0;
+
+  // ganancia por tipo
+  const ganPorTipo=['prestamo','hipotecario','prendario'].map(t=>{
+    const ops=act.filter(o=>o.tipo===t);
+    const gan=ops.reduce((a,o)=>{const{it}=calcC(o.capital,o.tasa,o.plazo);return a+it;},0);
+    return{tipo:tL(t),color:tC(t),gan,ops:ops.length};
+  });
+
+  // cheques
+  const chCob=S.cheques.filter(c=>c.estado==='cobrado');
+  const ganCh=S.cheques.reduce((a,c)=>a+c.ganancia,0);
+
+  // flujo proyectado próximos 6 meses
+  const flujo=[];
+  for(let i=0;i<6;i++){
+    const d=new Date(); d.setMonth(d.getMonth()+i);
+    const mes=d.toLocaleDateString('es-AR',{month:'short',year:'numeric'});
+    const y=d.getFullYear(), m=d.getMonth();
+    const cuotas=act.flatMap(o=>o.cuotas.filter(c=>{const cd=new Date(c.vto+'T00:00:00');return!c.paga&&cd.getFullYear()===y&&cd.getMonth()===m;}));
+    const cheques=S.cheques.filter(c=>{const cv=new Date(c.vencimiento+'T00:00:00');return c.estado==='en_cartera'&&cv.getFullYear()===y&&cv.getMonth()===m;});
+    flujo.push({mes,cuotas:cuotas.reduce((a,c)=>a+c.monto,0),cheques:cheques.reduce((a,c)=>a+c.monto,0)});
+  }
+  const maxFlujo=Math.max(...flujo.map(f=>f.cuotas+f.cheques),1);
+
+  // rentabilidad por mes (cobrado)
+  const rentMes=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(); d.setMonth(d.getMonth()-i);
+    const y=d.getFullYear(), m=d.getMonth();
+    const mes=d.toLocaleDateString('es-AR',{month:'short'});
+    const cobrado=S.movs.filter(mv=>{const fd=new Date(mv.fecha+'T00:00:00');return mv.tipo==='ingreso'&&fd.getFullYear()===y&&fd.getMonth()===m&&mv.concepto.toLowerCase().includes('cuota');}).reduce((a,mv)=>a+mv.monto,0);
+    rentMes.push({mes,cobrado});
+  }
+  const maxRent=Math.max(...rentMes.map(r=>r.cobrado),1);
+
+  // log
+  const logs=getLogs();
+
+  return`
+  <div class="ph"><div><div class="pt">Reportes</div><div class="ps">Visión del negocio</div></div></div>
+
+  <div class="grid g4 mb16">
+    <div class="card"><div class="sv">${fmt(totalCap)}</div><div class="sl">Capital en riesgo</div></div>
+    <div class="card"><div class="sv tgr">${fmt(totalCobrado)}</div><div class="sl">Total cobrado</div></div>
+    <div class="card"><div class="sv ta">${pctMora}%</div><div class="sl">Tasa de morosidad</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${conMora.length} de ${act.length} ops</div></div>
+    <div class="card"><div class="sv tgr">${fmt(ganCh)}</div><div class="sl">Ganancia cheques</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${chCob.length} cobrados</div></div>
+  </div>
+
+  <div class="grid g2 mb16">
+    <div class="card">
+      <div class="stl">Rentabilidad últimos 6 meses (ingresos de cuotas)</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:100px;margin-top:8px">
+        ${rentMes.map(r=>{
+          const h=maxRent>0?Math.round((r.cobrado/maxRent)*90):0;
+          return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="font-size:14px;color:var(--go)">${r.cobrado?fmt(r.cobrado).replace('$','').replace('.000','k'):''}</div>
+            <div style="width:100%;height:${h}px;background:linear-gradient(180deg,var(--go2),var(--go));min-height:2px"></div>
+            <div style="font-size:14px;color:var(--tx4)">${r.mes}</div>
+          </div>`;}).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div class="stl">Ganancia proyectada por tipo de crédito</div>
+      ${ganPorTipo.map(g=>`
+      <div style="margin-bottom:12px">
+        <div class="fb mb8">
+          <span style="font-size:14px;color:var(--tx3)">${g.tipo} (${g.ops} ops)</span>
+          <span style="font-size:14px;color:${g.color}">${fmt(g.gan)}</span>
+        </div>
+        <div class="pb"><div class="pf" style="width:${totalCap>0?Math.round(g.gan/(totalCap*0.5)*100):0}%;background:${g.color}"></div></div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="card mb16">
+    <div class="stl">Flujo de caja proyectado — próximos 6 meses</div>
+    <div style="display:flex;align-items:flex-end;gap:8px;height:120px;margin-top:10px">
+      ${flujo.map(f=>{
+        const tot=f.cuotas+f.cheques;
+        const hc=maxFlujo>0?Math.round((f.cuotas/maxFlujo)*100):0;
+        const hch=maxFlujo>0?Math.round((f.cheques/maxFlujo)*100):0;
+        return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="font-size:14px;color:var(--tx4)">${tot?fmt(tot).replace('$','').replace('.000','k'):''}</div>
+          <div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:90px;gap:1px">
+            <div style="width:100%;height:${hch}px;background:var(--am);min-height:${f.cheques?2:0}px"></div>
+            <div style="width:100%;height:${hc}px;background:var(--bl);min-height:${f.cuotas?2:0}px"></div>
+          </div>
+          <div style="font-size:14px;color:var(--tx4);text-align:center">${f.mes}</div>
+        </div>`;}).join('')}
+    </div>
+    <div class="fx g12 mt8" style="font-size:15px;color:var(--tx4)">
+      <div class="fx g8" style="align-items:center"><div style="width:10px;height:10px;background:var(--bl)"></div> Cuotas</div>
+      <div class="fx g8" style="align-items:center"><div style="width:10px;height:10px;background:var(--am)"></div> Cheques</div>
+    </div>
+  </div>
+
+  <div class="grid g2 mb16">
+    <div class="card">
+      <div class="stl">Detalle de morosidad</div>
+      ${conMora.length===0?'<div style="color:var(--gn);font-size:15px;padding:12px 0;text-align:center">✓ Sin operaciones en mora</div>':''}
+      ${conMora.map(op=>{
+        const vcs=vcOp(op);
+        return`<div class="fb ck" style="padding:7px 0;border-bottom:1px solid var(--br)" onclick="abrirOp(${op.id})">
+          <div><div style="font-size:14px">${cN(op.clienteId)}</div>
+            <div style="font-size:15px;color:var(--tx4)">${tL(op.tipo)} · ${fmt(op.capital)}</div></div>
+          <div style="text-align:right">
+            <div class="tr" style="font-size:14px">${fmt(vcs.reduce((a,c)=>a+c.monto,0))}</div>
+            <div style="font-size:14px;color:var(--rd)">${vcs.length} cuota${vcs.length>1?'s':''} vencida${vcs.length>1?'s':''}</div>
+          </div>
+        </div>`;}).join('')}
+    </div>
+    <div class="card">
+      <div class="stl">Composición de cartera</div>
+      ${['prestamo','hipotecario','prendario'].map(t=>{
+        const ops=act.filter(o=>o.tipo===t);
+        const c=ops.reduce((a,o)=>a+o.capital,0);
+        const pct=totalCap>0?Math.round(c/totalCap*100):0;
+        return`<div style="margin-bottom:10px">
+          <div class="fb mb8"><span style="font-size:14px;color:var(--tx3)">${tL(t)}</span><span style="font-size:14px;color:${tC(t)}">${pct}% · ${fmt(c)}</span></div>
+          <div class="pb"><div class="pf" style="width:${pct}%;background:${tC(t)}"></div></div>
+        </div>`;}).join('')}
+    </div>
+  </div>
+
+  <div class="card mb16">
+    <div class="fb mb12">
+      <div class="stl" style="margin:0">Log de accesos y operaciones</div>
+      <button class="btn bxs bo" onclick="localStorage.removeItem('fin_log');render()">Limpiar log</button>
+    </div>
+    <div style="max-height:200px;overflow-y:auto">
+      <table class="tbl"><thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th></tr></thead>
+      <tbody>
+        ${!logs.length?'<tr><td colspan="3" style="text-align:center;color:var(--tx4);padding:16px">Sin registros</td></tr>':''}
+        ${logs.slice(0,50).map(l=>`<tr>
+          <td style="font-size:14px;white-space:nowrap">${l.fecha}</td>
+          <td><span class="bdg" style="background:${l.tipo==='acceso'?'var(--bl)22':'var(--pu)22'};color:${l.tipo==='acceso'?'var(--bl)':'var(--pu)'};border:1px solid ${l.tipo==='acceso'?'var(--bl)':'var(--pu)'}44">${l.tipo.toUpperCase()}</span></td>
+          <td style="font-size:15px">${l.detalle}</td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>
+  </div>`;
+}
+
+// ═══ CONFIG PIN (en pantalla config) ═══
+function rCfgPin(){
+  const pinActual=getPin();
+  return`<div class="card mt16">
+    <div class="stl">Seguridad — PIN de acceso</div>
+    <div style="font-size:15px;color:var(--tx3);margin-bottom:12px">
+      ${pinActual?'✓ PIN configurado. Podés cambiarlo o eliminarlo.':'Sin PIN configurado. La app abre directo.'}
+    </div>
+    <div class="fg g2">
+      <div><label class="lb">Nuevo PIN (4 dígitos)</label><input id="pin-new" type="password" maxlength="4" placeholder="••••" style="letter-spacing:6px;font-size:16px"></div>
+      <div><label class="lb">Confirmar PIN</label><input id="pin-conf" type="password" maxlength="4" placeholder="••••" style="letter-spacing:6px;font-size:16px"></div>
+    </div>
+    <div class="fx g8 mt12">
+      <button class="btn bg" onclick="guardarPin()">Guardar PIN</button>
+      ${pinActual?`<button class="btn bd" onclick="if(confirm('¿Eliminar PIN?')){localStorage.removeItem('${PIN_KEY}');toast('PIN eliminado');render()}">Eliminar PIN</button>`:''}
+    </div>
+  </div>`;
+}
+function guardarPin(){
+  const n=document.getElementById('pin-new')?.value, c=document.getElementById('pin-conf')?.value;
+  if(!n||n.length!==4||!/^\d{4}$/.test(n))return toast('El PIN debe ser 4 dígitos numéricos','err');
+  if(n!==c)return toast('Los PINs no coinciden','err');
+  setPin(n); toast('PIN guardado correctamente'); render();
+}
+
+// ═══ CONTRATO PDF ═══
+function generarContrato(opId){
+  const op=S.ops.find(o=>o.id===opId);if(!op)return;
+  const cl=S.clientes.find(c=>c.id===op.clienteId)||{};
+  const{it,tp,cuota}=calcC(op.capital,op.tasa,op.plazo);
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Contrato — ${cl.name}</title><style>
+    body{font-family:'Georgia',serif;color:#111;padding:48px;max-width:760px;margin:0 auto;line-height:1.7;font-size:15px}
+    h1{font-size:20px;text-align:center;letter-spacing:3px;text-transform:uppercase;border-bottom:2px solid #8b6914;padding-bottom:10px;color:#5a3e00;margin-bottom:28px}
+    h2{font-size:15px;text-transform:uppercase;letter-spacing:2px;color:#8b6914;margin:22px 0 8px}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:14px}
+    td{padding:6px 10px;border:1px solid #ddd}
+    td:first-child{background:#faf7f0;font-weight:bold;width:45%}
+    .firma{display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:60px}
+    .firma-box{text-align:center}
+    .firma-line{border-top:1px solid #333;padding-top:8px;margin-top:50px;font-size:15px}
+    .clausula{margin-bottom:12px;text-align:justify}
+    .num{font-weight:bold;margin-right:6px}
+    @media print{body{padding:28px}}
+  </style></head><body>
+  <h1>◈ Contrato de ${tL(op.tipo)}</h1>
+  <h2>Partes del contrato</h2>
+  <table>
+    <tr><td>Prestamista</td><td>Financiera Pro</td></tr>
+    <tr><td>Prestatario</td><td>${cl.name||'—'}</td></tr>
+    <tr><td>DNI del prestatario</td><td>${cl.dni||'—'}</td></tr>
+    <tr><td>Domicilio</td><td>${cl.address||'—'}</td></tr>
+    <tr><td>Teléfono</td><td>${cl.phone||'—'}</td></tr>
+  </table>
+  <h2>Condiciones de la operación</h2>
+  <table>
+    <tr><td>Tipo de crédito</td><td>${tL(op.tipo)}</td></tr>
+    <tr><td>Capital otorgado</td><td>${fmt(op.capital)}</td></tr>
+    <tr><td>Gastos administrativos</td><td>${fmt(op.gastosAdmin)}</td></tr>
+    <tr><td>Monto neto entregado</td><td><strong>${fmt(op.neto)}</strong></td></tr>
+    <tr><td>Tasa de interés mensual</td><td>${op.tasa}%</td></tr>
+    <tr><td>Interés total</td><td>${fmt(it)}</td></tr>
+    <tr><td>Total a devolver</td><td><strong>${fmt(tp)}</strong></td></tr>
+    <tr><td>Plazo</td><td>${op.plazo} meses</td></tr>
+    <tr><td>Cuota mensual</td><td><strong>${fmt(cuota)}</strong></td></tr>
+    <tr><td>Fecha de inicio</td><td>${fD(op.fi)}</td></tr>
+    <tr><td>Primera cuota</td><td>${fD(op.cuotas[0]?.vto)}</td></tr>
+    <tr><td>Última cuota</td><td>${fD(op.cuotas[op.cuotas.length-1]?.vto)}</td></tr>
+  </table>
+  ${op.tipo==='prendario'&&op.vehiculo?`
+  <h2>Vehículo en garantía</h2>
+  <table>
+    <tr><td>Marca / Modelo</td><td>${op.vehiculo.marca} ${op.vehiculo.modelo} ${op.vehiculo.anio}</td></tr>
+    <tr><td>Patente</td><td>${op.vehiculo.patente}</td></tr>
+    <tr><td>Chasis</td><td>${op.vehiculo.chasis}</td></tr>
+    <tr><td>Color</td><td>${op.vehiculo.color}</td></tr>
+    <tr><td>Seguro</td><td>${op.vehiculo.seguro} · Póliza ${op.vehiculo.poliza}</td></tr>
+  </table>`:''}
+  <h2>Plan de pagos</h2>
+  <table>
+    <tr style="background:#5a3e00;color:#fff"><td style="background:#5a3e00;color:#fff;font-weight:bold">Cuota</td><td style="background:#5a3e00;color:#fff">Vencimiento</td><td style="background:#5a3e00;color:#fff">Monto</td></tr>
+    ${op.cuotas.map(c=>`<tr><td style="background:none">${c.num}</td><td>${fD(c.vto)}</td><td>${fmt(c.monto)}</td></tr>`).join('')}
+  </table>
+  <h2>Cláusulas</h2>
+  <p class="clausula"><span class="num">1.</span>El prestatario se compromete a abonar las cuotas en las fechas estipuladas en el plan de pagos.</p>
+  <p class="clausula"><span class="num">2.</span>El incumplimiento de dos o más cuotas consecutivas habilitará al prestamista a exigir la totalidad del saldo adeudado en forma inmediata.</p>
+  <p class="clausula"><span class="num">3.</span>Las cuotas que no sean abonadas en término devengarán un interés punitorio adicional a convenir entre las partes.</p>
+  <p class="clausula"><span class="num">4.</span>El presente contrato se suscribe en la ciudad de San Rafael, Mendoza, en la fecha indicada.</p>
+  <div class="firma">
+    <div class="firma-box"><div class="firma-line">${cl.name||'Prestatario'}<br>DNI ${cl.dni||'—'}</div></div>
+    <div class="firma-box"><div class="firma-line">Financiera Pro<br>Prestamista</div></div>
+  </div>
+  <p style="text-align:center;font-size:14px;color:#999;margin-top:30px">Generado el ${new Date().toLocaleDateString('es-AR')} · Financiera Pro</p>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  w.document.close();
+  addLog('operacion',`Contrato generado: ${cl.name}`);
+}
+
+// ═══ RECIBO DE PAGO ═══
+function generarRecibo(opId, cuotaNum){
+  const op=S.ops.find(o=>o.id===opId);if(!op)return;
+  const cl=S.clientes.find(c=>c.id===op.clienteId)||{};
+  const cuota=op.cuotas.find(c=>c.num===cuotaNum);if(!cuota)return;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Recibo</title><style>
+    body{font-family:'Georgia',serif;color:#111;padding:48px;max-width:600px;margin:0 auto}
+    .header{text-align:center;border-bottom:2px solid #8b6914;padding-bottom:16px;margin-bottom:24px}
+    .logo{font-size:22px;letter-spacing:3px;color:#5a3e00}
+    .sub{font-size:14px;letter-spacing:4px;color:#999;margin-top:4px}
+    .recibo-num{font-size:14px;color:#8b6914;margin-top:8px}
+    table{width:100%;border-collapse:collapse;margin:16px 0}
+    td{padding:8px 12px;border-bottom:1px solid #eee;font-size:15px}
+    td:first-child{color:#666;width:50%}
+    .monto-total{font-size:22px;text-align:center;color:#5a3e00;padding:20px;border:2px solid #8b6914;margin:20px 0}
+    .firma{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:50px;text-align:center}
+    .firma-line{border-top:1px solid #333;padding-top:6px;margin-top:40px;font-size:15px}
+    @media print{body{padding:28px}}
+  </style></head><body>
+  <div class="header">
+    <div class="logo">◈ FINANCIERA PRO</div>
+    <div class="sub">Comprobante de Pago</div>
+    <div class="recibo-num">Recibo Nº ${String(opId).padStart(4,'0')}-${String(cuotaNum).padStart(2,'0')}</div>
+  </div>
+  <table>
+    <tr><td>Fecha de pago</td><td><strong>${new Date().toLocaleDateString('es-AR')}</strong></td></tr>
+    <tr><td>Cliente</td><td>${cl.name||'—'}</td></tr>
+    <tr><td>DNI</td><td>${cl.dni||'—'}</td></tr>
+    <tr><td>Tipo de crédito</td><td>${tL(op.tipo)}</td></tr>
+    <tr><td>Capital original</td><td>${fmt(op.capital)}</td></tr>
+    <tr><td>Cuota número</td><td>${cuotaNum} de ${op.plazo}</td></tr>
+    <tr><td>Vencimiento</td><td>${fD(cuota.vto)}</td></tr>
+  </table>
+  <div class="monto-total">${fmt(cuota.monto)}</div>
+  <p style="text-align:center;font-size:15px;color:#666">Importe recibido en concepto de cuota ${cuotaNum}/${op.plazo}</p>
+  <div class="firma">
+    <div class="firma-box"><div class="firma-line">${cl.name||'Cliente'}<br>Firma y aclaración</div></div>
+    <div class="firma-box"><div class="firma-line">Financiera Pro<br>Firma y sello</div></div>
+  </div>
+  <p style="text-align:center;font-size:14px;color:#999;margin-top:30px">Este recibo es válido como comprobante de pago · Financiera Pro</p>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  w.document.close();
+  addLog('operacion',`Recibo emitido: ${cl.name} · Cuota ${cuotaNum}`);
+}
+
+function subirLogo(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=async e=>{
+    S.cfg.logo=e.target.result;
+    await dbSaveConfig('logo',e.target.result);
+    toast('Logo guardado');render();
+  };
+  r.readAsDataURL(file);
+}
+// ═══ SUPABASE CLIENT ═══
+const SB_URL = 'https://sbjvjwzvbeyqsvfgykcp.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNianZqd3p2YmV5cXN2Zmd5a2NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNjA3NDgsImV4cCI6MjA5MDkzNjc0OH0.eFJjyuYlo3j04ZJxfgM3Zwne830Am-xkp9jWPHv-yOA';
+
+const SB_HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Prefer': 'return=representation'
+};
+
+async function sbGet(table, params=''){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {headers: SB_HEADERS});
+  if(!r.ok) throw new Error(`sbGet ${table}: ${r.status}`);
+  return r.json();
+}
+async function sbPost(table, body){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {method:'POST', headers: SB_HEADERS, body: JSON.stringify(body)});
+  if(!r.ok){const e=await r.text();throw new Error(`sbPost ${table}: ${r.status} ${e}`);}
+  return r.json();
+}
+async function sbPatch(table, id, body){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {method:'PATCH', headers: SB_HEADERS, body: JSON.stringify(body)});
+  if(!r.ok) throw new Error(`sbPatch ${table}: ${r.status}`);
+  return r.json();
+}
+async function sbDelete(table, id){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {method:'DELETE', headers: SB_HEADERS});
+  if(!r.ok) throw new Error(`sbDelete ${table}: ${r.status}`);
+  return true;
+}
+
+// ═══ CARGA INICIAL ═══
+let DB_READY = false;
+
+async function loadFromDB(){
+  showLoader('Conectando con M&A Inversiones...');
+  try {
+    const [clientes, cajas, movs, ops, cuotas, cheques, cfg] = await Promise.all([
+      sbGet('clientes', 'order=id'),
+      sbGet('cajas', 'order=id'),
+      sbGet('movimientos', 'order=id'),
+      sbGet('operaciones', 'order=id'),
+      sbGet('cuotas', 'order=operacion_id,numero'),
+      sbGet('cheques', 'order=id'),
+      sbGet('configuracion'),
+    ]);
+
+    // Mapear clientes
+    S.clientes = clientes.map(c => ({
+      id: c.id, name: c.name, dni: c.dni||'', phone: c.phone||'',
+      email: c.email||'', address: c.address||'', score: c.score||'bueno'
+    }));
+
+    // Mapear cajas
+    S.cajas = cajas.map(c => ({
+      id: c.id, name: c.name, type: c.type, balance: parseFloat(c.balance)||0,
+      color: c.color, icon: c.icon, currency: c.currency
+    }));
+
+    // Mapear movimientos
+    S.movs = movs.map(m => ({
+      id: m.id, cajaId: m.caja_id, tipo: m.tipo,
+      monto: parseFloat(m.monto), concepto: m.concepto||'', fecha: m.fecha
+    }));
+
+    // Mapear operaciones con cuotas
+    S.ops = ops.map(op => {
+      const opCuotas = cuotas
+        .filter(c => c.operacion_id === op.id)
+        .map(c => ({num: c.numero, vto: c.vto, monto: parseFloat(c.monto), paga: c.paga, dbId: c.id}));
+      return {
+        id: op.id, clienteId: op.cliente_id, tipo: op.tipo,
+        capital: parseFloat(op.capital), tasa: parseFloat(op.tasa),
+        plazo: op.plazo, fi: op.fecha_inicio, cajaId: op.caja_id,
+        gastosAdmin: parseFloat(op.gastos_admin)||0, neto: parseFloat(op.neto)||0,
+        desc: op.descripcion||'', status: op.status,
+        vehiculo: op.vehiculo||null, cuotas: opCuotas
+      };
+    });
+
+    // Mapear cheques
+    S.cheques = cheques.map(c => ({
+      id: c.id, clienteId: c.cliente_id, numero: c.numero||'',
+      banco: c.banco||'', monto: parseFloat(c.monto),
+      tasaDiaria: parseFloat(c.tasa_diaria)||0.3, dias: c.dias||0,
+      vencimiento: c.vencimiento, impPct: parseFloat(c.imp_pct)||1.2,
+      gastosAdmin: parseFloat(c.gastos_admin)||0,
+      interes: parseFloat(c.interes)||0, impuesto: parseFloat(c.impuesto)||0,
+      gastos: parseFloat(c.gastos)||0, neto: parseFloat(c.neto)||0,
+      ganancia: parseFloat(c.ganancia)||0, estado: c.estado||'en_cartera',
+      cajaOrigenId: c.caja_origen_id, cajaTenenciaId: c.caja_tenencia_id,
+      ingreso: c.ingreso, titularCuenta: c.titular_cuenta||'',
+      titularDni: c.titular_dni||'', titularTel: c.titular_tel||'',
+      cbu: c.cbu||'', endoso: c.endoso||'', notas: c.notas||'',
+      fotoF: c.foto_frente||null, fotoD: c.foto_dorso||null,
+      destino: c.destino||{}
+    }));
+
+    // Config
+    cfg.forEach(c => {
+      if(c.clave === 'tasas') S.cfg.tasas = c.valor;
+      if(c.clave === 'impCheque') S.cfg.impCh = parseFloat(c.valor);
+      if(c.clave === 'logo') S.cfg.logo = c.valor;
+    });
+
+    DB_READY = true;
+    saveLocalBackup();
+    hideLoader();
+    buildNav(); render(); checkPin(); addLog('acceso','App abierta');
+    startAutoBackup();
+  } catch(e) {
+    console.error('Error cargando DB:', e);
+    // Intentar cargar desde backup local
+    const local = localStorage.getItem('ma_backup');
+    if(local){
+      try {
+        const data = JSON.parse(local);
+        if(data.clientes) S.clientes = data.clientes;
+        if(data.cajas) S.cajas = data.cajas;
+        if(data.movs) S.movs = data.movs;
+        if(data.ops) S.ops = data.ops;
+        if(data.cheques) S.cheques = data.cheques;
+        hideLoader();
+        showBanner('⚠ Sin conexión — mostrando datos del backup local. Los cambios NO se guardarán hasta recuperar conexión.','amber');
+        buildNav(); render(); checkPin();
+      } catch(e2){
+        hideLoader();
+        showBanner('✕ Error de conexión y sin backup local disponible.','red');
+        buildNav(); render();
+      }
+    } else {
+      hideLoader();
+      showBanner('⚠ Sin conexión a la base de datos. Revisá tu conexión a internet.','amber');
+      buildNav(); render();
+    }
+  }
+}
+
+// ═══ GUARDAR EN DB ═══
+
+async function dbSaveCliente(c){
+  if(c.id && c.id < 100000){
+    return sbPatch('clientes', c.id, {name:c.name,dni:c.dni,phone:c.phone,email:c.email,address:c.address,score:c.score});
+  }
+  const rows = await sbPost('clientes', {name:c.name,dni:c.dni,phone:c.phone,email:c.email,address:c.address,score:c.score});
+  return rows[0];
+}
+
+async function dbSaveCaja(c){
+  if(c.id && c.id < 100000){
+    return sbPatch('cajas', c.id, {name:c.name,type:c.type,balance:c.balance,color:c.color,icon:c.icon,currency:c.currency});
+  }
+  const rows = await sbPost('cajas', {name:c.name,type:c.type,balance:c.balance,color:c.color,icon:c.icon,currency:c.currency});
+  return rows[0];
+}
+
+async function dbUpdateCajaBalance(cajaId, balance){
+  return sbPatch('cajas', cajaId, {balance});
+}
+
+async function dbSaveMov(m){
+  const rows = await sbPost('movimientos', {caja_id:m.cajaId,tipo:m.tipo,monto:m.monto,concepto:m.concepto,fecha:m.fecha});
+  return rows[0];
+}
+
+async function dbSaveOp(op){
+  const opData = {
+    cliente_id:op.clienteId, tipo:op.tipo, capital:op.capital, tasa:op.tasa,
+    plazo:op.plazo, fecha_inicio:op.fi, caja_id:op.cajaId,
+    gastos_admin:op.gastosAdmin, neto:op.neto, descripcion:op.desc,
+    status:op.status, vehiculo:op.vehiculo
+  };
+  const rows = await sbPost('operaciones', opData);
+  const dbOp = rows[0];
+  // Guardar cuotas
+  const cuotasData = op.cuotas.map(c => ({
+    operacion_id: dbOp.id, numero: c.num, vto: c.vto, monto: c.monto, paga: c.paga
+  }));
+  const dbCuotas = await sbPost('cuotas', cuotasData);
+  dbOp.cuotas = dbCuotas;
+  return dbOp;
+}
+
+async function dbUpdateCuota(cuota){
+  return sbPatch('cuotas', cuota.dbId, {paga: cuota.paga, fecha_pago: cuota.paga ? hoy() : null});
+}
+
+async function dbCancelOp(opId){
+  return sbPatch('operaciones', opId, {status:'cancelado'});
+}
+
+async function dbSaveCheque(ch){
+  const rows = await sbPost('cheques', {
+    cliente_id:ch.clienteId, numero:ch.numero, banco:ch.banco, monto:ch.monto,
+    tasa_diaria:ch.tasaDiaria, dias:ch.dias, vencimiento:ch.vencimiento,
+    imp_pct:ch.impPct, gastos_admin:ch.gastosAdmin, interes:ch.interes,
+    impuesto:ch.impuesto, gastos:ch.gastos, neto:ch.neto, ganancia:ch.ganancia,
+    estado:ch.estado, caja_origen_id:ch.cajaOrigenId, caja_tenencia_id:ch.cajaTenenciaId,
+    ingreso:ch.ingreso, titular_cuenta:ch.titularCuenta, titular_dni:ch.titularDni,
+    titular_tel:ch.titularTel, cbu:ch.cbu, endoso:ch.endoso, notas:ch.notas,
+    foto_frente:ch.fotoF, foto_dorso:ch.fotoD, destino:ch.destino
+  });
+  return rows[0];
+}
+
+async function dbUpdateCheque(ch){
+  return sbPatch('cheques', ch.id, {
+    estado:ch.estado, destino:ch.destino,
+    titular_cuenta:ch.titularCuenta, endoso:ch.endoso
+  });
+}
+
+async function dbSaveConfig(clave, valor){
+  const r = await fetch(`${SB_URL}/rest/v1/configuracion?clave=eq.${clave}`, {
+    method:'PATCH',
+    headers: {...SB_HEADERS, 'Prefer': 'return=representation'},
+    body: JSON.stringify({valor, updated_at: new Date().toISOString()})
+  });
+  return r.json();
+}
+
+// ═══ BACKUP ═══
+function saveLocalBackup(){
+  const data = {
+    clientes: S.clientes, cajas: S.cajas, movs: S.movs,
+    ops: S.ops, cheques: S.cheques, ts: new Date().toISOString()
+  };
+  localStorage.setItem('ma_backup', JSON.stringify(data));
+}
+
+async function saveRemoteBackup(){
+  try {
+    const data = {
+      clientes: S.clientes, cajas: S.cajas, movs: S.movs,
+      ops: S.ops, cheques: S.cheques, ts: new Date().toISOString()
+    };
+    // Mantener solo los últimos 24 backups (24 horas)
+    const existing = await sbGet('backups', 'order=created_at.desc&limit=1');
+    await sbPost('backups', {datos: data});
+    // Limpiar backups viejos (más de 48h)
+    const cutoff = new Date(); cutoff.setHours(cutoff.getHours()-48);
+    await fetch(`${SB_URL}/rest/v1/backups?created_at=lt.${cutoff.toISOString()}`, {
+      method:'DELETE', headers: SB_HEADERS
+    });
+    saveLocalBackup();
+    addLog('acceso', 'Backup automático guardado');
+    console.log('Backup guardado:', new Date().toLocaleString('es-AR'));
+  } catch(e){
+    console.error('Error en backup:', e);
+    saveLocalBackup(); // Al menos guardar local
+  }
+}
+
+function startAutoBackup(){
+  // Backup cada 1 hora
+  setInterval(saveRemoteBackup, 60 * 60 * 1000);
+  // Backup al cerrar/salir
+  window.addEventListener('beforeunload', ()=>{ saveLocalBackup(); });
+  console.log('Auto-backup activo: cada 1 hora');
+}
+
+function exportarJSON(){
+  const data = {
+    clientes: S.clientes, cajas: S.cajas, movs: S.movs,
+    ops: S.ops, cheques: S.cheques,
+    exportado: new Date().toLocaleString('es-AR')
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ma-inversiones-backup-${hoy()}.json`;
+  a.click();
+  toast('Backup JSON descargado');
+}
+
+// ═══ LOADER / BANNER ═══
+function showLoader(msg){
+  let el = document.getElementById('loader');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'loader';
+    el.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `
+    <div style="font-family:Georgia,serif;font-size:22px;letter-spacing:4px;color:#d4a847">◈ M&A INVERSIONES</div>
+    <div style="font-size:10px;letter-spacing:3px;color:#3a3a4a;text-transform:uppercase">${msg}</div>
+    <div style="width:200px;height:2px;background:#1e1e2e;border-radius:1px;overflow:hidden">
+      <div style="height:100%;background:linear-gradient(90deg,#7a5c0e,#d4a847);animation:load 1.5s ease-in-out infinite" id="load-bar"></div>
+    </div>
+    <style>@keyframes load{0%{width:0%}50%{width:80%}100%{width:100%}}</style>`;
+}
+function hideLoader(){
+  document.getElementById('loader')?.remove();
+}
+
+let bannerEl = null;
+function showBanner(msg, type='amber'){
+  if(bannerEl) bannerEl.remove();
+  bannerEl = document.createElement('div');
+  const colors = {amber:'#110d00;border-color:#3a2800;color:#f59e0b', red:'#1a0808;border-color:#4a1a1a;color:#ef4444', green:'#081a0e;border-color:#1a4a2a;color:#10b981'};
+  bannerEl.style.cssText = `background:${colors[type]||colors.amber};border-bottom:1px solid;padding:8px 20px;font-size:10px;letter-spacing:1px;text-align:center;position:sticky;top:52px;z-index:49`;
+  bannerEl.textContent = msg;
+  document.getElementById('app').before(bannerEl);
+}
+// ═══ HOOKS DE DB — reemplaza las funciones que modifican S.* ═══
+// Cada función guarda en Supabase Y en el estado local
+
+// Override guardarOp
+const _guardarOpOrig = guardarOp;
+guardarOp = async function(){
+  const clienteId=parseInt(document.getElementById('fo-cli')?.value),tipo=document.getElementById('fo-tipo')?.value;
+  const capital=parseFloat(document.getElementById('fo-c')?.value||0),tasa=parseFloat(document.getElementById('fo-r')?.value||0);
+  const plazo=parseInt(document.getElementById('fo-p')?.value||1),gastosAdmin=parseFloat(document.getElementById('fo-g')?.value||0);
+  const cajaId=parseInt(document.getElementById('fo-caja')?.value),fi=document.getElementById('fo-fi')?.value||hoy();
+  const desc=document.getElementById('fo-desc')?.value||'';
+  if(!clienteId||!capital||!tasa||!cajaId)return toast('Completá los campos requeridos','err');
+  const caja=S.cajas.find(c=>c.id===cajaId);
+  if(!caja)return toast('Caja no encontrada','err');
+  if(caja.balance<capital)return toast(`Saldo insuficiente en ${caja.name}`,'err');
+  let vehiculo=null;
+  if(tipo==='prendario'){vehiculo={marca:document.getElementById('v-mar')?.value||'',modelo:document.getElementById('v-mod')?.value||'',anio:document.getElementById('v-ani')?.value||'',patente:document.getElementById('v-pat')?.value||'',color:document.getElementById('v-col')?.value||'',motor:document.getElementById('v-mot')?.value||'',chasis:document.getElementById('v-cha')?.value||'',km:document.getElementById('v-km')?.value||'',seguro:document.getElementById('v-seg')?.value||'',poliza:document.getElementById('v-pol')?.value||'',vtoSeg:document.getElementById('v-vts')?.value||''};}
+  const cuotas=genQ(capital,tasa,plazo,fi);
+  const newOp={clienteId,tipo,capital,tasa,plazo,fi,cajaId,gastosAdmin,desc,status:'activo',neto:capital-gastosAdmin,cuotas,vehiculo};
+  try {
+    showLoader('Guardando operación...');
+    const dbOp = await dbSaveOp(newOp);
+    // Asignar IDs de DB a cuotas
+    newOp.id = dbOp.id;
+    newOp.cuotas = cuotas.map((c,i) => ({...c, dbId: dbOp.cuotas?.[i]?.id}));
+    S.ops.push(newOp);
+    // Actualizar caja
+    const newBal = caja.balance - capital;
+    S.cajas = S.cajas.map(c=>c.id===cajaId?{...c,balance:newBal}:c);
+    await dbUpdateCajaBalance(cajaId, newBal);
+    const mov = {cajaId, tipo:'egreso', monto:capital, concepto:`${tL(tipo)} — ${cN(clienteId)}`, fecha:fi};
+    const dbMov = await dbSaveMov(mov);
+    S.movs.push({...mov, id:dbMov.id});
+    saveLocalBackup();
+    hideLoader(); cerrar(); toast(`${fmt(capital)} descontado de ${caja.name}`); render();
+    addLog('operacion',`Nueva op: ${tL(tipo)} ${cN(clienteId)} ${fmt(capital)}`);
+  } catch(e){ hideLoader(); toast('Error guardando: '+e.message,'err'); console.error(e); }
+};
+
+// Override guardarCliente
+const _guardarClienteOrig = guardarCliente;
+guardarCliente = async function(){
+  const name=document.getElementById('fc-n')?.value.trim(),dni=document.getElementById('fc-d')?.value.trim();
+  if(!name||!dni)return toast('Nombre y DNI requeridos','err');
+  const newC={name,dni,phone:document.getElementById('fc-p')?.value||'',email:document.getElementById('fc-e')?.value||'',address:document.getElementById('fc-a')?.value||'',score:document.getElementById('fc-s')?.value||'bueno'};
+  try {
+    const dbC = await dbSaveCliente(newC);
+    S.clientes.push({...newC, id:dbC.id});
+    saveLocalBackup(); cerrar(); toast('Cliente agregado'); render();
+  } catch(e){ toast('Error: '+e.message,'err'); }
+};
+
+// Override guardarCaja
+const _guardarCajaOrig = guardarCaja;
+guardarCaja = async function(){
+  const name=document.getElementById('fca-n')?.value.trim();
+  if(!name)return toast('Nombre requerido','err');
+  const type=document.getElementById('fca-t')?.value||'efectivo';
+  const newC={name,type,balance:parseFloat(document.getElementById('fca-b')?.value||0),color:document.getElementById('fca-col')?.value||'#d4a847',icon:type==='banco'?'▣':'◈',currency:document.getElementById('fca-c')?.value||'ARS'};
+  try {
+    const dbC = await dbSaveCaja(newC);
+    S.cajas.push({...newC, id:dbC.id});
+    saveLocalBackup(); cerrar(); toast('Caja creada'); render();
+  } catch(e){ toast('Error: '+e.message,'err'); }
+};
+
+// Override guardarMov
+const _guardarMovOrig = guardarMov;
+guardarMov = async function(cajaId,tipo){
+  const monto=parseFloat(document.getElementById('fm-m')?.value||0),conc=document.getElementById('fm-c')?.value||'Sin descripción',fecha=document.getElementById('fm-f')?.value||hoy();
+  if(!monto)return toast('Ingresá un monto','err');
+  try {
+    const newBal = S.cajas.find(c=>c.id===cajaId)?.balance + (tipo==='ingreso'?monto:-monto);
+    S.cajas=S.cajas.map(c=>c.id===cajaId?{...c,balance:newBal}:c);
+    await dbUpdateCajaBalance(cajaId, newBal);
+    const mov={cajaId,tipo,monto,concepto:conc,fecha};
+    const dbM = await dbSaveMov(mov);
+    S.movs.push({...mov,id:dbM.id});
+    saveLocalBackup(); cerrar(); toast(`${tipo==='ingreso'?'Ingreso':'Egreso'} registrado`); render();
+  } catch(e){ toast('Error: '+e.message,'err'); }
+};
+
+// Override guardarTransf
+const _guardarTransfOrig = guardarTransf;
+guardarTransf = async function(){
+  const from=parseInt(document.getElementById('ft-o')?.value),to=parseInt(document.getElementById('ft-d')?.value);
+  const monto=parseFloat(document.getElementById('ft-m')?.value||0),conc=document.getElementById('ft-c')?.value||'Transferencia';
+  if(!from||!to||!monto)return toast('Completá todos los campos','err');
+  if(from===to)return toast('Origen y destino distintos','err');
+  const f2=S.cajas.find(c=>c.id===from);if(f2.balance<monto)return toast('Saldo insuficiente','err');
+  try {
+    const newBalFrom = f2.balance - monto;
+    const newBalTo = S.cajas.find(c=>c.id===to)?.balance + monto;
+    S.cajas=S.cajas.map(c=>c.id===from?{...c,balance:newBalFrom}:c.id===to?{...c,balance:newBalTo}:c);
+    await Promise.all([dbUpdateCajaBalance(from, newBalFrom), dbUpdateCajaBalance(to, newBalTo)]);
+    const fecha=hoy();
+    const m1={cajaId:from,tipo:'egreso',monto,concepto:`${conc} → ${cajN(to)}`,fecha};
+    const m2={cajaId:to,tipo:'ingreso',monto,concepto:`${conc} ← ${cajN(from)}`,fecha};
+    const [d1,d2] = await Promise.all([dbSaveMov(m1), dbSaveMov(m2)]);
+    S.movs.push({...m1,id:d1.id},{...m2,id:d2.id});
+    saveLocalBackup(); cerrar(); toast(`${fmt(monto)} transferidos`); render();
+  } catch(e){ toast('Error: '+e.message,'err'); }
+};
+
+// Override guardarCheque
+const _guardarChequeOrig = guardarCheque;
+guardarCheque = async function(){
+  const clienteId=parseInt(document.getElementById('fch-cli')?.value),numero=document.getElementById('fch-num')?.value.trim(),banco=document.getElementById('fch-ban')?.value.trim();
+  const monto=parseFloat(document.getElementById('fch-m')?.value||0),tasaDiaria=parseFloat(document.getElementById('fch-t')?.value||0),impPct=parseFloat(document.getElementById('fch-i')?.value||0),gastosAdmin=parseFloat(document.getElementById('fch-ga')?.value||0);
+  const vencimiento=document.getElementById('fch-v')?.value,ingreso=document.getElementById('fch-d')?.value||hoy();
+  const cajaOrigenId=parseInt(document.getElementById('fch-or')?.value)||null,cajaTenenciaId=parseInt(document.getElementById('fch-ten')?.value)||null;
+  const dd=vencimiento&&ingreso?dds(vencimiento,ingreso):0;
+  if(!clienteId||!numero||!banco||!monto||!vencimiento||!dd)return toast('Completá los campos requeridos','err');
+  const r=calcCh(monto,tasaDiaria,dd,impPct,gastosAdmin);
+  const newCh={clienteId,numero,banco,monto,tasaDiaria,dias:dd,vencimiento,impPct,gastosAdmin,...r,estado:'en_cartera',cajaOrigenId,cajaTenenciaId,ingreso,
+    titularCuenta:document.getElementById('fch-tit')?.value||'',titularDni:document.getElementById('fch-tdn')?.value||'',titularTel:document.getElementById('fch-tte')?.value||'',cbu:document.getElementById('fch-cbu')?.value||'',endoso:document.getElementById('fch-end')?.value||'',notas:document.getElementById('fch-not')?.value||'',fotoF:document.getElementById('dat-ff')?.value||null,fotoD:document.getElementById('dat-fd')?.value||null,
+    destino:{entregadoA:document.getElementById('fch-da')?.value||'',fecha:document.getElementById('fch-df')?.value||'',motivo:document.getElementById('fch-dm')?.value||'',tipo:document.getElementById('fch-dt')?.value||'',comision:parseFloat(document.getElementById('fch-dc')?.value||0),notas:document.getElementById('fch-dn')?.value||''}};
+  try {
+    if(cajaOrigenId){
+      const cj=S.cajas.find(c=>c.id===cajaOrigenId);
+      if(cj&&cj.balance<r.neto)return toast(`Saldo insuficiente en ${cj.name}`,'err');
+      const newBal = cj.balance - r.neto;
+      S.cajas=S.cajas.map(c=>c.id===cajaOrigenId?{...c,balance:newBal}:c);
+      await dbUpdateCajaBalance(cajaOrigenId, newBal);
+      const mov={cajaId:cajaOrigenId,tipo:'egreso',monto:r.neto,concepto:`Cheque ${numero} — ${cN(clienteId)}`,fecha:ingreso};
+      const dbM=await dbSaveMov(mov); S.movs.push({...mov,id:dbM.id});
+    }
+    const dbCh = await dbSaveCheque(newCh);
+    S.cheques.push({...newCh, id:dbCh.id});
+    saveLocalBackup(); cerrar(); toast('Cheque registrado'); render();
+  } catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
+};
+
+// Override toggleCuota
+const _toggleCuotaOrig = toggleCuota;
+toggleCuota = async function(opId, num){
+  const op=S.ops.find(o=>o.id===opId);if(!op)return;
+  const c=op.cuotas.find(c=>c.num===num);if(!c)return;
+  const era=c.paga; c.paga=!era;
+  try {
+    if(c.dbId) await dbUpdateCuota(c);
+    if(!era&&op.cajaId){
+      const newBal = S.cajas.find(ca=>ca.id===op.cajaId)?.balance + c.monto;
+      S.cajas=S.cajas.map(ca=>ca.id===op.cajaId?{...ca,balance:newBal}:ca);
+      await dbUpdateCajaBalance(op.cajaId, newBal);
+      const mov={cajaId:op.cajaId,tipo:'ingreso',monto:c.monto,concepto:`Cuota ${num} — ${cN(op.clienteId)}`,fecha:hoy()};
+      const dbM=await dbSaveMov(mov); S.movs.push({...mov,id:dbM.id});
+      toast(`Cuota ${num} cobrada · ${fmt(c.monto)} → ${cajN(op.cajaId)}`);
+    } else if(era&&op.cajaId){
+      const newBal = S.cajas.find(ca=>ca.id===op.cajaId)?.balance - c.monto;
+      S.cajas=S.cajas.map(ca=>ca.id===op.cajaId?{...ca,balance:newBal}:ca);
+      await dbUpdateCajaBalance(op.cajaId, newBal);
+      const mov={cajaId:op.cajaId,tipo:'egreso',monto:c.monto,concepto:`Reversión cuota ${num} — ${cN(op.clienteId)}`,fecha:hoy()};
+      const dbM=await dbSaveMov(mov); S.movs.push({...mov,id:dbM.id});
+      toast('Cuota desmarcada');
+    }
+    saveLocalBackup(); abrirOp(opId);
+  } catch(e){ toast('Error: '+e.message,'err'); c.paga=era; }
+};
+
+// Override cobrarCh
+const _cobrarChOrig = cobrarCh;
+cobrarCh = async function(id){
+  const ch=S.cheques.find(c=>c.id===id);if(!ch)return;
+  try {
+    if(ch.cajaOrigenId){
+      const newBal = S.cajas.find(c=>c.id===ch.cajaOrigenId)?.balance + ch.monto;
+      S.cajas=S.cajas.map(c=>c.id===ch.cajaOrigenId?{...c,balance:newBal}:c);
+      await dbUpdateCajaBalance(ch.cajaOrigenId, newBal);
+      const mov={cajaId:ch.cajaOrigenId,tipo:'ingreso',monto:ch.monto,concepto:`Cobro cheque ${ch.numero}`,fecha:hoy()};
+      const dbM=await dbSaveMov(mov); S.movs.push({...mov,id:dbM.id});
+    }
+    S.cheques=S.cheques.map(c=>c.id===id?{...c,estado:'cobrado'}:c);
+    await dbUpdateCheque({...ch,estado:'cobrado'});
+    saveLocalBackup(); toast('Cheque cobrado · '+fmt(ch.monto)+' acreditado'); render();
+  } catch(e){ toast('Error: '+e.message,'err'); }
+};
+// ═══ PWA MANIFEST ═══
+function installPWA(){
+  const manifest = {
+    name: "M&A Inversiones",
+    short_name: "M&A",
+    description: "Sistema de gestión de inversiones",
+    start_url: "./",
+    display: "standalone",
+    background_color: "#09090f",
+    theme_color: "#d4a847",
+    orientation: "portrait-primary",
+    icons: [
+      {src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%2309090f'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='%23d4a847' font-family='Georgia'>◈</text></svg>`), sizes:"192x192", type:"image/svg+xml"},
+      {src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%2309090f'/><text x='256' y='360' font-size='280' text-anchor='middle' fill='%23d4a847' font-family='Georgia'>◈</text></svg>`), sizes:"512x512", type:"image/svg+xml"}
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest'; link.href = url;
+  document.head.appendChild(link);
+}
+
+// Service Worker inline para cache offline
+function registerSW(){
+  if('serviceWorker' in navigator){
+    const swCode = `
+const CACHE = 'ma-inversiones-v1';
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+});`;
+    const blob = new Blob([swCode], {type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob))
+      .then(()=>console.log('SW registrado'))
+      .catch(e=>console.log('SW error:',e));
+  }
+}
+
+// Prompt de instalación
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Mostrar botón de instalar en Config
+  S._canInstall = true;
+});
+
+function instalarApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r => {
+      if(r.outcome==='accepted') toast('App instalada en el celular');
+      deferredPrompt = null;
+    });
+  } else {
+    toast('Para instalar: menú del navegador → "Agregar a pantalla de inicio"');
+  }
+}
+installPWA();registerSW();loadFromDB();
+</script></body></html>
