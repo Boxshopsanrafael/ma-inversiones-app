@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#d4a847">
 <title>M&A Inversiones</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -17,91 +18,195 @@
   --bg:#09090f;--bg2:#0d0d16;--bg3:#111118;--bg4:#14141e;
   --br:#1e1e2e;--br2:#2a2a3e;
   --go:#d4a847;--go2:#7a5c0e;
-  --tx:#e8e0d0;--tx2:#a09880;--tx3:#666;--tx4:#3a3a4a;
+  --tx:#e8e0d0;--tx2:#a09880;--tx3:#888;--tx4:#555;
   --bl:#3b82f6;--gn:#10b981;--am:#f59e0b;--rd:#ef4444;--pu:#8b5cf6;
+  --fs:15px;--fs-sm:13px;--fs-xs:11px;--fs-lg:17px;
 }
-body{background:var(--bg);color:var(--tx);font-family:'Courier Prime',monospace;min-height:100vh;font-size:14px}
+body{background:var(--bg);color:var(--tx);font-family:'Courier Prime',monospace;min-height:100vh;font-size:var(--fs)}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--go2)}
-nav{background:var(--bg2);border-bottom:1px solid var(--br);padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.logo{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;letter-spacing:3px;color:var(--go);padding:12px 0 2px}
-.sub{font-size:9px;letter-spacing:3px;color:var(--tx4);padding-bottom:10px}
+
+/* NAV DESKTOP */
+#nav{background:var(--bg2);border-bottom:1px solid var(--br);padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;min-height:56px}
+.logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;letter-spacing:3px;color:var(--go);padding:12px 0 2px}
+.sub{font-size:10px;letter-spacing:4px;color:var(--tx4);padding-bottom:10px}
 .navlinks{display:flex;flex-wrap:wrap}
-.nb{background:none;border:none;cursor:pointer;padding:9px 11px;font-family:inherit;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);border-bottom:2px solid transparent;transition:.15s}
+.nb{background:none;border:none;cursor:pointer;padding:10px 14px;font-family:inherit;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--tx3);border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
 .nb:hover{color:var(--go)}.nb.on{color:var(--go);border-bottom-color:var(--go)}
-#app{max-width:1280px;margin:0 auto;padding:20px}
-.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:8px;flex-wrap:wrap}
-.pt{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:#c8bfa8}
-.ps{font-size:10px;letter-spacing:2px;color:var(--tx4);margin-top:2px;text-transform:uppercase}
+
+/* HAMBURGER */
+.hamburger{display:none;background:none;border:1px solid var(--br2);color:var(--tx);padding:8px 12px;cursor:pointer;font-size:20px}
+.mobile-menu{display:none;position:fixed;top:56px;left:0;right:0;background:var(--bg2);border-bottom:1px solid var(--br);z-index:49;flex-direction:column;padding:8px 0}
+.mobile-menu.open{display:flex}
+.mobile-menu .nb{padding:14px 24px;border-bottom:1px solid var(--bg3);font-size:14px;text-align:left;border-left:3px solid transparent}
+.mobile-menu .nb.on{border-left-color:var(--go);background:var(--bg3)}
+
+/* LAYOUT */
+#app{max-width:1320px;margin:0 auto;padding:24px}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:10px;flex-wrap:wrap}
+.pt{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:300;color:#c8bfa8}
+.ps{font-size:11px;letter-spacing:2px;color:var(--tx4);margin-top:3px;text-transform:uppercase}
+
+/* CARDS */
 .card{background:var(--bg3);border:1px solid var(--br);padding:20px}
 .csm{background:var(--bg3);border:1px solid var(--br);padding:16px}
-.btn{cursor:pointer;font-family:inherit;letter-spacing:1px;text-transform:uppercase;font-size:11px;border:none;padding:9px 18px;transition:.15s}
+
+/* BUTTONS */
+.btn{cursor:pointer;font-family:inherit;letter-spacing:1px;text-transform:uppercase;font-size:12px;border:none;padding:10px 20px;transition:.15s;border-radius:2px}
 .bg{background:linear-gradient(135deg,var(--go2),var(--go));color:#000;font-weight:700}.bg:hover{opacity:.85}
 .bo{background:none;border:1px solid var(--br2);color:var(--tx3)}.bo:hover{border-color:var(--go);color:var(--go)}
 .bd{background:none;border:1px solid #4a1a1a;color:var(--rd)}.bd:hover{background:#1a0808}
 .bs{background:none;border:1px solid #1a4a2a;color:var(--gn)}.bs:hover{background:#081a0e}
-.bsm{padding:6px 13px;font-size:10px}.bxs{padding:3px 9px;font-size:9px}
-.fg{display:grid;gap:10px}
+.bsm{padding:7px 14px;font-size:11px}.bxs{padding:4px 10px;font-size:10px}
+
+/* FORMS */
+.fg{display:grid;gap:12px}
 .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g4{grid-template-columns:1fr 1fr 1fr 1fr}
-.lb{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--tx4);margin-bottom:5px}
-input,select,textarea{background:var(--bg);border:1px solid var(--br);color:var(--tx);padding:9px 12px;font-family:inherit;font-size:13px;width:100%;outline:none;transition:.2s}
+.lb{display:block;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--tx4);margin-bottom:5px}
+input,select,textarea{background:var(--bg);border:1px solid var(--br);color:var(--tx);padding:10px 13px;font-family:inherit;font-size:14px;width:100%;outline:none;transition:.2s;border-radius:2px}
 input:focus,select:focus,textarea:focus{border-color:var(--go)}
 input::placeholder,textarea::placeholder{color:var(--tx4)}
 select option{background:var(--bg2)}
-textarea{resize:vertical;min-height:50px}
+textarea{resize:vertical;min-height:56px}
+
+/* TABLES */
 .tbl{width:100%;border-collapse:collapse}
-.tbl th{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--tx4);padding:7px 10px;text-align:left;border-bottom:1px solid var(--br);background:var(--bg2);white-space:nowrap}
-.tbl td{padding:10px 12px;border-bottom:1px solid var(--bg2);font-size:13px}
+.tbl th{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--tx4);padding:10px 13px;text-align:left;border-bottom:1px solid var(--br);background:var(--bg2);white-space:nowrap}
+.tbl td{padding:12px 13px;border-bottom:1px solid var(--bg2);font-size:14px}
 .tbl tr:hover td{background:var(--bg4)}.tbl tr.ck{cursor:pointer}
-.bdg{display:inline-block;padding:3px 8px;font-size:9px;letter-spacing:1px;text-transform:uppercase}
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto}
-.modal{background:var(--bg2);border:1px solid var(--br2);padding:22px;width:100%;max-width:720px;margin-top:6px}
-.mhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+
+/* BADGES */
+.bdg{display:inline-block;padding:3px 8px;font-size:10px;letter-spacing:1px;text-transform:uppercase;border-radius:2px}
+
+/* MODALS */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+.modal{background:var(--bg2);border:1px solid var(--br2);padding:28px;width:100%;max-width:760px;margin-top:8px}
+.mhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 .mtt{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:#c8bfa8}
-.mft{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
-.sv{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--go);line-height:1}
-.sl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin-top:2px}
-.stl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--tx4);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--br)}
-.grid{display:grid;gap:11px}
+.mft{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;flex-wrap:wrap}
+
+/* STATS */
+.sv{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:var(--go);line-height:1}
+.sl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin-top:4px}
+.stl{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--tx4);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--br)}
+
+/* LAYOUT UTILS */
+.grid{display:grid;gap:14px}
 .fb{display:flex;justify-content:space-between;align-items:center}
-.fx{display:flex}.g8{gap:8px}.g12{gap:12px}
-.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.fx{display:flex}.g8{gap:8px}.g12{gap:12px}.g16{gap:16px}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}
 .mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
 .tg{color:var(--go)}.tgr{color:var(--gn)}.tr{color:var(--rd)}.ta{color:var(--am)}.wf{width:100%}
 .serif{font-family:'Cormorant Garamond',serif}
-.srch{position:relative;margin-bottom:14px}
-.srch span{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx4);pointer-events:none}
-.srch input{padding-left:28px}
-.pb{height:4px;background:var(--br);border-radius:2px;overflow:hidden}
+.srch{position:relative;margin-bottom:16px}
+.srch span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--tx4);pointer-events:none;font-size:16px}
+.srch input{padding-left:36px}
+.pb{height:5px;background:var(--br);border-radius:2px;overflow:hidden}
 .pf{height:100%;background:linear-gradient(90deg,var(--go2),var(--go));transition:.4s}
-#toast{position:fixed;bottom:18px;right:18px;padding:11px 18px;font-size:12px;letter-spacing:1px;z-index:500;opacity:0;transition:.3s;pointer-events:none}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;padding:12px 18px;font-size:13px;letter-spacing:1px;z-index:500;opacity:0;transition:.3s;pointer-events:none;border-radius:2px}
 #toast.on{opacity:1}
-.al{padding:10px 14px;font-size:12px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+
+/* ALERTS */
+.al{padding:12px 16px;font-size:13px;margin-bottom:12px;display:flex;align-items:center;gap:10px;border-radius:2px}
 .al-r{background:#1a0808;border:1px solid #4a1a1a;color:var(--rd)}
 .al-a{background:#110d00;border:1px solid #3a2800;color:var(--am)}
-.tabs{display:flex;border-bottom:1px solid var(--br);margin-bottom:13px}
-.tab{background:none;border:none;padding:9px 16px;font-family:inherit;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:var(--tx4);border-bottom:2px solid transparent;transition:.15s}
+.al-g{background:#081a0e;border:1px solid #1a4a2a;color:var(--gn)}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--br);margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{background:none;border:none;padding:10px 18px;font-family:inherit;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:var(--tx4);border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
 .tab:hover{color:var(--go)}.tab.on{color:var(--go);border-bottom-color:var(--go)}
-.cc{background:var(--bg3);border:1px solid var(--br);padding:18px;cursor:pointer;transition:.15s;position:relative;overflow:hidden}
-.cc:hover{border-color:var(--br2);transform:translateY(-1px)}
+
+/* CLIENT/CAJA CARDS */
+.cc{background:var(--bg3);border:1px solid var(--br);padding:18px;cursor:pointer;transition:.15s;position:relative;overflow:hidden;border-radius:2px}
+.cc:hover{border-color:var(--br2);transform:translateY(-2px)}
 .cc .ac{position:absolute;top:0;left:0;width:3px;height:100%}
+
+/* CHIP STATUS */
 .chip-c{background:#0a1a2e;border:1px solid #1a3a5e;color:var(--bl)}
 .chip-ok{background:#081a0e;border:1px solid #1a4a2a;color:var(--gn)}
 .chip-v{background:#1a0808;border:1px solid #4a1a1a;color:var(--rd)}
-.pvbox{background:var(--bg4);border:1px solid var(--br2);padding:12px;margin-top:10px}
-.pvr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--br);font-size:13px;align-items:center}
-.pvr:last-child{border:none;padding-top:6px;font-weight:700}
-.pvr .lk{color:var(--tx3);font-size:11px;letter-spacing:0px}
-.fz{border:1px dashed var(--br2);padding:16px;text-align:center;cursor:pointer;transition:.15s;color:var(--tx4);font-size:11px}
+
+/* PREVIEW BOX */
+.pvbox{background:var(--bg4);border:1px solid var(--br2);padding:14px;margin-top:12px;border-radius:2px}
+.pvr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--br);font-size:14px;align-items:center}
+.pvr:last-child{border:none;padding-top:8px;font-weight:700;font-size:15px}
+.pvr .lk{color:var(--tx3);font-size:12px}
+
+/* FOTO */
+.fz{border:1px dashed var(--br2);padding:20px;text-align:center;cursor:pointer;transition:.15s;color:var(--tx4);font-size:13px;border-radius:2px}
 .fz:hover{border-color:var(--go);background:var(--bg4)}
+
+/* DESTINO BADGES */
 .dst-pago{background:#081a0e;border:1px solid #1a4a2a;color:var(--gn)}
 .dst-efectivo{background:#0a0a1e;border:1px solid #1a1a4a;color:var(--bl)}
 .dst-endoso{background:#100a1a;border:1px solid #2a1a4a;color:var(--pu)}
 .dst-otro{background:#111100;border:1px solid #3a3a00;color:var(--am)}
+
+/* SEARCH GLOBAL */
+.global-search{position:relative}
+.global-search input{background:var(--bg3);border:1px solid var(--br2);padding:10px 16px 10px 42px;font-size:14px;width:280px;border-radius:20px}
+.global-search input:focus{border-color:var(--go);width:340px}
+.global-search span{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--tx4)}
+.search-results{position:absolute;top:46px;right:0;width:380px;background:var(--bg2);border:1px solid var(--br2);z-index:60;max-height:400px;overflow-y:auto;border-radius:2px}
+.sr-item{padding:12px 16px;border-bottom:1px solid var(--br);cursor:pointer;font-size:13px}
+.sr-item:hover{background:var(--bg3)}
+.sr-cat{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);padding:8px 16px 4px;background:var(--bg3)}
+
+/* MOBILE RESPONSIVE */
+@media(max-width:768px){
+  .hamburger{display:block}
+  .navlinks{display:none}
+  #app{padding:14px}
+  .pt{font-size:26px}
+  .grid.g4{grid-template-columns:1fr 1fr}
+  .grid.g3{grid-template-columns:1fr 1fr}
+  .grid.g2{grid-template-columns:1fr}
+  .fg.g4{grid-template-columns:1fr 1fr}
+  .fg.g3{grid-template-columns:1fr 1fr}
+  .fg.g2{grid-template-columns:1fr}
+  .ph{flex-direction:column;gap:12px}
+  .ph .fx{flex-wrap:wrap}
+  .modal{padding:18px;margin-top:0}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .hide-mobile{display:none}
+  .sv{font-size:24px}
+  .card{padding:14px}
+  .global-search input{width:160px}
+  .global-search input:focus{width:200px}
+  .search-results{width:280px;right:0}
+  .mft{justify-content:stretch}
+  .mft .btn{flex:1;text-align:center}
+}
+@media(max-width:480px){
+  .grid.g4{grid-template-columns:1fr 1fr}
+  .grid.g3{grid-template-columns:1fr}
+  .fg.g4{grid-template-columns:1fr}
+  .fg.g3{grid-template-columns:1fr}
+  .btn{padding:12px 16px;font-size:13px}
+  .tbl th,.tbl td{padding:10px 8px;font-size:13px}
+}
+
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fi .2s ease}
 </style></head><body>
 <nav id="nav">
   <div><div class="logo">◈ M&A INVERSIONES</div><div class="sub">Gestión de Inversiones</div></div>
-  <div class="navlinks" id="navlinks"></div>
+  <div class="fx g8" style="align-items:center">
+    <div class="global-search" style="position:relative">
+      <span>⌕</span>
+      <input id="gsrch" placeholder="Buscar todo..." autocomplete="off"
+        oninput="S.globalSrch=this.value;S.showSearch=true;renderSearchDrop()"
+        onfocus="S.showSearch=true;renderSearchDrop()"
+        onblur="setTimeout(()=>{S.showSearch=false;document.getElementById('sdrop').innerHTML=''},200)">
+      <div id="sdrop"></div>
+    </div>
+    <div class="navlinks" id="navlinks"></div>
+    <button class="hamburger" onclick="toggleMobileMenu()">≡</button>
+  </div>
 </nav>
+<div class="mobile-menu" id="mobile-menu"></div>
 <div id="app"></div>
 <div id="toast"></div>
 <div id="ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;overflow-y:auto;padding:14px;flex-direction:column;align-items:center" onclick="if(event.target===this)cerrar()"></div>
@@ -130,7 +235,7 @@ function calcCh(m,td,d,ip,ga){
 }
 
 const S={
-  scr:'dash',srch:'',opsTab:'prestamo',
+  scr:'dash',srch:'',opsTab:'prestamo',globalSrch:'',showSearch:false,
   cfg:{
     tasas:[
       {id:1,type:'prestamo',label:'Préstamo Personal',rate:5,color:'#3b82f6'},
@@ -211,8 +316,19 @@ function toast(m,t='ok'){
 const PAGES=[['dash','Panel'],['ops','Operaciones'],['clientes','Clientes'],['cajas','Cajas'],['sim','Simulador'],['rep','Reportes'],['cfg','Config']];
 function buildNav(){
   document.getElementById('navlinks').innerHTML=PAGES.map(([p,l])=>`<button class="nb ${S.scr===p?'on':''}" onclick="go('${p}')">${l}</button>`).join('');
+  // mobile menu
+  let mm=document.getElementById('mobile-menu');
+  if(mm) mm.innerHTML=PAGES.map(([p,l])=>`<button class="nb ${S.scr===p?'on':''}" onclick="go('${p}');closeMobileMenu()">${l}</button>`).join('');
 }
-function go(s){S.scr=s;S.srch='';buildNav();render();}
+function go(s){S.scr=s;S.srch='';S.showSearch=false;buildNav();render();}
+function toggleMobileMenu(){
+  const mm=document.getElementById('mobile-menu');
+  if(mm)mm.classList.toggle('open');
+}
+function closeMobileMenu(){
+  const mm=document.getElementById('mobile-menu');
+  if(mm)mm.classList.remove('open');
+}
 
 function cerrar(){
   const o=document.getElementById('ov');
@@ -334,6 +450,7 @@ function rDash(){
   ${vcs.length?`<div class="al al-r">⚠ ${vcs.length} cuota${vcs.length>1?'s':''} vencida — ${fmt(vcs.reduce((a,c)=>a+c.monto,0))} <button class="btn bxs bd" style="margin-left:auto" onclick="go('ops')">Ver →</button></div>`:''}
   ${prx.length?`<div class="al al-a">🕐 ${prx.length} cuota${prx.length>1?'s':''} vence en 15 días — ${fmt(prx.reduce((a,c)=>a+c.monto,0))} <button class="btn bxs bo" style="margin-left:auto" onclick="go('ops')">Ver →</button></div>`:''}
   ${chv.length?`<div class="al al-a">📋 ${chv.length} cheque${chv.length>1?'s':''} vence en 7 días <button class="btn bxs bo" style="margin-left:auto" onclick="go('cheques')">Ver →</button></div>`:''}
+  ${rResumenDia()}
   <div class="grid g4 mb12">
     <div class="card"><div class="sv">${fmt(cap)}</div><div class="sl">Capital colocado</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${act.length} activas</div></div>
     <div class="card"><div class="sv">${fmt(sldo)}</div><div class="sl">Saldo por cobrar</div></div>
@@ -639,7 +756,20 @@ function simT(t){document.getElementById('sw-c').style.display=t==='c'?'block':'
 function simC(){const c=parseFloat(document.getElementById('sc-c')?.value||0),r=parseFloat(document.getElementById('sc-r')?.value||0),p=parseInt(document.getElementById('sc-p')?.value||1),g=parseFloat(document.getElementById('sc-g')?.value||0);const el=document.getElementById('sc-res');if(!el)return;if(!c||!r){el.innerHTML=`<div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div></div>`;return;}const{it,tp,cuota}=calcC(c,r,p);el.innerHTML=`<div style="width:100%"><div class="stl">Sistema Directo</div><div class="pvbox" style="margin:0"><div class="pvr"><span class="lk">Capital</span><span class="tg">${fmt(c)}</span></div><div class="pvr"><span class="lk">${r}%×${p}m</span><span>${(r*p).toFixed(1)}% total</span></div><div class="pvr"><span class="lk">Interés total</span><span class="tr">${fmt(it)}</span></div>${g?`<div class="pvr"><span class="lk">Gastos admin</span><span class="ta">-${fmt(g)}</span></div>`:''}<div class="pvr"><span class="lk">Neto al cliente</span><span class="tgr">${fmt(c-g)}</span></div><div class="pvr"><span class="lk">Total a cobrar</span><span>${fmt(tp)}</span></div><div class="pvr"><span class="lk">Cuota mensual</span><span class="tg" style="font-size:17px">${fmt(cuota)}</span></div></div></div>`;}
 function simCh(){const m=parseFloat(document.getElementById('sch-m')?.value||0),t=parseFloat(document.getElementById('sch-t')?.value||0),i=parseFloat(document.getElementById('sch-i')?.value||0),g=parseFloat(document.getElementById('sch-g')?.value||0);const d1=document.getElementById('sch-d')?.value,d2=document.getElementById('sch-v')?.value,dm=parseInt(document.getElementById('sch-ds')?.value||0);const d=dm||(d1&&d2?dds(d2,d1):0);const el=document.getElementById('sch-res');if(!el)return;if(!m||!t||!d){el.innerHTML=`<div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div></div>`;return;}const r=calcCh(m,t,d,i,g);el.innerHTML=`<div style="width:100%"><div class="stl">Descuento Diario</div><div class="pvbox" style="margin:0"><div class="pvr"><span class="lk">Valor nominal</span><span class="tg">${fmt(m)}</span></div><div class="pvr"><span class="lk">${t}%×${d}d</span><span>${(t*d).toFixed(2)}% total</span></div><div class="pvr"><span class="lk">Interés</span><span class="tr">-${fmt(r.interes)}</span></div><div class="pvr"><span class="lk">Impuesto (${i}%)</span><span class="ta">-${fmt(r.impuesto)}</span></div>${g?`<div class="pvr"><span class="lk">Gastos admin</span><span style="color:var(--tx3)">-${fmt(r.gastos)}</span></div>`:''}<div class="pvr"><span class="lk">Neto a entregar</span><span class="tgr" style="font-size:17px">${fmt(r.neto)}</span></div><div class="pvr"><span class="lk">Ganancia</span><span class="tg">${fmt(r.ganancia)}</span></div></div></div>`;}
 
-function rCfg(){return`<div class="ph"><div class="pt">Configuración</div></div><div class="grid g2"><div class="card"><div class="stl">Tasas predefinidas</div>${S.cfg.tasas.map(r=>`<div class="fb" style="padding:8px 0;border-bottom:1px solid var(--br);align-items:center"><div><div style="font-size:15px">${r.label}</div><div style="font-size:14px;color:var(--tx4)">${r.type==='descuento'?'DIARIA':'MENSUAL'}</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${r.rate}" style="width:75px;text-align:center" onchange="S.cfg.tasas=S.cfg.tasas.map(t=>t.id===${r.id}?{...t,rate:parseFloat(this.value)||t.rate}:t);toast('Tasa actualizada')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div>`).join('')}<div class="fb mt12" style="align-items:center"><div><div style="font-size:15px">Impuesto al cheque</div><div style="font-size:14px;color:var(--tx4)">% sobre nominal</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${S.cfg.impCh}" style="width:75px;text-align:center" onchange="S.cfg.impCh=parseFloat(this.value)||1.2;toast('Actualizado')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div></div><div class="card"><div class="stl">Cajas</div>${S.cajas.map(c=>`<div class="fb" style="padding:7px 0;border-bottom:1px solid var(--br)"><div class="fx g8" style="align-items:center"><span style="color:${c.color}">${c.icon}</span><div><div style="font-size:15px">${c.name}</div><div style="font-size:14px;color:var(--tx4)">${c.type}·${c.currency}</div></div></div><div class="serif" style="font-size:14px;color:${c.color}">${c.currency==='USD'?'US$ '+c.balance.toLocaleString('es-AR'):fmt(c.balance)}</div></div>`).join('')}<button class="btn bo wf mt8" onclick="abrirModal('nuevaCaja')">+ Agregar caja</button></div></div>${rCfgPin()}
+function rCfg(){return`<div class="ph"><div class="pt">Configuración</div></div><div class="grid g2"><div class="card"><div class="stl">Tasas predefinidas</div>${S.cfg.tasas.map(r=>`<div class="fb" style="padding:8px 0;border-bottom:1px solid var(--br);align-items:center"><div><div style="font-size:15px">${r.label}</div><div style="font-size:14px;color:var(--tx4)">${r.type==='descuento'?'DIARIA':'MENSUAL'}</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${r.rate}" style="width:75px;text-align:center" onchange="S.cfg.tasas=S.cfg.tasas.map(t=>t.id===${r.id}?{...t,rate:parseFloat(this.value)||t.rate}:t);toast('Tasa actualizada')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div>`).join('')}<div class="fb mt12" style="align-items:center"><div><div style="font-size:15px">Impuesto al cheque</div><div style="font-size:14px;color:var(--tx4)">% sobre nominal</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${S.cfg.impCh}" style="width:75px;text-align:center" onchange="S.cfg.impCh=parseFloat(this.value)||1.2;toast('Actualizado')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div></div><div class="card"><div class="stl">Cajas</div>${S.cajas.map(c=>`<div class="fb" style="padding:7px 0;border-bottom:1px solid var(--br)"><div class="fx g8" style="align-items:center"><span style="color:${c.color}">${c.icon}</span><div><div style="font-size:15px">${c.name}</div><div style="font-size:14px;color:var(--tx4)">${c.type}·${c.currency}</div></div></div><div class="serif" style="font-size:14px;color:${c.color}">${c.currency==='USD'?'US$ '+c.balance.toLocaleString('es-AR'):fmt(c.balance)}</div></div>`).join('')}<button class="btn bo wf mt8" onclick="abrirModal('nuevaCaja')">+ Agregar caja</button></div></div><div class="card mt16">
+    <div class="stl">Seguridad — PIN y auto-bloqueo</div>
+    <div style="font-size:13px;color:var(--tx3);margin-bottom:14px">
+      ${getPin()?'✓ PIN configurado — la app se bloquea tras 2 min. de inactividad':'Sin PIN configurado. La app abre directo.'}
+    </div>
+    <div class="fg g2">
+      <div><label class="lb">Nuevo PIN (4 dígitos)</label><input id="pin-new" type="password" maxlength="4" placeholder="••••" style="letter-spacing:8px;font-size:20px;text-align:center"></div>
+      <div><label class="lb">Confirmar PIN</label><input id="pin-conf" type="password" maxlength="4" placeholder="••••" style="letter-spacing:8px;font-size:20px;text-align:center"></div>
+    </div>
+    <div class="fx g8 mt12">
+      <button class="btn bg" onclick="guardarPin()">Guardar PIN</button>
+      ${getPin()?`<button class="btn bd" onclick="if(confirm('¿Eliminar PIN?')){localStorage.removeItem('ma_pin');toast('PIN eliminado');render()}">Eliminar PIN</button>`:''}
+    </div>
+  </div>
   <div class="card mt16">
     <div class="stl">Datos y backups</div>
     <div style="font-size:15px;color:var(--tx3);margin-bottom:12px">Datos guardados en Supabase en tiempo real. Backup automatico cada 1 hora.</div>
@@ -906,7 +1036,7 @@ function abrirOp(id){
       <td><button onclick="toggleCuota(${id},${c.num})" style="background:${c.paga?'var(--gn)22':'none'};border:1px solid ${c.paga?'var(--gn)':vc2?'var(--rd)':'var(--br2)'};color:${c.paga?'var(--gn)':vc2?'var(--rd)':'var(--tx4)'};padding:2px 9px;cursor:pointer;font-family:inherit;font-size:14px;letter-spacing:1px">${c.paga?'✓ PAGA':vc2?'VENCIDA':'PENDIENTE'}</button>${c.paga?`<button onclick="generarRecibo(${id},${c.num})" style="background:none;border:1px solid var(--br2);color:var(--tx3);padding:2px 7px;cursor:pointer;font-family:inherit;font-size:14px;margin-left:4px" title="Imprimir recibo">🧾</button>`:''}</td>
     </tr>`;}).join('')}</tbody></table>
   </div></div>
-  <div class="mft"><button class="btn bsm bd" onclick="if(confirm('¿Cancelar?')){S.ops=S.ops.map(o=>o.id===${id}?{...o,status:'cancelado'}:o);cerrar();toast('Cancelada');render()}">Cancelar op.</button><button class="btn bo" onclick="cerrar()">Cerrar</button></div>
+  <div class="mft"><button class="btn bsm bd" onclick="if(confirm('¿Cancelar?')){S.ops=S.ops.map(o=>o.id===${id}?{...o,status:'cancelado'}:o);cerrar();toast('Cancelada');render()}">Cancelar op.</button><button class="btn bsm bo" onclick="cerrar();setTimeout(()=>abrirEditarOp(${id}),80)">✏ Editar</button><button class="btn bo" onclick="cerrar()">Cerrar</button></div>
   </div>`);
 }
 function opT(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['op-d','op-v','op-q'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';});}
@@ -986,7 +1116,7 @@ function abrirCheque(id){
         '<div style="color:var(--tx4);font-size:15px;text-align:center;padding:30px 0;border:1px dashed var(--br2)">Sin foto</div>'}</div>
     </div>
   </div>
-  <div class="mft"><button class="btn bo" onclick="cerrar()">Cerrar</button></div>
+  <div class="mft"><button class="btn bsm bo" onclick="cerrar();setTimeout(()=>abrirEditarCliente(${id}),80)">✏ Editar cliente</button><button class="btn bo" onclick="cerrar()">Cerrar</button></div>
   </div>`);
 }
 function chkT(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['ck-d','ck-t','ck-dst','ck-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';});}
@@ -1079,52 +1209,6 @@ function expPdf(title,sections){
   <script>window.onload=()=>window.print()<\/script></body></html>`);
   w.document.close();
 }
-// ═══ PIN DE ACCESO ═══
-const PIN_KEY = 'fin_pin';
-function getPin(){ return localStorage.getItem(PIN_KEY)||null; }
-function setPin(p){ localStorage.setItem(PIN_KEY,p); }
-
-function checkPin(){
-  const pin=getPin();
-  if(!pin) return; // sin PIN configurado, pasa directo
-  const wrap=document.getElementById('wrap')||document.body;
-  const lock=document.createElement('div');
-  lock.id='lockscreen';
-  lock.style='position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px';
-  lock.innerHTML=`
-    <div style="font-family:Georgia,serif;font-size:22px;letter-spacing:4px;color:#d4a847">◈ FINANCIERA PRO</div>
-    <div style="font-size:15px;letter-spacing:4px;color:#3a3a4a;text-transform:uppercase">Ingresá tu PIN</div>
-    <div id="pin-dots" style="display:flex;gap:12px;margin:8px 0">
-      ${[0,1,2,3].map(i=>`<div id="dot${i}" style="width:12px;height:12px;border-radius:50%;border:1px solid #2a2a3e;background:#09090f"></div>`).join('')}
-    </div>
-    <div id="pin-error" style="font-size:14px;color:#ef4444;min-height:16px"></div>
-    <div style="display:grid;grid-template-columns:repeat(3,64px);gap:10px">
-      ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`<button onclick="pinPress('${k}')" style="background:#0d0d16;border:1px solid #1e1e2e;color:#e8e0d0;font-family:inherit;font-size:18px;padding:16px;cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='#d4a847'" onmouseout="this.style.borderColor='#1e1e2e'">${k}</button>`).join('')}
-    </div>`;
-  document.body.appendChild(lock);
-}
-
-let pinBuffer='';
-function pinPress(k){
-  if(k==='')return;
-  if(k==='⌫'){pinBuffer=pinBuffer.slice(0,-1);}
-  else if(pinBuffer.length<4){pinBuffer+=k;}
-  [0,1,2,3].forEach(i=>{
-    const d=document.getElementById('dot'+i);
-    if(d)d.style.background=i<pinBuffer.length?'#d4a847':'#09090f';
-  });
-  if(pinBuffer.length===4){
-    if(pinBuffer===getPin()){
-      document.getElementById('lockscreen')?.remove();
-      pinBuffer='';
-      logAcceso('Acceso correcto');
-    } else {
-      document.getElementById('pin-error').textContent='PIN incorrecto';
-      setTimeout(()=>{pinBuffer='';[0,1,2,3].forEach(i=>{const d=document.getElementById('dot'+i);if(d)d.style.background='#09090f';});document.getElementById('pin-error').textContent='';},900);
-    }
-  }
-}
-
 // ═══ LOG DE ACCESOS Y MOVIMIENTOS ═══
 const LOG_KEY='fin_log';
 function getLogs(){try{return JSON.parse(localStorage.getItem(LOG_KEY)||'[]');}catch{return[];}}
@@ -1291,29 +1375,6 @@ function rReportes(){
 }
 
 // ═══ CONFIG PIN (en pantalla config) ═══
-function rCfgPin(){
-  const pinActual=getPin();
-  return`<div class="card mt16">
-    <div class="stl">Seguridad — PIN de acceso</div>
-    <div style="font-size:15px;color:var(--tx3);margin-bottom:12px">
-      ${pinActual?'✓ PIN configurado. Podés cambiarlo o eliminarlo.':'Sin PIN configurado. La app abre directo.'}
-    </div>
-    <div class="fg g2">
-      <div><label class="lb">Nuevo PIN (4 dígitos)</label><input id="pin-new" type="password" maxlength="4" placeholder="••••" style="letter-spacing:6px;font-size:16px"></div>
-      <div><label class="lb">Confirmar PIN</label><input id="pin-conf" type="password" maxlength="4" placeholder="••••" style="letter-spacing:6px;font-size:16px"></div>
-    </div>
-    <div class="fx g8 mt12">
-      <button class="btn bg" onclick="guardarPin()">Guardar PIN</button>
-      ${pinActual?`<button class="btn bd" onclick="if(confirm('¿Eliminar PIN?')){localStorage.removeItem('${PIN_KEY}');toast('PIN eliminado');render()}">Eliminar PIN</button>`:''}
-    </div>
-  </div>`;
-}
-function guardarPin(){
-  const n=document.getElementById('pin-new')?.value, c=document.getElementById('pin-conf')?.value;
-  if(!n||n.length!==4||!/^\d{4}$/.test(n))return toast('El PIN debe ser 4 dígitos numéricos','err');
-  if(n!==c)return toast('Los PINs no coinciden','err');
-  setPin(n); toast('PIN guardado correctamente'); render();
-}
 
 // ═══ CONTRATO PDF ═══
 function generarContrato(opId){
@@ -1990,5 +2051,405 @@ function instalarApp(){
     toast('Para instalar: menú del navegador → "Agregar a pantalla de inicio"');
   }
 }
-installPWA();registerSW();loadFromDB();
+// ═══ BÚSQUEDA GLOBAL ═══
+function globalSearch(q){
+  if(!q||q.length<2) return [];
+  const ql=q.toLowerCase();
+  const results=[];
+
+  // Clientes
+  S.clientes.filter(c=>c.name.toLowerCase().includes(ql)||c.dni.includes(ql)||c.phone.includes(ql)).forEach(c=>{
+    results.push({tipo:'cliente',icon:'👤',label:c.name,sub:`DNI ${c.dni}`,action:`abrirCliente(${c.id})`});
+  });
+
+  // Operaciones
+  S.ops.filter(o=>cN(o.clienteId).toLowerCase().includes(ql)||o.desc.toLowerCase().includes(ql)||tL(o.tipo).toLowerCase().includes(ql)).forEach(o=>{
+    results.push({tipo:'operacion',icon:'💰',label:`${cN(o.clienteId)} — ${tL(o.tipo)}`,sub:`${fmt(o.capital)} · ${o.tasa}% mens.`,action:`abrirOp(${o.id})`});
+  });
+
+  // Cheques
+  S.cheques.filter(c=>c.numero.includes(ql)||c.banco.toLowerCase().includes(ql)||cN(c.clienteId).toLowerCase().includes(ql)).forEach(c=>{
+    results.push({tipo:'cheque',icon:'📋',label:`Cheque ${c.numero} — ${c.banco}`,sub:`${cN(c.clienteId)} · ${fmt(c.monto)}`,action:`abrirCheque(${c.id})`});
+  });
+
+  // Cajas
+  S.cajas.filter(c=>c.name.toLowerCase().includes(ql)).forEach(c=>{
+    results.push({tipo:'caja',icon:'🏦',label:c.name,sub:`${fmt(c.balance)} · ${c.currency}`,action:`abrirCaja(${c.id})`});
+  });
+
+  return results.slice(0,12);
+}
+
+function renderGlobalSearch(){
+  const q=S.globalSrch;
+  if(!q||q.length<2) return '';
+  const results=globalSearch(q);
+  if(!results.length) return `<div class="search-results"><div style="padding:16px;color:var(--tx4);font-size:13px;text-align:center">Sin resultados para "${q}"</div></div>`;
+
+  const byTipo={};
+  results.forEach(r=>{if(!byTipo[r.tipo])byTipo[r.tipo]=[];byTipo[r.tipo].push(r);});
+  const tipoLabel={cliente:'Clientes',operacion:'Operaciones',cheque:'Cheques',caja:'Cajas'};
+
+  return `<div class="search-results">
+    ${Object.entries(byTipo).map(([tipo,items])=>`
+      <div class="sr-cat">${tipoLabel[tipo]||tipo}</div>
+      ${items.map(r=>`<div class="sr-item" onclick="${r.action};S.globalSrch='';S.showSearch=false;document.getElementById('gsrch')?.blur();render()">
+        <div style="font-size:14px">${r.icon} ${r.label}</div>
+        <div style="font-size:11px;color:var(--tx4);margin-top:2px">${r.sub}</div>
+      </div>`).join('')}
+    `).join('')}
+  </div>`;
+}
+
+// ═══ EDITAR OPERACIÓN ═══
+function abrirEditarOp(id){
+  const op=S.ops.find(o=>o.id===id);if(!op)return;
+  const co=S.cajas.map(c=>`<option value="${c.id}" ${c.id===op.cajaId?'selected':''}>${c.name} (${fmt(c.balance)})</option>`).join('');
+  const cl=S.clientes.map(c=>`<option value="${c.id}" ${c.id===op.clienteId?'selected':''}>${c.name}</option>`).join('');
+
+  showOv(`<div class="modal">
+    <div class="mhd"><div class="mtt">Editar Operación</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>
+    <div class="fg g2">
+      <div><label class="lb">Cliente</label><select id="eo-cli">${cl}</select></div>
+      <div><label class="lb">Tipo</label>
+        <select id="eo-tipo" onchange="document.getElementById('eo-r').value=dR(this.value)">
+          <option value="prestamo" ${op.tipo==='prestamo'?'selected':''}>Préstamo Personal</option>
+          <option value="hipotecario" ${op.tipo==='hipotecario'?'selected':''}>Hipotecario</option>
+          <option value="prendario" ${op.tipo==='prendario'?'selected':''}>Prendario</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg g3 mt12">
+      <div><label class="lb">Tasa mensual %</label><input id="eo-r" type="number" step="0.1" value="${op.tasa}"></div>
+      <div><label class="lb">Caja</label><select id="eo-caja">${co}</select></div>
+      <div><label class="lb">Gastos admin $</label><input id="eo-ga" type="number" value="${op.gastosAdmin}"></div>
+    </div>
+    <div class="mt12"><label class="lb">Descripción</label><input id="eo-desc" value="${op.desc}"></div>
+    <div class="al al-a mt12">⚠ Solo se editan datos de referencia. Las cuotas ya generadas no cambian.</div>
+    <div class="mft">
+      <button class="btn bo" onclick="cerrar()">Cancelar</button>
+      <button class="btn bg" onclick="guardarEditarOp(${id})">Guardar cambios</button>
+    </div>
+  </div>`);
+}
+
+async function guardarEditarOp(id){
+  const op=S.ops.find(o=>o.id===id);if(!op)return;
+  op.clienteId=parseInt(document.getElementById('eo-cli')?.value)||op.clienteId;
+  op.tipo=document.getElementById('eo-tipo')?.value||op.tipo;
+  op.tasa=parseFloat(document.getElementById('eo-r')?.value)||op.tasa;
+  op.cajaId=parseInt(document.getElementById('eo-caja')?.value)||op.cajaId;
+  op.gastosAdmin=parseFloat(document.getElementById('eo-ga')?.value)||0;
+  op.desc=document.getElementById('eo-desc')?.value||op.desc;
+  op.neto=op.capital-op.gastosAdmin;
+  try{
+    await sbPatch('operaciones',id,{
+      cliente_id:op.clienteId,tipo:op.tipo,tasa:op.tasa,
+      caja_id:op.cajaId,gastos_admin:op.gastosAdmin,
+      neto:op.neto,descripcion:op.desc
+    });
+    saveLocalBackup();
+    cerrar();toast('Operación actualizada');render();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ═══ EDITAR CLIENTE ═══
+function abrirEditarCliente(id){
+  const cl=S.clientes.find(c=>c.id===id);if(!cl)return;
+  showOv(`<div class="modal">
+    <div class="mhd"><div class="mtt">Editar Cliente</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>
+    <div class="fg g2">
+      <div><label class="lb">Nombre *</label><input id="ec-n" value="${cl.name}"></div>
+      <div><label class="lb">DNI *</label><input id="ec-d" value="${cl.dni}"></div>
+    </div>
+    <div class="fg g2 mt12">
+      <div><label class="lb">Teléfono</label><input id="ec-p" value="${cl.phone||''}"></div>
+      <div><label class="lb">Email</label><input id="ec-e" value="${cl.email||''}"></div>
+    </div>
+    <div class="mt12"><label class="lb">Dirección</label><input id="ec-a" value="${cl.address||''}"></div>
+    <div class="mt12"><label class="lb">Calificación</label>
+      <select id="ec-s">
+        <option value="bueno" ${cl.score==='bueno'?'selected':''}>Bueno</option>
+        <option value="regular" ${cl.score==='regular'?'selected':''}>Regular</option>
+        <option value="moroso" ${cl.score==='moroso'?'selected':''}>Moroso</option>
+      </select>
+    </div>
+    <div class="mft">
+      <button class="btn bo" onclick="cerrar()">Cancelar</button>
+      <button class="btn bg" onclick="guardarEditarCliente(${id})">Guardar cambios</button>
+    </div>
+  </div>`);
+}
+
+async function guardarEditarCliente(id){
+  const name=document.getElementById('ec-n')?.value.trim(),dni=document.getElementById('ec-d')?.value.trim();
+  if(!name||!dni)return toast('Nombre y DNI requeridos','err');
+  const upd={name,dni,phone:document.getElementById('ec-p')?.value||'',email:document.getElementById('ec-e')?.value||'',address:document.getElementById('ec-a')?.value||'',score:document.getElementById('ec-s')?.value||'bueno'};
+  try{
+    await sbPatch('clientes',id,upd);
+    S.clientes=S.clientes.map(c=>c.id===id?{...c,...upd}:c);
+    saveLocalBackup();cerrar();toast('Cliente actualizado');render();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ═══ RESUMEN DEL DÍA ═══
+function rResumenDia(){
+  const hoyStr=hoy();
+  const vcs=S.ops.filter(o=>o.status==='activo').flatMap(o=>o.cuotas.filter(c=>!c.paga&&new Date(c.vto)<=new Date()));
+  const chHoy=S.cheques.filter(c=>c.estado==='en_cartera'&&c.vencimiento===hoyStr);
+  const cobradoHoy=S.movs.filter(m=>m.fecha===hoyStr&&m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
+  const gastadoHoy=S.movs.filter(m=>m.fecha===hoyStr&&m.tipo==='egreso').reduce((a,m)=>a+m.monto,0);
+
+  if(!vcs.length&&!chHoy.length&&!cobradoHoy&&!gastadoHoy) return '';
+
+  return `<div class="card mb16" style="border-left:3px solid var(--go)">
+    <div class="stl">Resumen de hoy — ${new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})}</div>
+    <div class="grid g4">
+      <div><div class="sv tgr">${fmt(cobradoHoy)}</div><div class="sl">Cobrado hoy</div></div>
+      <div><div class="sv tr">${fmt(gastadoHoy)}</div><div class="sl">Entregado hoy</div></div>
+      <div><div class="sv ${vcs.length?'tr':'tgr'}">${vcs.length}</div><div class="sl">Cuotas vencidas</div></div>
+      <div><div class="sv ${chHoy.length?'ta':'tgr'}">${chHoy.length}</div><div class="sl">Cheques vencen hoy</div></div>
+    </div>
+  </div>`;
+}
+// ═══ CONFIGURACIÓN DE SEGURIDAD ═══
+const SEC = {
+  PIN_KEY: 'ma_pin',
+  TIMEOUT: 2 * 60 * 1000, // 2 minutos
+  lastActivity: Date.now(),
+  locked: true,
+  timer: null,
+};
+
+function getPin(){ return localStorage.getItem(SEC.PIN_KEY)||null; }
+function setPin(p){ localStorage.setItem(SEC.PIN_KEY, p); }
+
+// Reiniciar timer de inactividad
+function resetTimer(){
+  SEC.lastActivity = Date.now();
+  if(SEC.timer) clearTimeout(SEC.timer);
+  if(getPin()){
+    SEC.timer = setTimeout(()=>{
+      autoLock();
+    }, SEC.TIMEOUT);
+  }
+}
+
+// Detectar actividad del usuario
+['click','touchstart','keydown','scroll','mousemove'].forEach(ev=>{
+  document.addEventListener(ev, resetTimer, {passive:true});
+});
+
+function autoLock(){
+  if(!getPin()) return;
+  SEC.locked = true;
+  showLockScreen('La sesión expiró por inactividad');
+}
+
+// ═══ PANTALLA DE BIENVENIDA + PIN ═══
+function showSplash(){
+  const pin = getPin();
+  const wrap = document.createElement('div');
+  wrap.id = 'splash';
+  wrap.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0';
+
+  wrap.innerHTML = `
+    <!-- LOGO M&A -->
+    <div style="margin-bottom:32px">
+      ${LOGO_SVG}
+    </div>
+
+    ${pin ? renderPinPad('') : renderNoPinMsg()}
+  `;
+  document.body.appendChild(wrap);
+}
+
+const LOGO_SVG = `
+<svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1508"/>
+      <stop offset="100%" stop-color="#09090f"/>
+    </radialGradient>
+    <radialGradient id="gold-grad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f0c84a"/>
+      <stop offset="50%" stop-color="#d4a847"/>
+      <stop offset="100%" stop-color="#7a5c0e"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Círculo exterior -->
+  <circle cx="110" cy="110" r="106" fill="url(#bg-grad)" stroke="#2a2210" stroke-width="1.5"/>
+  <!-- Círculo decorativo interno -->
+  <circle cx="110" cy="110" r="95" fill="none" stroke="#d4a847" stroke-width="0.5" opacity="0.4"/>
+  <circle cx="110" cy="110" r="88" fill="none" stroke="#d4a847" stroke-width="0.3" opacity="0.2"/>
+  <!-- Líneas decorativas diagonales -->
+  <line x1="25" y1="110" x2="50" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
+  <line x1="170" y1="110" x2="195" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
+  <line x1="110" y1="25" x2="110" y2="50" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
+  <line x1="110" y1="170" x2="110" y2="195" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
+  <!-- Puntos en las esquinas -->
+  <circle cx="47" cy="47" r="2" fill="#d4a847" opacity="0.5"/>
+  <circle cx="173" cy="47" r="2" fill="#d4a847" opacity="0.5"/>
+  <circle cx="47" cy="173" r="2" fill="#d4a847" opacity="0.5"/>
+  <circle cx="173" cy="173" r="2" fill="#d4a847" opacity="0.5"/>
+  <!-- Texto M&A grande -->
+  <text x="110" y="118" font-family="Georgia, serif" font-size="64" font-weight="700"
+    fill="url(#gold-grad)" text-anchor="middle" filter="url(#glow)" letter-spacing="2">M&amp;A</text>
+  <!-- Línea separadora -->
+  <line x1="52" y1="132" x2="168" y2="132" stroke="#d4a847" stroke-width="0.8" opacity="0.6"/>
+  <!-- Subtítulo -->
+  <text x="110" y="152" font-family="'Courier Prime', monospace" font-size="13" fill="#d4a847"
+    text-anchor="middle" letter-spacing="6" opacity="0.9">INVERSIONES</text>
+  <!-- Pequeño rombo decorativo abajo -->
+  <polygon points="110,168 114,172 110,176 106,172" fill="#d4a847" opacity="0.5"/>
+</svg>`;
+
+function renderPinPad(msg){
+  return `
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+    <div style="font-size:11px;letter-spacing:4px;color:#555;text-transform:uppercase">Ingresá tu PIN</div>
+    <div id="pin-dots" style="display:flex;gap:14px;margin:4px 0">
+      ${[0,1,2,3].map(i=>`<div id="dot${i}" style="width:14px;height:14px;border-radius:50%;border:1.5px solid #2a2a3e;background:#09090f;transition:.15s"></div>`).join('')}
+    </div>
+    <div id="pin-msg" style="font-size:11px;color:#ef4444;min-height:16px;letter-spacing:1px">${msg||''}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px">
+      ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`
+        <button onclick="pinPress('${k}')"
+          style="background:#0d0d16;border:1px solid #1e1e2e;color:${k===''?'transparent':'#e8e0d0'};
+          font-family:'Courier Prime',monospace;font-size:22px;padding:18px;cursor:pointer;
+          transition:.15s;border-radius:2px;${k===''?'pointer-events:none':''}"
+          onmouseover="if('${k}'!='')this.style.borderColor='#d4a847';this.style.background='#14141e'"
+          onmouseout="this.style.borderColor='#1e1e2e';this.style.background='#0d0d16'">
+          ${k}
+        </button>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderNoPinMsg(){
+  return `
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:8px">
+    <div style="font-size:11px;letter-spacing:3px;color:#555;text-transform:uppercase">Sin PIN configurado</div>
+    <button onclick="entrarSinPin()"
+      style="background:linear-gradient(135deg,#7a5c0e,#d4a847);color:#000;border:none;
+      padding:14px 40px;font-family:'Courier Prime',monospace;font-size:13px;
+      letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:700;border-radius:2px">
+      Entrar →
+    </button>
+    <div style="font-size:10px;color:#333;letter-spacing:1px">Podés configurar un PIN en Ajustes</div>
+  </div>`;
+}
+
+function entrarSinPin(){
+  document.getElementById('splash')?.remove();
+  SEC.locked = false;
+  resetTimer();
+}
+
+let pinBuffer = '';
+function pinPress(k){
+  if(k==='') return;
+  if(k==='⌫'){
+    pinBuffer = pinBuffer.slice(0,-1);
+  } else if(pinBuffer.length < 4){
+    pinBuffer += k;
+  }
+  // Actualizar dots
+  [0,1,2,3].forEach(i=>{
+    const d = document.getElementById('dot'+i);
+    if(d){
+      d.style.background = i < pinBuffer.length ? '#d4a847' : '#09090f';
+      d.style.borderColor = i < pinBuffer.length ? '#d4a847' : '#2a2a3e';
+    }
+  });
+  if(pinBuffer.length === 4){
+    const pin = getPin();
+    if(!pin){
+      // Primera vez configurando PIN desde splash (no debería pasar)
+      entrarSinPin();
+    } else if(pinBuffer === pin){
+      document.getElementById('splash')?.remove();
+      SEC.locked = false;
+      pinBuffer = '';
+      resetTimer();
+      addLog('acceso', 'PIN correcto — acceso concedido');
+    } else {
+      // PIN incorrecto
+      const msg = document.getElementById('pin-msg');
+      if(msg) msg.textContent = 'PIN incorrecto, intentá de nuevo';
+      // Vibrar dots
+      [0,1,2,3].forEach(i=>{
+        const d = document.getElementById('dot'+i);
+        if(d){ d.style.background = '#ef4444'; d.style.borderColor = '#ef4444'; }
+      });
+      setTimeout(()=>{
+        pinBuffer = '';
+        [0,1,2,3].forEach(i=>{
+          const d = document.getElementById('dot'+i);
+          if(d){ d.style.background = '#09090f'; d.style.borderColor = '#2a2a3e'; }
+        });
+        if(msg) msg.textContent = '';
+      }, 800);
+      addLog('acceso', 'PIN incorrecto — intento fallido');
+    }
+  }
+}
+
+// ═══ AUTO-LOCK ═══
+function showLockScreen(msg){
+  // Quitar splash anterior si hay
+  document.getElementById('splash')?.remove();
+  pinBuffer = '';
+  const wrap = document.createElement('div');
+  wrap.id = 'splash';
+  wrap.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0';
+  wrap.innerHTML = `
+    <div style="margin-bottom:32px">${LOGO_SVG}</div>
+    <div style="font-size:11px;letter-spacing:3px;color:#555;text-transform:uppercase;margin-bottom:20px">${msg||'Sesión bloqueada'}</div>
+    ${renderPinPad('')}
+  `;
+  document.body.appendChild(wrap);
+}
+
+// ═══ INICIALIZAR ═══
+function initSecurity(){
+  showSplash();
+  resetTimer();
+}
+
+// ═══ GUARDAR PIN DESDE CONFIG ═══
+function guardarPin(){
+  const n = document.getElementById('pin-new')?.value;
+  const c = document.getElementById('pin-conf')?.value;
+  if(!n || n.length !== 4 || !/^\d{4}$/.test(n)) return toast('El PIN debe ser 4 dígitos numéricos','err');
+  if(n !== c) return toast('Los PINs no coinciden','err');
+  setPin(n);
+  // Activar auto-lock
+  resetTimer();
+  toast('PIN guardado. Se bloqueará tras 2 min. de inactividad');
+  render();
+}
+function renderSearchDrop(){
+  const el=document.getElementById('sdrop');
+  if(!el)return;
+  el.innerHTML=S.showSearch&&S.globalSrch.length>=2?renderGlobalSearch():'';
+}
+
+// Arrancar app — primero seguridad, luego DB
+function startApp(){
+  installPWA();
+  registerSW();
+  initSecurity(); // muestra splash con logo
+  // Cargar DB en background
+  loadFromDB().then(()=>{
+    buildNav();
+    render();
+  });
+}
+
+startApp();
 </script></body></html>
