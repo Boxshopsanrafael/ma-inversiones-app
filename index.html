@@ -220,8 +220,31 @@ const SEC = {
   timer: null,
 };
 
-function getPin(){ return localStorage.getItem(SEC.PIN_KEY)||null; }
-function setPin(p){ localStorage.setItem(SEC.PIN_KEY, p); }
+// PIN se guarda en Supabase Y en localStorage para acceso offline
+// Siempre se pide el PIN si está configurado, sin importar el dispositivo
+function getPin(){ 
+  return localStorage.getItem(SEC.PIN_KEY) || null; 
+}
+function setPin(p){ 
+  localStorage.setItem(SEC.PIN_KEY, p);
+  // También guardar en Supabase para sincronizar entre dispositivos
+  if(typeof sbPatch !== 'undefined' && typeof S !== 'undefined'){
+    dbSaveConfig('pin_hash', p).catch(e=>console.log('pin sync error',e));
+  }
+}
+async function syncPinFromDB(){
+  try {
+    const rows = await sbGet('configuracion','clave=eq.pin_hash');
+    if(rows && rows.length && rows[0].valor && rows[0].valor !== 'null'){
+      const dbPin = typeof rows[0].valor === 'string' ? rows[0].valor.replace(/"/g,'') : rows[0].valor;
+      if(dbPin && dbPin !== 'null'){
+        localStorage.setItem(SEC.PIN_KEY, dbPin);
+        return dbPin;
+      }
+    }
+  } catch(e){ console.log('syncPin error',e); }
+  return localStorage.getItem(SEC.PIN_KEY);
+}
 
 // Reiniciar timer de inactividad
 function resetTimer(){
@@ -415,21 +438,37 @@ function showLockScreen(msg){
 }
 
 // ═══ INICIALIZAR ═══
-function initSecurity(){
-  showSplash();
+async function initSecurity(){
+  showSplash(); // Mostrar splash inmediatamente
+  // Sincronizar PIN desde Supabase (para que funcione en cualquier dispositivo)
+  try {
+    const pin = await syncPinFromDB();
+    // Refrescar splash con PIN actualizado
+    const splash = document.getElementById('splash');
+    if(splash && pin){
+      const pinContent = splash.querySelector('#pin-dots')?.closest('div[style]');
+      // Re-render con PIN actualizado
+    }
+  } catch(e){ console.log('initSecurity sync error',e); }
   resetTimer();
 }
 
 // ═══ GUARDAR PIN DESDE CONFIG ═══
-function guardarPin(){
+async function guardarPin(){
   const n = document.getElementById('pin-new')?.value;
   const c = document.getElementById('pin-conf')?.value;
   if(!n || n.length !== 4 || !/^\d{4}$/.test(n)) return toast('El PIN debe ser 4 dígitos numéricos','err');
   if(n !== c) return toast('Los PINs no coinciden','err');
-  setPin(n);
-  // Activar auto-lock
+  // Guardar local
+  localStorage.setItem(SEC.PIN_KEY, n);
+  // Guardar en Supabase para todos los dispositivos
+  try {
+    await dbSaveConfig('pin_hash', n);
+    toast('PIN guardado — funciona en todos los dispositivos');
+  } catch(e){
+    toast('PIN guardado localmente (sin conexión)');
+  }
   resetTimer();
-  toast('PIN guardado. Se bloqueará tras 2 min. de inactividad');
   render();
 }
 const fmt=n=>new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0}).format(n||0);
@@ -1057,7 +1096,22 @@ function mNuevaOp(){
   const co=S.cajas.map(c=>`<option value="${c.id}">${c.name} (${fmt(c.balance)})</option>`).join('');
   const cl=S.clientes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
   return`${mH('Nueva Operación')}
-    <div class="fg g2"><div><label class="lb">Cliente *</label><select id="fo-cli"><option value="">—</option>${cl}</select></div>
+    <div class="fg g2">
+      <div>
+        <label class="lb">Cliente *</label>
+        <select id="fo-cli" onchange="autoFillCliente()">
+          <option value="">— Seleccionar o escribir nuevo —</option>
+          ${cl}
+        </select>
+        <div id="fo-nuevo-cli" style="margin-top:6px;display:none">
+          <input id="fo-cli-nombre" placeholder="Nombre completo del cliente nuevo" style="margin-bottom:6px">
+          <div class="fg g2">
+            <input id="fo-cli-dni" placeholder="DNI (ej: 30.000.000)">
+            <input id="fo-cli-tel" placeholder="Teléfono">
+          </div>
+        </div>
+        <button class="btn bxs bo" style="margin-top:6px;font-size:9px" onclick="toggleNuevoCli()" id="fo-btn-nuevo">+ Crear cliente nuevo</button>
+      </div>
       <div><label class="lb">Tipo *</label><select id="fo-tipo" onchange="document.getElementById('fo-r').value=dR(this.value);toggleVeh()"><option value="prestamo">Préstamo Personal</option><option value="hipotecario">Hipotecario</option><option value="prendario">Prendario</option></select></div></div>
     <div class="fg g4 mt8"><div><label class="lb">Capital *</label><input id="fo-c" type="number" placeholder="0" oninput="prevOp()"></div>
       <div><label class="lb">Tasa mensual % *</label><input id="fo-r" type="number" step="0.1" value="${dR('prestamo')}" oninput="prevOp()"></div>
@@ -1179,7 +1233,13 @@ function mNuevoCheque(){
   return`${mH('Ingresar Cheque')}
     <div class="tabs"><button class="tab on" onclick="chTab(this,'ch-d')">Datos</button><button class="tab" onclick="chTab(this,'ch-t')">Titular/Endoso</button><button class="tab" onclick="chTab(this,'ch-dst')">Destino</button><button class="tab" onclick="chTab(this,'ch-f')">Foto</button></div>
     <div id="ch-d">
-      <div class="fg g2"><div><label class="lb">Cliente (quién lo trajo) *</label><select id="fch-cli"><option value="">—</option>${cl}</select></div><div><label class="lb">Número *</label><input id="fch-num" placeholder="00000000"></div></div>
+      <div class="fg g2">
+      <div>
+        <label class="lb">Cliente (quién lo trajo) *</label>
+        <select id="fch-cli" style="margin-bottom:4px"><option value="">— Seleccionar —</option>${cl}</select>
+        <input id="fch-cli-nombre" placeholder="O escribí nombre nuevo..." style="font-size:12px" oninput="if(this.value)document.getElementById('fch-cli').value=''">
+        <input id="fch-cli-dni" placeholder="DNI (opcional)" style="font-size:12px;margin-top:4px">
+      </div><div><label class="lb">Número *</label><input id="fch-num" placeholder="00000000"></div></div>
       <div class="fg g3 mt8"><div><label class="lb">Banco *</label><input id="fch-ban" placeholder="Banco Nación"></div><div><label class="lb">Valor nominal *</label><input id="fch-m" type="number" placeholder="0" oninput="prevCh()"></div><div><label class="lb">Tasa diaria %</label><input id="fch-t" type="number" step="0.01" value="${dR('descuento')}" oninput="prevCh()"></div></div>
       <div class="fg g3 mt8"><div><label class="lb">Fecha ingreso</label><input id="fch-d" type="date" value="${hoy()}" oninput="prevCh()"></div><div><label class="lb">Vencimiento *</label><input id="fch-v" type="date" oninput="prevCh()"></div><div><label class="lb">Días (auto)</label><input id="fch-ds" type="number" readonly style="color:var(--tx3)"></div></div>
       <div class="fg g3 mt8"><div><label class="lb">Impuesto %</label><input id="fch-i" type="number" step="0.01" value="${S.cfg.impCh}" oninput="prevCh()"></div><div><label class="lb">Gastos admin $</label><input id="fch-ga" type="number" value="0" oninput="prevCh()"></div><div></div></div>
@@ -1240,7 +1300,29 @@ function mNuevoCheque(){
   </div>`;
 }
 function chTab(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['ch-d','ch-t','ch-dst','ch-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';});}
-function cargaFoto(input,zoneId,hiddenId){const file=input.files[0];if(!file)return;const r=new FileReader();r.onload=e=>{const z=document.getElementById(zoneId),h=document.getElementById(hiddenId);if(z)z.innerHTML=`<img src="${e.target.result}" style="max-width:100%;max-height:150px;object-fit:contain">`;if(h)h.value=e.target.result;};r.readAsDataURL(file);}
+function cargaFoto(input,zoneId,hiddenId){
+  const file=input.files[0];if(!file)return;
+  const canvas=document.createElement('canvas');
+  const ctx=canvas.getContext('2d');
+  const img=new Image();
+  const reader=new FileReader();
+  reader.onload=e=>{
+    img.onload=()=>{
+      const maxW=800,maxH=600;
+      let w=img.width,h=img.height;
+      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+      canvas.width=w;canvas.height=h;
+      ctx.drawImage(img,0,0,w,h);
+      const comp=canvas.toDataURL('image/jpeg',0.7);
+      const z=document.getElementById(zoneId),hEl=document.getElementById(hiddenId);
+      if(z)z.innerHTML=`<img src="${comp}" style="max-width:100%;max-height:150px;object-fit:contain;border:1px solid var(--br)">`;
+      if(hEl)hEl.value=comp;
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 function prevCh(){
   const m=parseFloat(document.getElementById('fch-m')?.value||0),t=parseFloat(document.getElementById('fch-t')?.value||0),i=parseFloat(document.getElementById('fch-i')?.value||0),ga=parseFloat(document.getElementById('fch-ga')?.value||0);
   const d1=document.getElementById('fch-d')?.value,d2=document.getElementById('fch-v')?.value,dd=d1&&d2?dds(d2,d1):0;
@@ -1291,6 +1373,28 @@ function togglePagadoAhora(){
   const val = document.getElementById('fch-pagado')?.value;
   const sec = document.getElementById('dst-deuda-sec');
   if(sec) sec.style.display = val==='no' ? 'block' : 'none';
+}
+
+function toggleNuevoCli(){
+  const sec=document.getElementById('fo-nuevo-cli');
+  const btn=document.getElementById('fo-btn-nuevo');
+  const sel=document.getElementById('fo-cli');
+  if(!sec)return;
+  const show=sec.style.display==='none';
+  sec.style.display=show?'block':'none';
+  if(btn)btn.textContent=show?'× Cancelar':'+ Crear cliente nuevo';
+  if(show){sel.value='';sel.disabled=true;}
+  else{sel.disabled=false;}
+}
+
+function autoFillCliente(){
+  // si seleccionó un cliente, ocultar formulario de nuevo
+  const v=document.getElementById('fo-cli')?.value;
+  if(v){
+    document.getElementById('fo-nuevo-cli').style.display='none';
+    document.getElementById('fo-btn-nuevo').textContent='+ Crear cliente nuevo';
+    document.getElementById('fo-cli').disabled=false;
+  }
 }
 function cobrarCh(id){const ch=S.cheques.find(c=>c.id===id);if(!ch)return;if(ch.cajaOrigenId){S.cajas=S.cajas.map(c=>c.id===ch.cajaOrigenId?{...c,balance:c.balance+ch.monto}:c);S.movs.push({id:uid(),cajaId:ch.cajaOrigenId,tipo:'ingreso',monto:ch.monto,concepto:`Cobro cheque ${ch.numero}`,fecha:hoy()});}S.cheques=S.cheques.map(c=>c.id===id?{...c,estado:'cobrado'}:c);toast('Cheque cobrado · '+fmt(ch.monto)+' acreditado');render();}
 
@@ -2251,6 +2355,10 @@ async function loadFromDB(){
       if(c.clave === 'tasas') S.cfg.tasas = c.valor;
       if(c.clave === 'impCheque') S.cfg.impCh = parseFloat(c.valor);
       if(c.clave === 'logo') S.cfg.logo = c.valor;
+      if(c.clave === 'pin_hash' && c.valor && c.valor !== 'null'){
+        const pin = typeof c.valor === 'string' ? c.valor.replace(/"/g,'') : String(c.valor);
+        if(pin && pin !== 'null') localStorage.setItem('ma_pin', pin);
+      }
     });
 
     DB_READY = true;
@@ -2459,7 +2567,17 @@ function showBanner(msg, type='amber'){
 // Override guardarOp
 const _guardarOpOrig = guardarOp;
 guardarOp = async function(){
-  const clienteId=parseInt(document.getElementById('fo-cli')?.value),tipo=document.getElementById('fo-tipo')?.value;
+  let clienteId=parseInt(document.getElementById('fo-cli')?.value)||0;
+  // Si hay nombre de cliente nuevo, crearlo primero
+  const _ncNombre=document.getElementById('fo-cli-nombre')?.value?.trim();
+  if(!clienteId && _ncNombre){
+    try{
+      const _nc={name:_ncNombre,dni:document.getElementById('fo-cli-dni')?.value||'',phone:document.getElementById('fo-cli-tel')?.value||'',email:'',address:'',score:'bueno'};
+      const _dbC=await dbSaveCliente(_nc);
+      _nc.id=_dbC.id; S.clientes.push(_nc); clienteId=_dbC.id;
+    }catch(e){return toast('Error creando cliente: '+e.message,'err');}
+  }
+  const tipo=document.getElementById('fo-tipo')?.value;
   const capital=parseFloat(document.getElementById('fo-c')?.value||0),tasa=parseFloat(document.getElementById('fo-r')?.value||0);
   const plazo=parseInt(document.getElementById('fo-p')?.value||1),gastosAdmin=parseFloat(document.getElementById('fo-g')?.value||0);
   const cajaId=parseInt(document.getElementById('fo-caja')?.value),fi=document.getElementById('fo-fi')?.value||hoy();
@@ -2560,7 +2678,16 @@ guardarTransf = async function(){
 // Override guardarCheque
 const _guardarChequeOrig = guardarCheque;
 guardarCheque = async function(){
-  const clienteId=parseInt(document.getElementById('fch-cli')?.value),numero=document.getElementById('fch-num')?.value.trim(),banco=document.getElementById('fch-ban')?.value.trim();
+  let clienteId=parseInt(document.getElementById('fch-cli')?.value)||0;
+  const _ccNombre=document.getElementById('fch-cli-nombre')?.value?.trim();
+  if(!clienteId && _ccNombre){
+    try{
+      const _cc={name:_ccNombre,dni:document.getElementById('fch-cli-dni')?.value||'',phone:'',email:'',address:'',score:'bueno'};
+      const _dbCC=await dbSaveCliente(_cc);
+      _cc.id=_dbCC.id; S.clientes.push(_cc); clienteId=_dbCC.id;
+    }catch(e){return toast('Error creando cliente: '+e.message,'err');}
+  }
+  const numero=document.getElementById('fch-num')?.value.trim(),banco=document.getElementById('fch-ban')?.value.trim();
   const monto=parseFloat(document.getElementById('fch-m')?.value||0),tasaDiaria=parseFloat(document.getElementById('fch-t')?.value||0),impPct=parseFloat(document.getElementById('fch-i')?.value||0),gastosAdmin=parseFloat(document.getElementById('fch-ga')?.value||0);
   const vencimiento=document.getElementById('fch-v')?.value,ingreso=document.getElementById('fch-d')?.value||hoy();
   const cajaOrigenId=parseInt(document.getElementById('fch-or')?.value)||null,cajaTenenciaId=parseInt(document.getElementById('fch-ten')?.value)||null;
@@ -2857,5 +2984,9 @@ function renderSearchDrop(){
   if(!el)return;
   el.innerHTML=S.showSearch&&S.globalSrch.length>=2?renderGlobalSearch():'';
 }
-initSecurity();installPWA();registerSW();loadFromDB();
+// Arrancar app
+initSecurity();
+installPWA();
+registerSW();
+loadFromDB();
 </script></body></html>
