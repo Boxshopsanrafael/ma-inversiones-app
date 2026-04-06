@@ -1467,8 +1467,8 @@ function abrirCliente(id){
     </div>`).join('')}
   </div>
   <div class="mft">
-    ${ch.estado==='cobrado'?`<button class="btn bsm bd" onclick="revertirCheque(${id})">↩ Revertir a En cartera</button>`:''}
-    <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>editarDestinoCheque(${id}),80)">✏ Editar destino</button>
+    ${ch.estado==='cobrado'?`<button class="btn bsm bd" onclick="revertirCheque(${id})">↩ Revertir</button>`:''}
+    <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>editarChequeFull(${id}),80)">✏ Editar</button>
     <button class="btn bo" onclick="cerrar()">Cerrar</button>
   </div>
   </div>`);
@@ -1503,8 +1503,8 @@ function abrirCaja(id){
     </tr>`).join('')}</tbody></table>
   </div>
   <div class="mft">
-    ${ch.estado==='cobrado'?`<button class="btn bsm bd" onclick="revertirCheque(${id})">↩ Revertir a En cartera</button>`:''}
-    <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>editarDestinoCheque(${id}),80)">✏ Editar destino</button>
+    ${ch.estado==='cobrado'?`<button class="btn bsm bd" onclick="revertirCheque(${id})">↩ Revertir</button>`:''}
+    <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>editarChequeFull(${id}),80)">✏ Editar</button>
     <button class="btn bo" onclick="cerrar()">Cerrar</button>
   </div>
   </div>`);
@@ -1623,6 +1623,215 @@ async function guardarEditarDestino(id){
     toast('Destino actualizado');
     render();
   } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+// ═══ EDITAR CHEQUE COMPLETO ═══
+function editarChequeFull(id){
+  const ch = S.cheques.find(c=>c.id===id); if(!ch) return;
+  const dst = ch.destino || {};
+  const cliOpts = S.clientes.map(c=>`<option value="${c.id}" ${c.id===ch.clienteId?'selected':''}>${c.name}</option>`).join('');
+  const cajOpts = S.cajas.map(c=>`<option value="${c.id}" ${c.id===ch.cajaOrigenId?'selected':''}>${c.name}</option>`).join('');
+  const cajTOpts = S.cajas.map(c=>`<option value="${c.id}" ${c.id===ch.cajaTenenciaId?'selected':''}>${c.name}</option>`).join('');
+
+  showOv(`<div class="modal" style="max-width:800px">
+    <div class="mhd"><div class="mtt">Editar Cheque Nº ${ch.numero}</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="ecTab(this,'ec-datos')">Datos</button>
+      <button class="tab" onclick="ecTab(this,'ec-titular')">Titular/Endoso</button>
+      <button class="tab" onclick="ecTab(this,'ec-destino')">Destino</button>
+    </div>
+
+    <!-- DATOS -->
+    <div id="ec-datos">
+      <div class="fg g2">
+        <div><label class="lb">Cliente (quién lo trajo)</label><select id="ec-cli">${cliOpts}</select></div>
+        <div><label class="lb">Número</label><input id="ec-num" value="${ch.numero}"></div>
+      </div>
+      <div class="fg g3 mt12">
+        <div><label class="lb">Banco</label><input id="ec-banco" value="${ch.banco}"></div>
+        <div><label class="lb">Valor nominal</label><input id="ec-monto" type="number" value="${ch.monto}"></div>
+        <div><label class="lb">Tasa diaria %</label><input id="ec-tasa" type="number" step="0.01" value="${ch.tasaDiaria}"></div>
+      </div>
+      <div class="fg g3 mt12">
+        <div><label class="lb">Fecha ingreso</label><input id="ec-ing" type="date" value="${ch.ingreso}"></div>
+        <div><label class="lb">Vencimiento</label><input id="ec-vto" type="date" value="${ch.vencimiento}"></div>
+        <div><label class="lb">Impuesto %</label><input id="ec-imp" type="number" step="0.01" value="${ch.impPct}"></div>
+      </div>
+      <div class="fg g2 mt12">
+        <div><label class="lb">Caja origen</label><select id="ec-cor"><option value="">—</option>${cajOpts}</select></div>
+        <div><label class="lb">Caja tenencia</label><select id="ec-cten"><option value="">—</option>${cajTOpts}</select></div>
+      </div>
+      <div class="fg g2 mt12">
+        <div><label class="lb">Gastos admin ($)</label><input id="ec-ga" type="number" value="${ch.gastosAdmin||0}"></div>
+        <div><label class="lb">Estado</label>
+          <select id="ec-estado">
+            <option value="en_cartera" ${ch.estado==='en_cartera'?'selected':''}>En cartera</option>
+            <option value="cobrado" ${ch.estado==='cobrado'?'selected':''}>Cobrado</option>
+            <option value="rechazado" ${ch.estado==='rechazado'?'selected':''}>Rechazado</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- TITULAR -->
+    <div id="ec-titular" style="display:none">
+      <div class="fg g2">
+        <div><label class="lb">Nombre titular de la cuenta</label><input id="ec-tit" value="${ch.titularCuenta||''}"></div>
+        <div><label class="lb">CBU</label><input id="ec-cbu" value="${ch.cbu||''}"></div>
+      </div>
+      <div class="fg g2 mt12">
+        <div><label class="lb">DNI / CUIT titular</label><input id="ec-tdni" value="${ch.titularDni||''}"></div>
+        <div><label class="lb">Teléfono titular</label><input id="ec-ttel" value="${ch.titularTel||''}"></div>
+      </div>
+      <div class="mt12"><label class="lb">Endoso</label><input id="ec-end" value="${ch.endoso||''}"></div>
+      <div class="mt12"><label class="lb">Notas</label><textarea id="ec-notas">${ch.notas||''}</textarea></div>
+    </div>
+
+    <!-- DESTINO -->
+    <div id="ec-destino" style="display:none">
+      <div class="fg g2">
+        <div><label class="lb">Entregado a</label><input id="ec-da" value="${dst.entregadoA||''}"></div>
+        <div><label class="lb">Fecha de entrega</label><input id="ec-df" type="date" value="${dst.fecha||''}"></div>
+      </div>
+      <div class="mt12"><label class="lb">Motivo</label><input id="ec-dm" value="${dst.motivo||''}"></div>
+      <div class="fg g2 mt12">
+        <div><label class="lb">Tipo de operación</label>
+          <select id="ec-dt" onchange="toggleEcEfec()">
+            <option value="" ${!dst.tipo?'selected':''}>— Sin entregar —</option>
+            <option value="pago" ${dst.tipo==='pago'?'selected':''}>Pago de deuda / mercadería</option>
+            <option value="efectivo" ${dst.tipo==='efectivo'?'selected':''}>Cambio por efectivo</option>
+            <option value="endoso" ${dst.tipo==='endoso'?'selected':''}>Endosado a tercero</option>
+            <option value="otro" ${dst.tipo==='otro'?'selected':''}>Otro</option>
+          </select>
+        </div>
+        <div><label class="lb">Comisión cobrada ($)</label><input id="ec-dc" type="number" value="${dst.comision||0}"></div>
+      </div>
+      <div id="ec-efec-sec" style="display:${dst.tipo==='efectivo'?'block':'none'}">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--am);margin:14px 0 10px;padding-bottom:4px;border-bottom:1px solid var(--br)">Cambio por efectivo</div>
+        <div class="fg g2">
+          <div><label class="lb">¿Te pagó en el momento?</label>
+            <select id="ec-pagado" onchange="toggleEcDeuda()">
+              <option value="si" ${dst.pagadoEfectivo!=='no'?'selected':''}>Sí — pagó en el momento</option>
+              <option value="no" ${dst.pagadoEfectivo==='no'?'selected':''}>No — me lo debe</option>
+            </select>
+          </div>
+          <div><label class="lb">Monto efectivo ($)</label><input id="ec-mefec" type="number" value="${dst.montoEfectivo||0}"></div>
+        </div>
+        <div id="ec-deuda-sec" style="display:${dst.pagadoEfectivo==='no'?'block':'none'}">
+          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--rd);margin:12px 0 10px;padding-bottom:4px;border-bottom:1px solid var(--br)">⚠ Deuda pendiente</div>
+          <div class="fg g3">
+            <div><label class="lb">Fecha de cobro acordada</label><input id="ec-dvto" type="date" value="${dst.deudaVto||''}"></div>
+            <div><label class="lb">Teléfono deudor</label><input id="ec-dtel" value="${dst.deudaTel||''}"></div>
+            <div><label class="lb">Garantía</label><input id="ec-dgar" value="${dst.deudaGarantia||''}"></div>
+          </div>
+        </div>
+      </div>
+      <div class="mt12"><label class="lb">Notas adicionales</label><textarea id="ec-dn">${dst.notas||''}</textarea></div>
+    </div>
+
+    <div class="mft">
+      <button class="btn bo" onclick="cerrar()">Cancelar</button>
+      <button class="btn bg" onclick="guardarChequeFull(${id})">Guardar todos los cambios</button>
+    </div>
+  </div>`);
+}
+
+function ecTab(btn,tab){
+  btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  ['ec-datos','ec-titular','ec-destino'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';
+  });
+}
+function toggleEcEfec(){
+  const t=document.getElementById('ec-dt')?.value;
+  const s=document.getElementById('ec-efec-sec');
+  if(s)s.style.display=t==='efectivo'?'block':'none';
+}
+function toggleEcDeuda(){
+  const v=document.getElementById('ec-pagado')?.value;
+  const s=document.getElementById('ec-deuda-sec');
+  if(s)s.style.display=v==='no'?'block':'none';
+}
+
+async function guardarChequeFull(id){
+  const ch = S.cheques.find(c=>c.id===id); if(!ch) return;
+  const monto = parseFloat(document.getElementById('ec-monto')?.value||ch.monto);
+  const tasaDiaria = parseFloat(document.getElementById('ec-tasa')?.value||ch.tasaDiaria);
+  const impPct = parseFloat(document.getElementById('ec-imp')?.value||ch.impPct);
+  const gastosAdmin = parseFloat(document.getElementById('ec-ga')?.value||0);
+  const ingreso = document.getElementById('ec-ing')?.value||ch.ingreso;
+  const vencimiento = document.getElementById('ec-vto')?.value||ch.vencimiento;
+  const dias = ingreso&&vencimiento ? dds(vencimiento,ingreso) : ch.dias;
+  const r = calcCh(monto, tasaDiaria, dias, impPct, gastosAdmin);
+
+  const destino = {
+    entregadoA: document.getElementById('ec-da')?.value||'',
+    fecha:       document.getElementById('ec-df')?.value||'',
+    motivo:      document.getElementById('ec-dm')?.value||'',
+    tipo:        document.getElementById('ec-dt')?.value||'',
+    comision:    parseFloat(document.getElementById('ec-dc')?.value||0),
+    notas:       document.getElementById('ec-dn')?.value||'',
+    pagadoEfectivo: document.getElementById('ec-pagado')?.value||'si',
+    montoEfectivo:  parseFloat(document.getElementById('ec-mefec')?.value||0),
+    deudaVto:    document.getElementById('ec-dvto')?.value||'',
+    deudaTel:    document.getElementById('ec-dtel')?.value||'',
+    deudaGarantia: document.getElementById('ec-dgar')?.value||'',
+  };
+
+  const updated = {
+    ...ch,
+    clienteId:     parseInt(document.getElementById('ec-cli')?.value)||ch.clienteId,
+    numero:        document.getElementById('ec-num')?.value||ch.numero,
+    banco:         document.getElementById('ec-banco')?.value||ch.banco,
+    monto, tasaDiaria, impPct, gastosAdmin, ingreso, vencimiento, dias,
+    cajaOrigenId:  parseInt(document.getElementById('ec-cor')?.value)||ch.cajaOrigenId,
+    cajaTenenciaId:parseInt(document.getElementById('ec-cten')?.value)||ch.cajaTenenciaId,
+    estado:        document.getElementById('ec-estado')?.value||ch.estado,
+    titularCuenta: document.getElementById('ec-tit')?.value||'',
+    cbu:           document.getElementById('ec-cbu')?.value||'',
+    titularDni:    document.getElementById('ec-tdni')?.value||'',
+    titularTel:    document.getElementById('ec-ttel')?.value||'',
+    endoso:        document.getElementById('ec-end')?.value||'',
+    notas:         document.getElementById('ec-notas')?.value||'',
+    ...r, destino,
+  };
+
+  try {
+    await sbPatch('cheques', id, {
+      cliente_id:      updated.clienteId,
+      numero:          updated.numero,
+      banco:           updated.banco,
+      monto:           updated.monto,
+      tasa_diaria:     updated.tasaDiaria,
+      dias:            updated.dias,
+      vencimiento:     updated.vencimiento,
+      imp_pct:         updated.impPct,
+      gastos_admin:    updated.gastosAdmin,
+      interes:         updated.interes,
+      impuesto:        updated.impuesto,
+      gastos:          updated.gastos,
+      neto:            updated.neto,
+      ganancia:        updated.ganancia,
+      estado:          updated.estado,
+      caja_origen_id:  updated.cajaOrigenId,
+      caja_tenencia_id:updated.cajaTenenciaId,
+      ingreso:         updated.ingreso,
+      titular_cuenta:  updated.titularCuenta,
+      titular_dni:     updated.titularDni,
+      titular_tel:     updated.titularTel,
+      cbu:             updated.cbu,
+      endoso:          updated.endoso,
+      notas:           updated.notas,
+      destino:         updated.destino,
+    });
+    S.cheques = S.cheques.map(c=>c.id===id ? updated : c);
+    saveLocalBackup();
+    cerrar();
+    toast('Cheque actualizado correctamente');
+    render();
+  } catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
 }
 function expOpsXls(){const wb=XLSX.utils.book_new();const h=['Cliente','Tipo','Capital','Tasa','Plazo','G.Admin','Neto','Caja','Inicio','Total cobrar','Cuotas pagas','Saldo'];const rows=S.ops.map(o=>{const{tp}=calcC(o.capital,o.tasa,o.plazo);return[cN(o.clienteId),tL(o.tipo),o.capital,o.tasa+'%',o.plazo,o.gastosAdmin,o.neto,cajN(o.cajaId),o.fi,tp,o.cuotas.filter(c=>c.paga).length+'/'+o.plazo,sal(o)];});XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([h,...rows]),'Operaciones');XLSX.writeFile(wb,'operaciones.xlsx');toast('Excel descargado');}
 function expOpsPdf(){expPdf('Operaciones',[{title:'Operaciones',headers:['Cliente','Tipo','Capital','Tasa','Neto','Caja','Saldo'],rows:S.ops.map(o=>[cN(o.clienteId),tL(o.tipo),fmt(o.capital),o.tasa+'%',fmt(o.neto),cajN(o.cajaId),fmt(sal(o))])}]);}
