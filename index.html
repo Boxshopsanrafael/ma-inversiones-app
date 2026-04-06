@@ -211,6 +211,227 @@ textarea{resize:vertical;min-height:56px}
 <div id="toast"></div>
 <div id="ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;overflow-y:auto;padding:14px;flex-direction:column;align-items:center" onclick="if(event.target===this)cerrar()"></div>
 <script>
+// ═══ CONFIGURACIÓN DE SEGURIDAD ═══
+const SEC = {
+  PIN_KEY: 'ma_pin',
+  TIMEOUT: 2 * 60 * 1000, // 2 minutos
+  lastActivity: Date.now(),
+  locked: true,
+  timer: null,
+};
+
+function getPin(){ return localStorage.getItem(SEC.PIN_KEY)||null; }
+function setPin(p){ localStorage.setItem(SEC.PIN_KEY, p); }
+
+// Reiniciar timer de inactividad
+function resetTimer(){
+  SEC.lastActivity = Date.now();
+  if(SEC.timer) clearTimeout(SEC.timer);
+  if(getPin()){
+    SEC.timer = setTimeout(()=>{
+      autoLock();
+    }, SEC.TIMEOUT);
+  }
+}
+
+// Detectar actividad del usuario
+['click','touchstart','keydown','scroll','mousemove'].forEach(ev=>{
+  document.addEventListener(ev, resetTimer, {passive:true});
+});
+
+function autoLock(){
+  if(!getPin()) return;
+  SEC.locked = true;
+  showLockScreen('La sesión expiró por inactividad');
+}
+
+// ═══ PANTALLA DE BIENVENIDA + PIN ═══
+function showSplash(){
+  const pin = getPin();
+  const wrap = document.createElement('div');
+  wrap.id = 'splash';
+  wrap.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0';
+
+  wrap.innerHTML = `
+    <!-- LOGO M&A -->
+    <div style="margin-bottom:32px">
+      ${LOGO_SVG}
+    </div>
+
+    ${pin ? renderPinPad('') : renderNoPinMsg()}
+  `;
+  document.body.appendChild(wrap);
+}
+
+const LOGO_SVG = `
+<svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1508"/>
+      <stop offset="100%" stop-color="#09090f"/>
+    </radialGradient>
+    <radialGradient id="gold-grad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f0c84a"/>
+      <stop offset="50%" stop-color="#d4a847"/>
+      <stop offset="100%" stop-color="#7a5c0e"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Círculo exterior -->
+  <circle cx="110" cy="110" r="106" fill="url(#bg-grad)" stroke="#2a2210" stroke-width="1.5"/>
+  <!-- Círculo decorativo interno -->
+  <circle cx="110" cy="110" r="95" fill="none" stroke="#d4a847" stroke-width="0.5" opacity="0.4"/>
+  <circle cx="110" cy="110" r="88" fill="none" stroke="#d4a847" stroke-width="0.3" opacity="0.2"/>
+  <!-- Líneas decorativas diagonales -->
+  <line x1="25" y1="110" x2="50" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
+  <line x1="170" y1="110" x2="195" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
+  <line x1="110" y1="25" x2="110" y2="50" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
+  <line x1="110" y1="170" x2="110" y2="195" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
+  <!-- Puntos en las esquinas -->
+  <circle cx="47" cy="47" r="2" fill="#d4a847" opacity="0.5"/>
+  <circle cx="173" cy="47" r="2" fill="#d4a847" opacity="0.5"/>
+  <circle cx="47" cy="173" r="2" fill="#d4a847" opacity="0.5"/>
+  <circle cx="173" cy="173" r="2" fill="#d4a847" opacity="0.5"/>
+  <!-- Texto M&A grande -->
+  <text x="110" y="118" font-family="Georgia, serif" font-size="64" font-weight="700"
+    fill="url(#gold-grad)" text-anchor="middle" filter="url(#glow)" letter-spacing="2">M&amp;A</text>
+  <!-- Línea separadora -->
+  <line x1="52" y1="132" x2="168" y2="132" stroke="#d4a847" stroke-width="0.8" opacity="0.6"/>
+  <!-- Subtítulo -->
+  <text x="110" y="152" font-family="'Courier Prime', monospace" font-size="13" fill="#d4a847"
+    text-anchor="middle" letter-spacing="6" opacity="0.9">INVERSIONES</text>
+  <!-- Pequeño rombo decorativo abajo -->
+  <polygon points="110,168 114,172 110,176 106,172" fill="#d4a847" opacity="0.5"/>
+</svg>`;
+
+function renderPinPad(msg){
+  return `
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+    <div style="font-size:11px;letter-spacing:4px;color:#555;text-transform:uppercase">Ingresá tu PIN</div>
+    <div id="pin-dots" style="display:flex;gap:14px;margin:4px 0">
+      ${[0,1,2,3].map(i=>`<div id="dot${i}" style="width:14px;height:14px;border-radius:50%;border:1.5px solid #2a2a3e;background:#09090f;transition:.15s"></div>`).join('')}
+    </div>
+    <div id="pin-msg" style="font-size:11px;color:#ef4444;min-height:16px;letter-spacing:1px">${msg||''}</div>
+    <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px">
+      ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`
+        <button onclick="pinPress('${k}')"
+          style="background:#0d0d16;border:1px solid #1e1e2e;color:${k===''?'transparent':'#e8e0d0'};
+          font-family:'Courier Prime',monospace;font-size:22px;padding:18px;cursor:pointer;
+          transition:.15s;border-radius:2px;${k===''?'pointer-events:none':''}"
+          onmouseover="if('${k}'!='')this.style.borderColor='#d4a847';this.style.background='#14141e'"
+          onmouseout="this.style.borderColor='#1e1e2e';this.style.background='#0d0d16'">
+          ${k}
+        </button>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderNoPinMsg(){
+  return `
+  <div style="display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:8px">
+    <div style="font-size:11px;letter-spacing:3px;color:#555;text-transform:uppercase">Sin PIN configurado</div>
+    <button onclick="entrarSinPin()"
+      style="background:linear-gradient(135deg,#7a5c0e,#d4a847);color:#000;border:none;
+      padding:14px 40px;font-family:'Courier Prime',monospace;font-size:13px;
+      letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:700;border-radius:2px">
+      Entrar →
+    </button>
+    <div style="font-size:10px;color:#333;letter-spacing:1px">Podés configurar un PIN en Ajustes</div>
+  </div>`;
+}
+
+function entrarSinPin(){
+  document.getElementById('splash')?.remove();
+  SEC.locked = false;
+  resetTimer();
+}
+
+let pinBuffer = '';
+function pinPress(k){
+  if(k==='') return;
+  if(k==='⌫'){
+    pinBuffer = pinBuffer.slice(0,-1);
+  } else if(pinBuffer.length < 4){
+    pinBuffer += k;
+  }
+  // Actualizar dots
+  [0,1,2,3].forEach(i=>{
+    const d = document.getElementById('dot'+i);
+    if(d){
+      d.style.background = i < pinBuffer.length ? '#d4a847' : '#09090f';
+      d.style.borderColor = i < pinBuffer.length ? '#d4a847' : '#2a2a3e';
+    }
+  });
+  if(pinBuffer.length === 4){
+    const pin = getPin();
+    if(!pin){
+      // Primera vez configurando PIN desde splash (no debería pasar)
+      entrarSinPin();
+    } else if(pinBuffer === pin){
+      document.getElementById('splash')?.remove();
+      SEC.locked = false;
+      pinBuffer = '';
+      resetTimer();
+      addLog('acceso', 'PIN correcto — acceso concedido');
+    } else {
+      // PIN incorrecto
+      const msg = document.getElementById('pin-msg');
+      if(msg) msg.textContent = 'PIN incorrecto, intentá de nuevo';
+      // Vibrar dots
+      [0,1,2,3].forEach(i=>{
+        const d = document.getElementById('dot'+i);
+        if(d){ d.style.background = '#ef4444'; d.style.borderColor = '#ef4444'; }
+      });
+      setTimeout(()=>{
+        pinBuffer = '';
+        [0,1,2,3].forEach(i=>{
+          const d = document.getElementById('dot'+i);
+          if(d){ d.style.background = '#09090f'; d.style.borderColor = '#2a2a3e'; }
+        });
+        if(msg) msg.textContent = '';
+      }, 800);
+      addLog('acceso', 'PIN incorrecto — intento fallido');
+    }
+  }
+}
+
+// ═══ AUTO-LOCK ═══
+function showLockScreen(msg){
+  // Quitar splash anterior si hay
+  document.getElementById('splash')?.remove();
+  pinBuffer = '';
+  const wrap = document.createElement('div');
+  wrap.id = 'splash';
+  wrap.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0';
+  wrap.innerHTML = `
+    <div style="margin-bottom:32px">${LOGO_SVG}</div>
+    <div style="font-size:11px;letter-spacing:3px;color:#555;text-transform:uppercase;margin-bottom:20px">${msg||'Sesión bloqueada'}</div>
+    ${renderPinPad('')}
+  `;
+  document.body.appendChild(wrap);
+}
+
+// ═══ INICIALIZAR ═══
+function initSecurity(){
+  showSplash();
+  resetTimer();
+}
+
+// ═══ GUARDAR PIN DESDE CONFIG ═══
+function guardarPin(){
+  const n = document.getElementById('pin-new')?.value;
+  const c = document.getElementById('pin-conf')?.value;
+  if(!n || n.length !== 4 || !/^\d{4}$/.test(n)) return toast('El PIN debe ser 4 dígitos numéricos','err');
+  if(n !== c) return toast('Los PINs no coinciden','err');
+  setPin(n);
+  // Activar auto-lock
+  resetTimer();
+  toast('PIN guardado. Se bloqueará tras 2 min. de inactividad');
+  render();
+}
 const fmt=n=>new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0}).format(n||0);
 const fD=d=>d?new Date(d+'T00:00:00').toLocaleDateString('es-AR'):'—';
 const hoy=()=>new Date().toISOString().split('T')[0];
@@ -1616,7 +1837,7 @@ async function loadFromDB(){
     DB_READY = true;
     saveLocalBackup();
     hideLoader();
-    buildNav(); render(); checkPin(); addLog('acceso','App abierta');
+    buildNav(); render(); addLog('acceso','App abierta');
     startAutoBackup();
   } catch(e) {
     console.error('Error cargando DB:', e);
@@ -2212,244 +2433,15 @@ function rResumenDia(){
     </div>
   </div>`;
 }
-// ═══ CONFIGURACIÓN DE SEGURIDAD ═══
-const SEC = {
-  PIN_KEY: 'ma_pin',
-  TIMEOUT: 2 * 60 * 1000, // 2 minutos
-  lastActivity: Date.now(),
-  locked: true,
-  timer: null,
-};
-
-function getPin(){ return localStorage.getItem(SEC.PIN_KEY)||null; }
-function setPin(p){ localStorage.setItem(SEC.PIN_KEY, p); }
-
-// Reiniciar timer de inactividad
-function resetTimer(){
-  SEC.lastActivity = Date.now();
-  if(SEC.timer) clearTimeout(SEC.timer);
-  if(getPin()){
-    SEC.timer = setTimeout(()=>{
-      autoLock();
-    }, SEC.TIMEOUT);
-  }
-}
-
-// Detectar actividad del usuario
-['click','touchstart','keydown','scroll','mousemove'].forEach(ev=>{
-  document.addEventListener(ev, resetTimer, {passive:true});
-});
-
-function autoLock(){
-  if(!getPin()) return;
-  SEC.locked = true;
-  showLockScreen('La sesión expiró por inactividad');
-}
-
-// ═══ PANTALLA DE BIENVENIDA + PIN ═══
-function showSplash(){
-  const pin = getPin();
-  const wrap = document.createElement('div');
-  wrap.id = 'splash';
-  wrap.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0';
-
-  wrap.innerHTML = `
-    <!-- LOGO M&A -->
-    <div style="margin-bottom:32px">
-      ${LOGO_SVG}
-    </div>
-
-    ${pin ? renderPinPad('') : renderNoPinMsg()}
-  `;
-  document.body.appendChild(wrap);
-}
-
-const LOGO_SVG = `
-<svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1a1508"/>
-      <stop offset="100%" stop-color="#09090f"/>
-    </radialGradient>
-    <radialGradient id="gold-grad" cx="30%" cy="30%" r="70%">
-      <stop offset="0%" stop-color="#f0c84a"/>
-      <stop offset="50%" stop-color="#d4a847"/>
-      <stop offset="100%" stop-color="#7a5c0e"/>
-    </radialGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-  </defs>
-  <!-- Círculo exterior -->
-  <circle cx="110" cy="110" r="106" fill="url(#bg-grad)" stroke="#2a2210" stroke-width="1.5"/>
-  <!-- Círculo decorativo interno -->
-  <circle cx="110" cy="110" r="95" fill="none" stroke="#d4a847" stroke-width="0.5" opacity="0.4"/>
-  <circle cx="110" cy="110" r="88" fill="none" stroke="#d4a847" stroke-width="0.3" opacity="0.2"/>
-  <!-- Líneas decorativas diagonales -->
-  <line x1="25" y1="110" x2="50" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
-  <line x1="170" y1="110" x2="195" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
-  <line x1="110" y1="25" x2="110" y2="50" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
-  <line x1="110" y1="170" x2="110" y2="195" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
-  <!-- Puntos en las esquinas -->
-  <circle cx="47" cy="47" r="2" fill="#d4a847" opacity="0.5"/>
-  <circle cx="173" cy="47" r="2" fill="#d4a847" opacity="0.5"/>
-  <circle cx="47" cy="173" r="2" fill="#d4a847" opacity="0.5"/>
-  <circle cx="173" cy="173" r="2" fill="#d4a847" opacity="0.5"/>
-  <!-- Texto M&A grande -->
-  <text x="110" y="118" font-family="Georgia, serif" font-size="64" font-weight="700"
-    fill="url(#gold-grad)" text-anchor="middle" filter="url(#glow)" letter-spacing="2">M&amp;A</text>
-  <!-- Línea separadora -->
-  <line x1="52" y1="132" x2="168" y2="132" stroke="#d4a847" stroke-width="0.8" opacity="0.6"/>
-  <!-- Subtítulo -->
-  <text x="110" y="152" font-family="'Courier Prime', monospace" font-size="13" fill="#d4a847"
-    text-anchor="middle" letter-spacing="6" opacity="0.9">INVERSIONES</text>
-  <!-- Pequeño rombo decorativo abajo -->
-  <polygon points="110,168 114,172 110,176 106,172" fill="#d4a847" opacity="0.5"/>
-</svg>`;
-
-function renderPinPad(msg){
-  return `
-  <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
-    <div style="font-size:11px;letter-spacing:4px;color:#555;text-transform:uppercase">Ingresá tu PIN</div>
-    <div id="pin-dots" style="display:flex;gap:14px;margin:4px 0">
-      ${[0,1,2,3].map(i=>`<div id="dot${i}" style="width:14px;height:14px;border-radius:50%;border:1.5px solid #2a2a3e;background:#09090f;transition:.15s"></div>`).join('')}
-    </div>
-    <div id="pin-msg" style="font-size:11px;color:#ef4444;min-height:16px;letter-spacing:1px">${msg||''}</div>
-    <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px">
-      ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`
-        <button onclick="pinPress('${k}')"
-          style="background:#0d0d16;border:1px solid #1e1e2e;color:${k===''?'transparent':'#e8e0d0'};
-          font-family:'Courier Prime',monospace;font-size:22px;padding:18px;cursor:pointer;
-          transition:.15s;border-radius:2px;${k===''?'pointer-events:none':''}"
-          onmouseover="if('${k}'!='')this.style.borderColor='#d4a847';this.style.background='#14141e'"
-          onmouseout="this.style.borderColor='#1e1e2e';this.style.background='#0d0d16'">
-          ${k}
-        </button>`).join('')}
-    </div>
-  </div>`;
-}
-
-function renderNoPinMsg(){
-  return `
-  <div style="display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:8px">
-    <div style="font-size:11px;letter-spacing:3px;color:#555;text-transform:uppercase">Sin PIN configurado</div>
-    <button onclick="entrarSinPin()"
-      style="background:linear-gradient(135deg,#7a5c0e,#d4a847);color:#000;border:none;
-      padding:14px 40px;font-family:'Courier Prime',monospace;font-size:13px;
-      letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:700;border-radius:2px">
-      Entrar →
-    </button>
-    <div style="font-size:10px;color:#333;letter-spacing:1px">Podés configurar un PIN en Ajustes</div>
-  </div>`;
-}
-
-function entrarSinPin(){
-  document.getElementById('splash')?.remove();
-  SEC.locked = false;
-  resetTimer();
-}
-
-let pinBuffer = '';
-function pinPress(k){
-  if(k==='') return;
-  if(k==='⌫'){
-    pinBuffer = pinBuffer.slice(0,-1);
-  } else if(pinBuffer.length < 4){
-    pinBuffer += k;
-  }
-  // Actualizar dots
-  [0,1,2,3].forEach(i=>{
-    const d = document.getElementById('dot'+i);
-    if(d){
-      d.style.background = i < pinBuffer.length ? '#d4a847' : '#09090f';
-      d.style.borderColor = i < pinBuffer.length ? '#d4a847' : '#2a2a3e';
-    }
-  });
-  if(pinBuffer.length === 4){
-    const pin = getPin();
-    if(!pin){
-      // Primera vez configurando PIN desde splash (no debería pasar)
-      entrarSinPin();
-    } else if(pinBuffer === pin){
-      document.getElementById('splash')?.remove();
-      SEC.locked = false;
-      pinBuffer = '';
-      resetTimer();
-      addLog('acceso', 'PIN correcto — acceso concedido');
-    } else {
-      // PIN incorrecto
-      const msg = document.getElementById('pin-msg');
-      if(msg) msg.textContent = 'PIN incorrecto, intentá de nuevo';
-      // Vibrar dots
-      [0,1,2,3].forEach(i=>{
-        const d = document.getElementById('dot'+i);
-        if(d){ d.style.background = '#ef4444'; d.style.borderColor = '#ef4444'; }
-      });
-      setTimeout(()=>{
-        pinBuffer = '';
-        [0,1,2,3].forEach(i=>{
-          const d = document.getElementById('dot'+i);
-          if(d){ d.style.background = '#09090f'; d.style.borderColor = '#2a2a3e'; }
-        });
-        if(msg) msg.textContent = '';
-      }, 800);
-      addLog('acceso', 'PIN incorrecto — intento fallido');
-    }
-  }
-}
-
-// ═══ AUTO-LOCK ═══
-function showLockScreen(msg){
-  // Quitar splash anterior si hay
-  document.getElementById('splash')?.remove();
-  pinBuffer = '';
-  const wrap = document.createElement('div');
-  wrap.id = 'splash';
-  wrap.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0';
-  wrap.innerHTML = `
-    <div style="margin-bottom:32px">${LOGO_SVG}</div>
-    <div style="font-size:11px;letter-spacing:3px;color:#555;text-transform:uppercase;margin-bottom:20px">${msg||'Sesión bloqueada'}</div>
-    ${renderPinPad('')}
-  `;
-  document.body.appendChild(wrap);
-}
-
-// ═══ INICIALIZAR ═══
-function initSecurity(){
-  showSplash();
-  resetTimer();
-}
-
-// ═══ GUARDAR PIN DESDE CONFIG ═══
-function guardarPin(){
-  const n = document.getElementById('pin-new')?.value;
-  const c = document.getElementById('pin-conf')?.value;
-  if(!n || n.length !== 4 || !/^\d{4}$/.test(n)) return toast('El PIN debe ser 4 dígitos numéricos','err');
-  if(n !== c) return toast('Los PINs no coinciden','err');
-  setPin(n);
-  // Activar auto-lock
-  resetTimer();
-  toast('PIN guardado. Se bloqueará tras 2 min. de inactividad');
-  render();
-}
 function renderSearchDrop(){
   const el=document.getElementById('sdrop');
   if(!el)return;
   el.innerHTML=S.showSearch&&S.globalSrch.length>=2?renderGlobalSearch():'';
 }
 
-// Arrancar app — primero seguridad, luego DB
-function startApp(){
-  installPWA();
-  registerSW();
-  initSecurity(); // muestra splash con logo
-  // Cargar DB en background
-  loadFromDB().then(()=>{
-    buildNav();
-    render();
-  });
-}
-
-startApp();
+// Arrancar: primero lockscreen, luego cargar DB en background
+initSecurity();
+installPWA();
+registerSW();
+loadFromDB();
 </script></body></html>
