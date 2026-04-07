@@ -700,7 +700,7 @@ function rDash(){
   const cap=act.reduce((a,o)=>a+o.capital,0),sldo=act.reduce((a,o)=>a+sal(o),0);
   const ars=S.cajas.filter(c=>c.currency==='ARS').reduce((a,c)=>a+c.balance,0);
   const car=S.cheques.filter(c=>c.estado==='en_cartera');
-  const ganCh=car.reduce((a,c)=>a+c.ganancia,0);
+  const ganCh=S.cheques.reduce((a,c)=>a+c.ganancia,0); // incluye cobrados
   const vcs=act.flatMap(o=>vcOp(o).map(c=>({...c,op:o})));
   const lim=new Date();lim.setDate(lim.getDate()+15);
   const prx=act.flatMap(o=>o.cuotas.filter(c=>!c.paga&&new Date(c.vto)>new Date()&&new Date(c.vto)<=lim).map(c=>({...c,op:o})));
@@ -716,7 +716,7 @@ function rDash(){
     <div class="card"><div class="sv">${fmt(cap)}</div><div class="sl">Capital colocado</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${act.length} activas</div></div>
     <div class="card"><div class="sv">${fmt(sldo)}</div><div class="sl">Saldo por cobrar</div></div>
     <div class="card"><div class="sv">${fmt(ars)}</div><div class="sl">Total cajas ARS</div></div>
-    <div class="card"><div class="sv tgr">${fmt(ganCh)}</div><div class="sl">Ganancia cheques</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${car.length} en cartera</div></div>
+    <div class="card"><div class="sv tgr">${fmt(ganCh)}</div><div class="sl">Ganancia cheques</div><div style="font-size:13px;color:var(--tx4);margin-top:2px">${car.length} cartera · ${S.cheques.filter(c=>c.estado==='cobrado').length} cobrados</div></div>
   </div>
   <div class="grid g3 mb12">
     ${['prestamo','hipotecario','prendario'].map(t=>{
@@ -921,7 +921,7 @@ function rChInline(){
     <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Valor nominal</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${car.length} en cartera</div></div>
     <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.neto,0))}</div><div class="sl">Neto entregado</div></div>
     <div class="card"><div class="sv ta">${fmt(car.reduce((a,c)=>a+c.impuesto,0))}</div><div class="sl">Impuesto cobrado</div></div>
-    <div class="card"><div class="sv tgr">${fmt(car.reduce((a,c)=>a+c.ganancia,0))}</div><div class="sl">Ganancia total</div></div>
+    <div class="card"><div class="sv tgr">${fmt(S.cheques.reduce((a,c)=>a+c.ganancia,0))}</div><div class="sl">Ganancia total</div><div style="font-size:13px;color:var(--tx4);margin-top:2px">hist. + cartera</div></div>
   </div>
   <div class="fx g8 mb12">
     <button class="btn bsm bo" onclick="expChXls()">⬇ Excel</button>
@@ -983,7 +983,7 @@ function rCh(){
     <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Valor nominal</div></div>
     <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.neto,0))}</div><div class="sl">Neto entregado</div></div>
     <div class="card"><div class="sv ta">${fmt(car.reduce((a,c)=>a+c.impuesto,0))}</div><div class="sl">Impuesto cobrado</div></div>
-    <div class="card"><div class="sv tgr">${fmt(car.reduce((a,c)=>a+c.ganancia,0))}</div><div class="sl">Ganancia total</div></div>
+    <div class="card"><div class="sv tgr">${fmt(S.cheques.reduce((a,c)=>a+c.ganancia,0))}</div><div class="sl">Ganancia total</div><div style="font-size:13px;color:var(--tx4);margin-top:2px">hist. + cartera</div></div>
   </div>
   <div class="card" style="padding:0;overflow-x:auto"><table class="tbl">
     <thead><tr><th>Número</th><th>Banco</th><th>Cliente/Titular</th><th>Nominal</th><th>Días</th><th>Interés</th><th>Imp.</th><th>Neto</th><th>Vto.</th><th>Tenencia</th><th>Destino</th><th>Estado</th><th></th></tr></thead>
@@ -1423,7 +1423,18 @@ function abrirOp(id){
       <div class="pb" style="height:6px;margin-bottom:12px"><div class="pf" style="width:${pct}%"></div></div>
       <div class="grid g2">
         <div><div class="tgr" style="font-size:17px">${fmt(op.cuotas.filter(c=>c.paga).reduce((a,c)=>a+c.monto,0))}</div><div style="font-size:15px;color:var(--tx4);letter-spacing:2px">COBRADO</div></div>
-        <div><div class="ta" style="font-size:17px">${fmt(sl)}</div><div style="font-size:15px;color:var(--tx4);letter-spacing:2px">PENDIENTE</div></div>
+        <div><div class="ta" style="font-size:17px">${fmt(sl)}</div><div style="font-size:11px;color:var(--tx4)">PENDIENTE</div></div>
+      </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--br)">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin-bottom:8px">Desglose de lo cobrado</div>
+        <div class="fb" style="margin-bottom:6px">
+          <span style="font-size:12px;color:var(--tx3)">Interés ganado</span>
+          <span style="color:var(--go);font-weight:700">${fmt(Math.max(0,Math.round(op.cuotas.filter(c=>c.paga).reduce((a,c)=>a+c.monto,0) - (op.capital/op.plazo * op.cuotas.filter(c=>c.paga).length))))}</span>
+        </div>
+        <div class="fb">
+          <span style="font-size:12px;color:var(--tx3)">Capital recuperado</span>
+          <span style="color:var(--gn)">${fmt(Math.round(Math.min(op.capital, op.capital/op.plazo * op.cuotas.filter(c=>c.paga).length)))}</span>
+        </div>
       </div>
     </div>
   </div></div>
@@ -1573,6 +1584,7 @@ function abrirCliente(id){
   <div class="mft">
     ${ch.estado==='cobrado'?`<button class="btn bsm bd" onclick="revertirCheque(${id})">↩ Revertir</button>`:''}
     <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>editarChequeFull(${id}),80)">✏ Editar</button>
+    <button class="btn bsm bd" style="background:#1a0808" onclick="eliminarCheque(${id})">🗑 Eliminar</button>
     <button class="btn bo" onclick="cerrar()">Cerrar</button>
   </div>
   </div>`);
@@ -1609,6 +1621,7 @@ function abrirCaja(id){
   <div class="mft">
     ${ch.estado==='cobrado'?`<button class="btn bsm bd" onclick="revertirCheque(${id})">↩ Revertir</button>`:''}
     <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>editarChequeFull(${id}),80)">✏ Editar</button>
+    <button class="btn bsm bd" style="background:#1a0808" onclick="eliminarCheque(${id})">🗑 Eliminar</button>
     <button class="btn bo" onclick="cerrar()">Cerrar</button>
   </div>
   </div>`);
@@ -1935,6 +1948,30 @@ async function guardarChequeFull(id){
     cerrar();
     toast('Cheque actualizado correctamente');
     render();
+  } catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
+}
+
+// ═══ ELIMINAR OPERACIÓN ═══
+async function eliminarOp(id){
+  if(!confirm('¿Eliminar esta operación permanentemente? Esta acción no se puede deshacer.')) return;
+  try {
+    // Eliminar cuotas primero (cascade debería hacerlo pero por las dudas)
+    await fetch(`${SB_URL}/rest/v1/cuotas?operacion_id=eq.${id}`, {method:'DELETE', headers:SB_HEADERS});
+    await sbDelete('operaciones', id);
+    S.ops = S.ops.filter(o=>o.id!==id);
+    saveLocalBackup();
+    cerrar(); toast('Operación eliminada'); render();
+  } catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
+}
+
+// ═══ ELIMINAR CHEQUE ═══
+async function eliminarCheque(id){
+  if(!confirm('¿Eliminar este cheque permanentemente?')) return;
+  try {
+    await sbDelete('cheques', id);
+    S.cheques = S.cheques.filter(c=>c.id!==id);
+    saveLocalBackup();
+    cerrar(); toast('Cheque eliminado'); render();
   } catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
 }
 function expOpsXls(){const wb=XLSX.utils.book_new();const h=['Cliente','Tipo','Capital','Tasa','Plazo','G.Admin','Neto','Caja','Inicio','Total cobrar','Cuotas pagas','Saldo'];const rows=S.ops.map(o=>{const{tp}=calcC(o.capital,o.tasa,o.plazo);return[cN(o.clienteId),tL(o.tipo),o.capital,o.tasa+'%',o.plazo,o.gastosAdmin,o.neto,cajN(o.cajaId),o.fi,tp,o.cuotas.filter(c=>c.paga).length+'/'+o.plazo,sal(o)];});XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([h,...rows]),'Operaciones');XLSX.writeFile(wb,'operaciones.xlsx');toast('Excel descargado');}
@@ -2463,8 +2500,19 @@ async function dbSaveCheque(ch){
 
 async function dbUpdateCheque(ch){
   return sbPatch('cheques', ch.id, {
-    estado:ch.estado, destino:ch.destino,
-    titular_cuenta:ch.titularCuenta, endoso:ch.endoso
+    estado:     ch.estado,
+    destino:    ch.destino,
+    titular_cuenta: ch.titularCuenta,
+    titular_dni:    ch.titularDni||'',
+    titular_tel:    ch.titularTel||'',
+    cbu:        ch.cbu||'',
+    endoso:     ch.endoso,
+    notas:      ch.notas||'',
+    // Preservar ganancia siempre
+    ganancia:   ch.ganancia,
+    interes:    ch.interes,
+    impuesto:   ch.impuesto,
+    neto:       ch.neto,
   });
 }
 
@@ -2745,16 +2793,22 @@ const _cobrarChOrig = cobrarCh;
 cobrarCh = async function(id){
   const ch=S.cheques.find(c=>c.id===id);if(!ch)return;
   try {
+    // Acreditar el NOMINAL a la caja (lo que cobré del banco)
     if(ch.cajaOrigenId){
       const newBal = S.cajas.find(c=>c.id===ch.cajaOrigenId)?.balance + ch.monto;
       S.cajas=S.cajas.map(c=>c.id===ch.cajaOrigenId?{...c,balance:newBal}:c);
       await dbUpdateCajaBalance(ch.cajaOrigenId, newBal);
-      const mov={cajaId:ch.cajaOrigenId,tipo:'ingreso',monto:ch.monto,concepto:`Cobro cheque ${ch.numero}`,fecha:hoy()};
+      const mov={cajaId:ch.cajaOrigenId,tipo:'ingreso',monto:ch.monto,
+        concepto:`Cobro cheque ${ch.numero} — nominal ${fmt(ch.monto)} (ganancia: ${fmt(ch.ganancia)})`,fecha:hoy()};
       const dbM=await dbSaveMov(mov); S.movs.push({...mov,id:dbM.id});
     }
-    S.cheques=S.cheques.map(c=>c.id===id?{...c,estado:'cobrado'}:c);
-    await dbUpdateCheque({...ch,estado:'cobrado'});
-    saveLocalBackup(); toast('Cheque cobrado · '+fmt(ch.monto)+' acreditado'); render();
+    // Marcar cobrado pero PRESERVAR ganancia original
+    const updated = {...ch, estado:'cobrado', fechaCobro:hoy()};
+    S.cheques=S.cheques.map(c=>c.id===id?updated:c);
+    await dbUpdateCheque(updated);
+    saveLocalBackup();
+    toast(`Cheque cobrado · Nominal: ${fmt(ch.monto)} · Ganancia: ${fmt(ch.ganancia)}`);
+    render();
   } catch(e){ toast('Error: '+e.message,'err'); }
 };
 // ═══ PWA MANIFEST ═══
@@ -2873,27 +2927,62 @@ function abrirEditarOp(id){
   const op=S.ops.find(o=>o.id===id);if(!op)return;
   const co=S.cajas.map(c=>`<option value="${c.id}" ${c.id===op.cajaId?'selected':''}>${c.name} (${fmt(c.balance)})</option>`).join('');
   const cl=S.clientes.map(c=>`<option value="${c.id}" ${c.id===op.clienteId?'selected':''}>${c.name}</option>`).join('');
+  const {it,tp,cuota}=calcC(op.capital,op.tasa,op.plazo);
 
-  showOv(`<div class="modal">
+  showOv(`<div class="modal" style="max-width:800px">
     <div class="mhd"><div class="mtt">Editar Operación</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>
+    <div class="al al-a mb12">⚠ Al modificar la tasa o plazo, las cuotas ya existentes NO cambian. Para recalcular cuotas, cancelá y creá una nueva operación.</div>
+    
     <div class="fg g2">
-      <div><label class="lb">Cliente</label><select id="eo-cli">${cl}</select></div>
-      <div><label class="lb">Tipo</label>
-        <select id="eo-tipo" onchange="document.getElementById('eo-r').value=dR(this.value)">
+      <div><label class="lb">Cliente *</label><select id="eo-cli">${cl}</select></div>
+      <div><label class="lb">Tipo *</label>
+        <select id="eo-tipo">
           <option value="prestamo" ${op.tipo==='prestamo'?'selected':''}>Préstamo Personal</option>
           <option value="hipotecario" ${op.tipo==='hipotecario'?'selected':''}>Hipotecario</option>
           <option value="prendario" ${op.tipo==='prendario'?'selected':''}>Prendario</option>
         </select>
       </div>
     </div>
-    <div class="fg g3 mt12">
+    <div class="fg g4 mt12">
+      <div><label class="lb">Capital</label><input id="eo-cap" type="number" value="${op.capital}"></div>
       <div><label class="lb">Tasa mensual %</label><input id="eo-r" type="number" step="0.1" value="${op.tasa}"></div>
-      <div><label class="lb">Caja</label><select id="eo-caja">${co}</select></div>
+      <div><label class="lb">Plazo meses</label><input id="eo-plazo" type="number" value="${op.plazo}"></div>
       <div><label class="lb">Gastos admin $</label><input id="eo-ga" type="number" value="${op.gastosAdmin}"></div>
     </div>
+    <div class="fg g2 mt12">
+      <div><label class="lb">Caja</label><select id="eo-caja">${co}</select></div>
+      <div><label class="lb">Fecha inicio</label><input id="eo-fi" type="date" value="${op.fi}"></div>
+    </div>
     <div class="mt12"><label class="lb">Descripción</label><input id="eo-desc" value="${op.desc}"></div>
-    <div class="al al-a mt12">⚠ Solo se editan datos de referencia. Las cuotas ya generadas no cambian.</div>
+    <div class="mt12"><label class="lb">Estado</label>
+      <select id="eo-status">
+        <option value="activo" ${op.status==='activo'?'selected':''}>Activo</option>
+        <option value="cancelado" ${op.status==='cancelado'?'selected':''}>Cancelado</option>
+        <option value="finalizado" ${op.status==='finalizado'?'selected':''}>Finalizado</option>
+      </select>
+    </div>
+    ${op.tipo==='prendario'&&op.vehiculo?`
+    <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--pu);margin:16px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--br)">Vehículo en garantía</div>
+    <div class="fg g4">
+      <div><label class="lb">Marca</label><input id="eo-vmar" value="${op.vehiculo.marca||''}"></div>
+      <div><label class="lb">Modelo</label><input id="eo-vmod" value="${op.vehiculo.modelo||''}"></div>
+      <div><label class="lb">Año</label><input id="eo-vani" value="${op.vehiculo.anio||''}"></div>
+      <div><label class="lb">Patente</label><input id="eo-vpat" value="${op.vehiculo.patente||''}"></div>
+    </div>
+    <div class="fg g4 mt12">
+      <div><label class="lb">Color</label><input id="eo-vcol" value="${op.vehiculo.color||''}"></div>
+      <div><label class="lb">Motor</label><input id="eo-vmot" value="${op.vehiculo.motor||''}"></div>
+      <div><label class="lb">Chasis</label><input id="eo-vcha" value="${op.vehiculo.chasis||''}"></div>
+      <div><label class="lb">KM</label><input id="eo-vkm" value="${op.vehiculo.km||''}"></div>
+    </div>
+    <div class="fg g3 mt12">
+      <div><label class="lb">Seguro</label><input id="eo-vseg" value="${op.vehiculo.seguro||''}"></div>
+      <div><label class="lb">Póliza</label><input id="eo-vpol" value="${op.vehiculo.poliza||''}"></div>
+      <div><label class="lb">Vto. seguro</label><input id="eo-vvts" type="date" value="${op.vehiculo.vtoSeg||''}"></div>
+    </div>`:''}
+
     <div class="mft">
+      <button class="btn bd" onclick="eliminarOp(${id})">🗑 Eliminar operación</button>
       <button class="btn bo" onclick="cerrar()">Cancelar</button>
       <button class="btn bg" onclick="guardarEditarOp(${id})">Guardar cambios</button>
     </div>
@@ -2902,22 +2991,72 @@ function abrirEditarOp(id){
 
 async function guardarEditarOp(id){
   const op=S.ops.find(o=>o.id===id);if(!op)return;
-  op.clienteId=parseInt(document.getElementById('eo-cli')?.value)||op.clienteId;
-  op.tipo=document.getElementById('eo-tipo')?.value||op.tipo;
-  op.tasa=parseFloat(document.getElementById('eo-r')?.value)||op.tasa;
-  op.cajaId=parseInt(document.getElementById('eo-caja')?.value)||op.cajaId;
-  op.gastosAdmin=parseFloat(document.getElementById('eo-ga')?.value)||0;
-  op.desc=document.getElementById('eo-desc')?.value||op.desc;
-  op.neto=op.capital-op.gastosAdmin;
+  const updatedOp = {
+    ...op,
+    clienteId: parseInt(document.getElementById('eo-cli')?.value)||op.clienteId,
+    tipo:       document.getElementById('eo-tipo')?.value||op.tipo,
+    capital:    parseFloat(document.getElementById('eo-cap')?.value)||op.capital,
+    tasa:       parseFloat(document.getElementById('eo-r')?.value)||op.tasa,
+    plazo:      parseInt(document.getElementById('eo-plazo')?.value)||op.plazo,
+    gastosAdmin:parseFloat(document.getElementById('eo-ga')?.value)||0,
+    cajaId:     parseInt(document.getElementById('eo-caja')?.value)||op.cajaId,
+    fi:         document.getElementById('eo-fi')?.value||op.fi,
+    desc:       document.getElementById('eo-desc')?.value||op.desc,
+    status:     document.getElementById('eo-status')?.value||op.status,
+  };
+  updatedOp.neto = updatedOp.capital - updatedOp.gastosAdmin;
+  
+  // Actualizar vehículo si es prendario
+  if(op.tipo==='prendario'&&op.vehiculo){
+    updatedOp.vehiculo = {
+      ...op.vehiculo,
+      marca:   document.getElementById('eo-vmar')?.value||op.vehiculo.marca,
+      modelo:  document.getElementById('eo-vmod')?.value||op.vehiculo.modelo,
+      anio:    document.getElementById('eo-vani')?.value||op.vehiculo.anio,
+      patente: document.getElementById('eo-vpat')?.value||op.vehiculo.patente,
+      color:   document.getElementById('eo-vcol')?.value||op.vehiculo.color,
+      motor:   document.getElementById('eo-vmot')?.value||op.vehiculo.motor,
+      chasis:  document.getElementById('eo-vcha')?.value||op.vehiculo.chasis,
+      km:      document.getElementById('eo-vkm')?.value||op.vehiculo.km,
+      seguro:  document.getElementById('eo-vseg')?.value||op.vehiculo.seguro,
+      poliza:  document.getElementById('eo-vpol')?.value||op.vehiculo.poliza,
+      vtoSeg:  document.getElementById('eo-vvts')?.value||op.vehiculo.vtoSeg,
+    };
+  }
+  
   try{
-    await sbPatch('operaciones',id,{
-      cliente_id:op.clienteId,tipo:op.tipo,tasa:op.tasa,
-      caja_id:op.cajaId,gastos_admin:op.gastosAdmin,
-      neto:op.neto,descripcion:op.desc
+    await sbPatch('operaciones', id, {
+      cliente_id:   updatedOp.clienteId,
+      tipo:         updatedOp.tipo,
+      capital:      updatedOp.capital,
+      tasa:         updatedOp.tasa,
+      plazo:        updatedOp.plazo,
+      gastos_admin: updatedOp.gastosAdmin,
+      neto:         updatedOp.neto,
+      caja_id:      updatedOp.cajaId,
+      fecha_inicio: updatedOp.fi,
+      descripcion:  updatedOp.desc,
+      status:       updatedOp.status,
+      vehiculo:     updatedOp.vehiculo,
     });
+    S.ops = S.ops.map(o=>o.id===id ? updatedOp : o);
     saveLocalBackup();
-    cerrar();toast('Operación actualizada');render();
-  }catch(e){toast('Error: '+e.message,'err');}
+    cerrar(); toast('Operación actualizada'); render();
+  }catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
+}
+
+async function eliminarOp(id){
+  if(!confirm('¿Eliminar esta operación permanentemente? Esta acción no se puede deshacer.')) return;
+  const op = S.ops.find(o=>o.id===id); if(!op) return;
+  try {
+    // Eliminar cuotas primero (cascade debería hacerlo pero por las dudas)
+    await fetch(`${SB_URL}/rest/v1/cuotas?operacion_id=eq.${id}`, {method:'DELETE', headers:SB_HEADERS});
+    // Eliminar operación
+    await sbDelete('operaciones', id);
+    S.ops = S.ops.filter(o=>o.id!==id);
+    saveLocalBackup();
+    cerrar(); toast('Operación eliminada'); render();
+  } catch(e){ toast('Error eliminando: '+e.message,'err'); console.error(e); }
 }
 
 // ═══ EDITAR CLIENTE ═══
@@ -2984,9 +3123,5 @@ function renderSearchDrop(){
   if(!el)return;
   el.innerHTML=S.showSearch&&S.globalSrch.length>=2?renderGlobalSearch():'';
 }
-// Arrancar app
-initSecurity();
-installPWA();
-registerSW();
-loadFromDB();
+initSecurity();installPWA();registerSW();loadFromDB();
 </script></body></html>
