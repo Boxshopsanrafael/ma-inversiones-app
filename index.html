@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="M&A Inversiones">
 <meta name="theme-color" content="#d4a847">
 <title>M&A Inversiones</title>
+<!-- v3.1 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -196,7 +197,7 @@ textarea{resize:vertical;min-height:56px}
   <div class="fx g8" style="align-items:center">
     <div class="global-search" style="position:relative">
       <span>⌕</span>
-      <input id="gsrch" placeholder="Buscar todo..." autocomplete="off"
+      <input id="gsrch" placeholder="Buscar..." autocomplete="off"
         oninput="S.globalSrch=this.value;S.showSearch=true;renderSearchDrop()"
         onfocus="S.showSearch=true;renderSearchDrop()"
         onblur="setTimeout(()=>{S.showSearch=false;document.getElementById('sdrop').innerHTML=''},200)">
@@ -1587,7 +1588,9 @@ function abrirCliente(id){
     </div>`).join('')}
   </div>
   <div class="mft">
-    <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>abrirEditarCliente(${id}),80)">✏ Editar cliente</button>
+    ${ch.estado==='cobrado'?`<button class="btn bsm bd" onclick="revertirCheque(${id})">↩ Revertir</button>`:''}
+    <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>editarChequeFull(${id}),80)">✏ Editar</button>
+    <button class="btn bsm bd" style="background:#1a0808" onclick="eliminarCheque(${id})">🗑 Eliminar</button>
     <button class="btn bo" onclick="cerrar()">Cerrar</button>
   </div>
   </div>`);
@@ -1622,6 +1625,9 @@ function abrirCaja(id){
     </tr>`).join('')}</tbody></table>
   </div>
   <div class="mft">
+    ${ch.estado==='cobrado'?`<button class="btn bsm bd" onclick="revertirCheque(${id})">↩ Revertir</button>`:''}
+    <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>editarChequeFull(${id}),80)">✏ Editar</button>
+    <button class="btn bsm bd" style="background:#1a0808" onclick="eliminarCheque(${id})">🗑 Eliminar</button>
     <button class="btn bo" onclick="cerrar()">Cerrar</button>
   </div>
   </div>`);
