@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Financiera">
 <meta name="theme-color" content="#d4a847">
 <title>Financiera</title>
-<!-- v4.3 -->
+<!-- v4.4 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>.monto-oculto{filter:blur(5px);transition:filter .3s;user-select:none}</style>
@@ -1586,6 +1586,7 @@ function prevCh(){
 function cobrarCh(id){const ch=S.cheques.find(c=>c.id===id);if(!ch)return;if(ch.cajaOrigenId){S.cajas=S.cajas.map(c=>c.id===ch.cajaOrigenId?{...c,balance:c.balance+ch.monto}:c);S.movs.push({id:uid(),cajaId:ch.cajaOrigenId,tipo:'ingreso',monto:ch.monto,concepto:`Cobro cheque ${ch.numero}`,fecha:hoy()});}S.cheques=S.cheques.map(c=>c.id===id?{...c,estado:'cobrado'}:c);toast('Cheque cobrado · '+fmt(ch.monto)+' acreditado');render();}
 
 function abrirOp(id){
+  id=parseInt(id);
   const op=S.ops.find(o=>o.id===id);if(!op)return;
   const cl=S.clientes.find(c=>c.id===op.clienteId);
   const pg=op.cuotas.filter(c=>c.paga).length,sl=sal(op),{it,tp,cuota}=calcC(op.capital,op.tasa,op.plazo),pct=Math.round(pg/op.plazo*100);
@@ -1653,6 +1654,7 @@ function toggleCuota(opId,num){
 }
 
 function abrirCheque(id){
+  id=parseInt(id);
   const ch=S.cheques.find(c=>c.id===id);if(!ch)return;
   const ec=ch.estado==='en_cartera';
   const dstL={pago:'Pago de deuda/mercadería/servicio',efectivo:'Cambio por efectivo',endoso:'Endosado a tercero',otro:'Otro'};
@@ -1740,6 +1742,7 @@ function chkT(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=
 function verFoto(src){const ov=document.getElementById('ov');const div=document.createElement('div');div.style='position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:200;display:flex;align-items:center;justify-content:center;cursor:pointer';div.onclick=()=>div.remove();div.innerHTML=`<img src="${src}" style="max-width:95vw;max-height:92vh;object-fit:contain">`;document.body.appendChild(div);}
 
 function abrirCliente(id){
+  id=parseInt(id);
   const cl=S.clientes.find(c=>c.id===id);if(!cl)return;
   const ops=S.ops.filter(o=>o.clienteId===id);
   const chs=S.cheques.filter(c=>c.clienteId===id);
@@ -1826,6 +1829,7 @@ function abrirCliente(id){
 }
 
 function abrirCaja(id){
+  id=parseInt(id);
   const cj=S.cajas.find(c=>c.id===id);if(!cj)return;
   const mv=S.movs.filter(m=>m.cajaId===id).slice(-20).reverse();
   const ing=mv.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
@@ -2207,6 +2211,21 @@ async function eliminarCheque(id){
     saveLocalBackup();
     cerrar(); toast('Cheque eliminado'); render();
   } catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
+}
+
+function cliT(btn,tab){
+  btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  ['ci-o','ci-c','ci-cc'].forEach(id=>{
+    const e=document.getElementById(id);
+    if(e){
+      e.style.display=id===tab?'block':'none';
+      // Lazy load cuenta corriente
+      if(id===tab&&id==='ci-cc'&&e.dataset.cli&&!e.innerHTML.trim()){
+        e.innerHTML=rCuentaCorrienteCliente(parseInt(e.dataset.cli));
+      }
+    }
+  });
 }
 function expOpsXls(){const wb=XLSX.utils.book_new();const h=['Cliente','Tipo','Capital','Tasa','Plazo','G.Admin','Neto','Caja','Inicio','Total cobrar','Cuotas pagas','Saldo'];const rows=S.ops.map(o=>{const{tp}=calcC(o.capital,o.tasa,o.plazo);return[cN(o.clienteId),tL(o.tipo),o.capital,o.tasa+'%',o.plazo,o.gastosAdmin,o.neto,cajN(o.cajaId),o.fi,tp,o.cuotas.filter(c=>c.paga).length+'/'+o.plazo,sal(o)];});XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([h,...rows]),'Operaciones');XLSX.writeFile(wb,'operaciones.xlsx');toast('Excel descargado');}
 function expOpsPdf(){expPdf('Operaciones',[{title:'Operaciones',headers:['Cliente','Tipo','Capital','Tasa','Neto','Caja','Saldo'],rows:S.ops.map(o=>[cN(o.clienteId),tL(o.tipo),fmt(o.capital),o.tasa+'%',fmt(o.neto),cajN(o.cajaId),fmt(sal(o))])}]);}
