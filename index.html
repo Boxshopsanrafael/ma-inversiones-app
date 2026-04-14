@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Financiera">
 <meta name="theme-color" content="#d4a847">
 <title>Financiera</title>
-<!-- v4.4 -->
+<!-- v4.5 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>.monto-oculto{filter:blur(5px);transition:filter .3s;user-select:none}</style>
@@ -422,56 +422,13 @@ const S={
     impCh:1.2,
     logo:null,
   },
-  clientes:[
-    {id:1,name:'María González',dni:'28.456.789',phone:'2604-123456',email:'maria@email.com',address:'Rivadavia 450',score:'bueno'},
-    {id:2,name:'Carlos Pérez',dni:'32.111.222',phone:'2604-654321',email:'carlos@email.com',address:'Belgrano 123',score:'regular'},
-    {id:3,name:'Ana Rodríguez',dni:'25.999.888',phone:'2604-789012',email:'ana@email.com',address:'San Martín 800',score:'bueno'},
-  ],
-  cajas:[
-    {id:1,name:'Caja Principal',type:'efectivo',balance:850000,color:'#d4a847',icon:'◈',currency:'ARS'},
-    {id:2,name:'Banco Nación',type:'banco',balance:2300000,color:'#3b82f6',icon:'▣',currency:'ARS'},
-    {id:3,name:'Caja 2',type:'efectivo',balance:420000,color:'#10b981',icon:'◈',currency:'ARS'},
-  ],
-  movs:[
-    {id:1,cajaId:1,tipo:'egreso',monto:150000,concepto:'Préstamo — María González',fecha:'2025-01-15'},
-    {id:2,cajaId:1,tipo:'ingreso',monto:12500,concepto:'Cuota 1 — María González',fecha:'2025-02-15'},
-  ],
+  clientes:[],
+  cajas:[],
+  movs:[],
   ops:[],cheques:[],cuentaCorriente:[],
 };
 
-(function initDemo(){
-  function mkOp(o){
-    const r={...o,neto:o.capital-o.gastosAdmin,cuotas:genQ(o.capital,o.tasa,o.plazo,o.fi)};
-    r.cuotas=r.cuotas.map((c,i)=>({...c,paga:i<(o.pg||0)}));
-    return r;
-  }
-  S.ops=[
-    mkOp({id:1,clienteId:1,tipo:'prestamo',capital:150000,tasa:5,plazo:12,fi:'2025-01-15',cajaId:1,gastosAdmin:2000,desc:'Préstamo refacción',status:'activo',vehiculo:null,pg:3}),
-    mkOp({id:2,clienteId:3,tipo:'hipotecario',capital:500000,tasa:3,plazo:24,fi:'2024-06-01',cajaId:2,gastosAdmin:5000,desc:'Hipoteca propiedad',status:'activo',vehiculo:null,pg:10}),
-    mkOp({id:3,clienteId:2,tipo:'prendario',capital:320000,tasa:4,plazo:18,fi:'2025-03-01',cajaId:1,gastosAdmin:3000,desc:'Prenda Ford Focus',status:'activo',
-      vehiculo:{marca:'Ford',modelo:'Focus',anio:'2019',patente:'AB123CD',color:'Gris',motor:'1.6',chasis:'WVW12345678',km:'85000',seguro:'La Caja',poliza:'POL-12345',vtoSeg:'2026-12-01'},pg:1}),
-  ];
-  const h=new Date(),v30=new Date(h),v15=new Date(h),v60=new Date(h);
-  v30.setDate(h.getDate()+30);v15.setDate(h.getDate()+15);v60.setDate(h.getDate()+60);
-  const ts=d=>d.toISOString().split('T')[0];
-  function mkCh(o){
-    const d=dds(o.vto,o.ing),r=calcCh(o.m,o.td,d,S.cfg.impCh,o.ga||0);
-    return{id:o.id,clienteId:o.cli,numero:o.num,banco:o.banco,monto:o.m,tasaDiaria:o.td,dias:d,
-      vencimiento:o.vto,impPct:S.cfg.impCh,gastosAdmin:o.ga||0,...r,
-      estado:o.est||'en_cartera',cajaOrigenId:o.coId,cajaTenenciaId:o.ctId,ingreso:o.ing,
-      titularCuenta:'',titularDni:'',titularTel:'',cbu:'',endoso:'',notas:'',
-      fotoF:null,fotoD:null,
-      destino:{entregadoA:'',fecha:'',motivo:'',tipo:'',comision:0,notas:''},
-    };
-  }
-  S.cheques=[
-    mkCh({id:101,cli:1,num:'00123456',banco:'Banco Nación',m:200000,td:0.3,vto:ts(v30),ing:hoy(),coId:1,ctId:1}),
-    mkCh({id:102,cli:2,num:'00789012',banco:'Banco Galicia',m:80000,td:0.3,vto:ts(v15),ing:hoy(),coId:1,ctId:1,ga:500}),
-    mkCh({id:103,cli:3,num:'00345678',banco:'BBVA',m:150000,td:0.3,vto:ts(v60),ing:hoy(),coId:2,ctId:2,ga:1000}),
-    {...mkCh({id:104,cli:1,num:'00567890',banco:'Banco Macro',m:120000,td:0.35,vto:'2025-12-10',ing:'2025-11-01',coId:1,ctId:1}),
-      estado:'cobrado',destino:{entregadoA:'Proveedor ABC',fecha:'2025-11-05',motivo:'Pago de materiales',tipo:'pago',comision:0,notas:''}},
-  ];
-})();
+
 
 const cN=id=>S.clientes.find(c=>c.id===id)?.name||'—';
 const cajN=id=>S.cajas.find(c=>c.id===id)?.name||'—';
@@ -938,7 +895,7 @@ function rCli(){
   <div class="srch"><span>⌕</span><input placeholder="Nombre o DNI..." value="${S.srch}" oninput="S.srch=this.value;render()"></div>
   <div class="grid g3">
     ${fil.map(c=>{
-      const ops=S.ops.filter(o=>o.clienteId===c.id),sl=ops.reduce((a,o)=>a+sal(o),0),mora=ops.some(o=>vcOp(o).length>0);
+      const ops=S.ops.filter(o=>parseInt(o.clienteId)===parseInt(c.id)),sl=ops.filter(o=>o.status==='activo').reduce((a,o)=>a+sal(o),0),mora=ops.some(o=>vcOp(o).length>0);
       return`<div class="cc" onclick="abrirCliente(${c.id})"><div class="ac" style="background:${scC(c.score)}"></div>
         <div class="fx g12 mb10" style="align-items:center">
           <div style="width:38px;height:38px;background:var(--bg2);border:1px solid var(--br2);display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:17px;color:var(--go);flex-shrink:0">${c.name.charAt(0)}</div>
@@ -1743,9 +1700,9 @@ function verFoto(src){const ov=document.getElementById('ov');const div=document.
 
 function abrirCliente(id){
   id=parseInt(id);
-  const cl=S.clientes.find(c=>c.id===id);if(!cl)return;
-  const ops=S.ops.filter(o=>o.clienteId===id);
-  const chs=S.cheques.filter(c=>c.clienteId===id);
+  const cl=S.clientes.find(c=>parseInt(c.id)===id);if(!cl)return;
+  const ops=S.ops.filter(o=>parseInt(o.clienteId)===id);
+  const chs=S.cheques.filter(c=>parseInt(c.clienteId)===id);
   const sl=ops.filter(o=>o.status==='activo').reduce((a,o)=>a+sal(o),0);
   const mora=ops.some(o=>vcOp(o).length>0);
 
@@ -3396,14 +3353,14 @@ const CC_TIPOS = {
 
 // Calcular saldo de cuenta corriente de un cliente
 function saldoCC(clienteId){
-  const movs = (S.cuentaCorriente||[]).filter(m=>m.clienteId===clienteId);
+  const movs = (S.cuentaCorriente||[]).filter(m=>parseInt(m.clienteId)===parseInt(clienteId));
   return movs.reduce((a,m)=> m.esIngreso ? a+m.monto : a-m.monto, 0);
 }
 
 // Vista de cuenta corriente dentro del detalle de cliente
 function rCuentaCorrienteCliente(clienteId){
   const movs = (S.cuentaCorriente||[])
-    .filter(m=>m.clienteId===clienteId)
+    .filter(m=>parseInt(m.clienteId)===parseInt(clienteId))
     .sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
   const saldo = saldoCC(clienteId);
 
