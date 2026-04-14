@@ -9,9 +9,12 @@
 <meta name="apple-mobile-web-app-title" content="M&A Inversiones">
 <meta name="theme-color" content="#d4a847">
 <title>M&A Inversiones</title>
-<!-- v3.1 -->
+<!-- v4.0 build 20260414_063123 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+.monto-oculto{filter:blur(6px);transition:filter .3s;user-select:none;cursor:pointer}
+</style>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -212,83 +215,35 @@ textarea{resize:vertical;min-height:56px}
 <div id="toast"></div>
 <div id="ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;overflow-y:auto;padding:14px;flex-direction:column;align-items:center" onclick="if(event.target===this)cerrar()"></div>
 <script>
-// ═══ CONFIGURACIÓN DE SEGURIDAD ═══
+const SB_URL = 'https://sbjvjwzvbeyqsvfgykcp.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNianZqd3p2YmV5cXN2Zmd5a2NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNjA3NDgsImV4cCI6MjA5MDkzNjc0OH0.eFJjyuYlo3j04ZJxfgM3Zwne830Am-xkp9jWPHv-yOA';
+const SB_HEADERS = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+// ═══ AUTENTICACIÓN CON SUPABASE AUTH ═══
 const SEC = {
-  PIN_KEY: 'ma_pin',
-  TIMEOUT: 2 * 60 * 1000, // 2 minutos
-  lastActivity: Date.now(),
-  locked: true,
+  TIMEOUT: 30 * 60 * 1000, // 30 minutos de inactividad
   timer: null,
+  user: null,
+  session: null,
 };
 
-// PIN se guarda en Supabase Y en localStorage para acceso offline
-// Siempre se pide el PIN si está configurado, sin importar el dispositivo
-function getPin(){ 
-  return localStorage.getItem(SEC.PIN_KEY) || null; 
-}
-function setPin(p){ 
-  localStorage.setItem(SEC.PIN_KEY, p);
-  // También guardar en Supabase para sincronizar entre dispositivos
-  if(typeof sbPatch !== 'undefined' && typeof S !== 'undefined'){
-    dbSaveConfig('pin_hash', p).catch(e=>console.log('pin sync error',e));
-  }
-}
-async function syncPinFromDB(){
-  try {
-    const rows = await sbGet('configuracion','clave=eq.pin_hash');
-    if(rows && rows.length && rows[0].valor && rows[0].valor !== 'null'){
-      const dbPin = typeof rows[0].valor === 'string' ? rows[0].valor.replace(/"/g,'') : rows[0].valor;
-      if(dbPin && dbPin !== 'null'){
-        localStorage.setItem(SEC.PIN_KEY, dbPin);
-        return dbPin;
-      }
-    }
-  } catch(e){ console.log('syncPin error',e); }
-  return localStorage.getItem(SEC.PIN_KEY);
-}
-
-// Reiniciar timer de inactividad
+// Detectar inactividad
 function resetTimer(){
-  SEC.lastActivity = Date.now();
   if(SEC.timer) clearTimeout(SEC.timer);
-  if(getPin()){
-    SEC.timer = setTimeout(()=>{
-      autoLock();
-    }, SEC.TIMEOUT);
-  }
+  SEC.timer = setTimeout(()=>{ autoLock(); }, SEC.TIMEOUT);
 }
-
-// Detectar actividad del usuario
 ['click','touchstart','keydown','scroll','mousemove'].forEach(ev=>{
   document.addEventListener(ev, resetTimer, {passive:true});
 });
 
 function autoLock(){
-  if(!getPin()) return;
-  SEC.locked = true;
-  showLockScreen('La sesión expiró por inactividad');
+  SEC.user = null;
+  SEC.session = null;
+  showLoginScreen('Tu sesión expiró por inactividad');
 }
 
-// ═══ PANTALLA DE BIENVENIDA + PIN ═══
-function showSplash(){
-  const pin = getPin();
-  const wrap = document.createElement('div');
-  wrap.id = 'splash';
-  wrap.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0';
-
-  wrap.innerHTML = `
-    <!-- LOGO M&A -->
-    <div style="margin-bottom:32px">
-      ${LOGO_SVG}
-    </div>
-
-    ${pin ? renderPinPad('') : renderNoPinMsg()}
-  `;
-  document.body.appendChild(wrap);
-}
-
+// ═══ PANTALLA DE LOGIN ═══
 const LOGO_SVG = `
-<svg width="220" height="220" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+<svg width="180" height="180" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#1a1508"/>
@@ -304,174 +259,145 @@ const LOGO_SVG = `
       <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
-  <!-- Círculo exterior -->
   <circle cx="110" cy="110" r="106" fill="url(#bg-grad)" stroke="#2a2210" stroke-width="1.5"/>
-  <!-- Círculo decorativo interno -->
   <circle cx="110" cy="110" r="95" fill="none" stroke="#d4a847" stroke-width="0.5" opacity="0.4"/>
-  <circle cx="110" cy="110" r="88" fill="none" stroke="#d4a847" stroke-width="0.3" opacity="0.2"/>
-  <!-- Líneas decorativas diagonales -->
   <line x1="25" y1="110" x2="50" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
   <line x1="170" y1="110" x2="195" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
   <line x1="110" y1="25" x2="110" y2="50" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
   <line x1="110" y1="170" x2="110" y2="195" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
-  <!-- Puntos en las esquinas -->
-  <circle cx="47" cy="47" r="2" fill="#d4a847" opacity="0.5"/>
-  <circle cx="173" cy="47" r="2" fill="#d4a847" opacity="0.5"/>
-  <circle cx="47" cy="173" r="2" fill="#d4a847" opacity="0.5"/>
-  <circle cx="173" cy="173" r="2" fill="#d4a847" opacity="0.5"/>
-  <!-- Texto M&A grande -->
   <text x="110" y="118" font-family="Georgia, serif" font-size="64" font-weight="700"
     fill="url(#gold-grad)" text-anchor="middle" filter="url(#glow)" letter-spacing="2">M&amp;A</text>
-  <!-- Línea separadora -->
   <line x1="52" y1="132" x2="168" y2="132" stroke="#d4a847" stroke-width="0.8" opacity="0.6"/>
-  <!-- Subtítulo -->
   <text x="110" y="152" font-family="'Courier Prime', monospace" font-size="13" fill="#d4a847"
     text-anchor="middle" letter-spacing="6" opacity="0.9">INVERSIONES</text>
-  <!-- Pequeño rombo decorativo abajo -->
   <polygon points="110,168 114,172 110,176 106,172" fill="#d4a847" opacity="0.5"/>
 </svg>`;
 
-function renderPinPad(msg){
-  return `
-  <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
-    <div style="font-size:11px;letter-spacing:4px;color:#555;text-transform:uppercase">Ingresá tu PIN</div>
-    <div id="pin-dots" style="display:flex;gap:14px;margin:4px 0">
-      ${[0,1,2,3].map(i=>`<div id="dot${i}" style="width:14px;height:14px;border-radius:50%;border:1.5px solid #2a2a3e;background:#09090f;transition:.15s"></div>`).join('')}
-    </div>
-    <div id="pin-msg" style="font-size:11px;color:#ef4444;min-height:16px;letter-spacing:1px">${msg||''}</div>
-    <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px">
-      ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`
-        <button onclick="pinPress('${k}')"
-          style="background:#0d0d16;border:1px solid #1e1e2e;color:${k===''?'transparent':'#e8e0d0'};
-          font-family:'Courier Prime',monospace;font-size:22px;padding:18px;cursor:pointer;
-          transition:.15s;border-radius:2px;${k===''?'pointer-events:none':''}"
-          onmouseover="if('${k}'!='')this.style.borderColor='#d4a847';this.style.background='#14141e'"
-          onmouseout="this.style.borderColor='#1e1e2e';this.style.background='#0d0d16'">
-          ${k}
-        </button>`).join('')}
-    </div>
-  </div>`;
-}
-
-function renderNoPinMsg(){
-  return `
-  <div style="display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:8px">
-    <div style="font-size:11px;letter-spacing:3px;color:#555;text-transform:uppercase">Sin PIN configurado</div>
-    <button onclick="entrarSinPin()"
-      style="background:linear-gradient(135deg,#7a5c0e,#d4a847);color:#000;border:none;
-      padding:14px 40px;font-family:'Courier Prime',monospace;font-size:13px;
-      letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-weight:700;border-radius:2px">
-      Entrar →
-    </button>
-    <div style="font-size:10px;color:#333;letter-spacing:1px">Podés configurar un PIN en Ajustes</div>
-  </div>`;
-}
-
-function entrarSinPin(){
+function showLoginScreen(msg){
   document.getElementById('splash')?.remove();
-  SEC.locked = false;
-  resetTimer();
-}
-
-let pinBuffer = '';
-function pinPress(k){
-  if(k==='') return;
-  if(k==='⌫'){
-    pinBuffer = pinBuffer.slice(0,-1);
-  } else if(pinBuffer.length < 4){
-    pinBuffer += k;
-  }
-  // Actualizar dots
-  [0,1,2,3].forEach(i=>{
-    const d = document.getElementById('dot'+i);
-    if(d){
-      d.style.background = i < pinBuffer.length ? '#d4a847' : '#09090f';
-      d.style.borderColor = i < pinBuffer.length ? '#d4a847' : '#2a2a3e';
-    }
-  });
-  if(pinBuffer.length === 4){
-    const pin = getPin();
-    if(!pin){
-      // Primera vez configurando PIN desde splash (no debería pasar)
-      entrarSinPin();
-    } else if(pinBuffer === pin){
-      document.getElementById('splash')?.remove();
-      SEC.locked = false;
-      pinBuffer = '';
-      resetTimer();
-      addLog('acceso', 'PIN correcto — acceso concedido');
-    } else {
-      // PIN incorrecto
-      const msg = document.getElementById('pin-msg');
-      if(msg) msg.textContent = 'PIN incorrecto, intentá de nuevo';
-      // Vibrar dots
-      [0,1,2,3].forEach(i=>{
-        const d = document.getElementById('dot'+i);
-        if(d){ d.style.background = '#ef4444'; d.style.borderColor = '#ef4444'; }
-      });
-      setTimeout(()=>{
-        pinBuffer = '';
-        [0,1,2,3].forEach(i=>{
-          const d = document.getElementById('dot'+i);
-          if(d){ d.style.background = '#09090f'; d.style.borderColor = '#2a2a3e'; }
-        });
-        if(msg) msg.textContent = '';
-      }, 800);
-      addLog('acceso', 'PIN incorrecto — intento fallido');
-    }
-  }
-}
-
-// ═══ AUTO-LOCK ═══
-function showLockScreen(msg){
-  // Quitar splash anterior si hay
-  document.getElementById('splash')?.remove();
-  pinBuffer = '';
   const wrap = document.createElement('div');
   wrap.id = 'splash';
-  wrap.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0';
+  wrap.style.cssText = 'position:fixed;inset:0;background:#09090f;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:20px';
   wrap.innerHTML = `
-    <div style="margin-bottom:32px">${LOGO_SVG}</div>
-    <div style="font-size:11px;letter-spacing:3px;color:#555;text-transform:uppercase;margin-bottom:20px">${msg||'Sesión bloqueada'}</div>
-    ${renderPinPad('')}
+    <div style="margin-bottom:24px">${LOGO_SVG}</div>
+    <div style="width:100%;max-width:360px">
+      ${msg ? `<div style="text-align:center;font-size:11px;color:#ef4444;letter-spacing:1px;margin-bottom:16px;padding:8px;border:1px solid #4a1a1a;background:#1a0808">${msg}</div>` : ''}
+      <div id="login-err" style="text-align:center;font-size:11px;color:#ef4444;min-height:20px;margin-bottom:8px"></div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;display:block;margin-bottom:6px">Email</label>
+        <input id="login-email" type="email" placeholder="tu@email.com" autocomplete="email"
+          style="background:#0d0d16;border:1px solid #2a2a3e;color:#e8e0d0;padding:12px 14px;width:100%;font-family:'Courier Prime',monospace;font-size:14px;outline:none;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#555;display:block;margin-bottom:6px">Contraseña</label>
+        <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+          style="background:#0d0d16;border:1px solid #2a2a3e;color:#e8e0d0;padding:12px 14px;width:100%;font-family:'Courier Prime',monospace;font-size:14px;outline:none;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button onclick="doLogin()" id="login-btn"
+        style="background:linear-gradient(135deg,#7a5c0e,#d4a847);color:#000;border:none;width:100%;padding:14px;font-family:'Courier Prime',monospace;font-size:13px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-weight:700">
+        INGRESAR
+      </button>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="showForgotPassword()" style="background:none;border:none;color:#555;font-family:'Courier Prime',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;text-decoration:underline">
+          Olvidé mi contraseña
+        </button>
+      </div>
+    </div>
   `;
   document.body.appendChild(wrap);
+  setTimeout(()=>document.getElementById('login-email')?.focus(), 100);
+}
+
+async function doLogin(){
+  const email = document.getElementById('login-email')?.value?.trim();
+  const pass = document.getElementById('login-pass')?.value;
+  const errEl = document.getElementById('login-err');
+  const btn = document.getElementById('login-btn');
+
+  if(!email || !pass) {
+    if(errEl) errEl.textContent = 'Ingresá email y contraseña';
+    return;
+  }
+
+  if(btn) { btn.textContent = 'INGRESANDO...'; btn.disabled = true; }
+  if(errEl) errEl.textContent = '';
+
+  try {
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+
+    if(!res.ok || data.error) {
+      const msg = data.error_description || data.msg || 'Email o contraseña incorrectos';
+      if(errEl) errEl.textContent = msg;
+      if(btn) { btn.textContent = 'INGRESAR'; btn.disabled = false; }
+      return;
+    }
+
+    // Login exitoso
+    SEC.user = data.user;
+    SEC.session = data.access_token;
+    // Actualizar headers con token de sesión
+    SB_HEADERS['Authorization'] = 'Bearer ' + data.access_token;
+
+    document.getElementById('splash')?.remove();
+    resetTimer();
+    addLog('acceso', `Login: ${email}`);
+
+    // Cargar datos
+    await loadFromDB();
+
+  } catch(e) {
+    if(errEl) errEl.textContent = 'Error de conexión. Revisá internet.';
+    if(btn) { btn.textContent = 'INGRESAR'; btn.disabled = false; }
+  }
+}
+
+function showForgotPassword(){
+  const email = document.getElementById('login-email')?.value?.trim();
+  const errEl = document.getElementById('login-err');
+  if(!email){
+    if(errEl) errEl.textContent = 'Primero escribí tu email arriba';
+    return;
+  }
+  fetch(`${SB_URL}/auth/v1/recover`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
+    body: JSON.stringify({ email })
+  }).then(()=>{
+    if(errEl){ errEl.style.color='#10b981'; errEl.textContent = `✓ Te enviamos un email a ${email}`; }
+  });
 }
 
 // ═══ INICIALIZAR ═══
-async function initSecurity(){
-  showSplash(); // Mostrar splash inmediatamente
-  // Sincronizar PIN desde Supabase (para que funcione en cualquier dispositivo)
-  try {
-    const pin = await syncPinFromDB();
-    // Refrescar splash con PIN actualizado
-    const splash = document.getElementById('splash');
-    if(splash && pin){
-      const pinContent = splash.querySelector('#pin-dots')?.closest('div[style]');
-      // Re-render con PIN actualizado
-    }
-  } catch(e){ console.log('initSecurity sync error',e); }
-  resetTimer();
+function initSecurity(){
+  // Verificar si hay sesión guardada
+  const savedSession = localStorage.getItem('ma_session');
+  if(savedSession){
+    try {
+      const s = JSON.parse(savedSession);
+      // Verificar si no expiró
+      if(s.expires_at && new Date(s.expires_at * 1000) > new Date()){
+        SEC.user = s.user;
+        SEC.session = s.access_token;
+        SB_HEADERS['Authorization'] = 'Bearer ' + s.access_token;
+        showLoader('Conectando con M&A Inversiones...');
+        resetTimer();
+        loadFromDB();
+        return;
+      }
+    } catch(e){}
+  }
+  showLoginScreen('');
 }
 
-// ═══ GUARDAR PIN DESDE CONFIG ═══
-async function guardarPin(){
-  const n = document.getElementById('pin-new')?.value;
-  const c = document.getElementById('pin-conf')?.value;
-  if(!n || n.length !== 4 || !/^\d{4}$/.test(n)) return toast('El PIN debe ser 4 dígitos numéricos','err');
-  if(n !== c) return toast('Los PINs no coinciden','err');
-  // Guardar local
-  localStorage.setItem(SEC.PIN_KEY, n);
-  // Guardar en Supabase para todos los dispositivos
-  try {
-    await dbSaveConfig('pin_hash', n);
-    toast('PIN guardado — funciona en todos los dispositivos');
-  } catch(e){
-    toast('PIN guardado localmente (sin conexión)');
-  }
-  resetTimer();
-  render();
-}
+// Guardar sesión al hacer login exitoso
+const _origDoLogin = doLogin;
 const fmt=n=>new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0}).format(n||0);
 const fD=d=>d?new Date(d+'T00:00:00').toLocaleDateString('es-AR'):'—';
 const hoy=()=>new Date().toISOString().split('T')[0];
@@ -521,7 +447,7 @@ const S={
     {id:1,cajaId:1,tipo:'egreso',monto:150000,concepto:'Préstamo — María González',fecha:'2025-01-15'},
     {id:2,cajaId:1,tipo:'ingreso',monto:12500,concepto:'Cuota 1 — María González',fecha:'2025-02-15'},
   ],
-  ops:[],cheques:[],
+  ops:[],cheques:[],cuentaCorriente:[],
 };
 
 (function initDemo(){
@@ -609,6 +535,34 @@ function abrirModal(tipo,extra){
   ov.style.display='flex';
 }
 function mH(t){return`<div class="modal"><div class="mhd"><div class="mtt">${t}</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>`;}
+
+// Toggle visibilidad de montos en el panel
+function toggleMonto(card, valor){
+  const el = card.querySelector('.sv, .monto-oculto');
+  if(!el) return;
+  if(el.textContent.includes('•')){
+    el.textContent = valor;
+    el.classList.remove('monto-oculto');
+    card.title = 'Clic para ocultar';
+  } else {
+    el.textContent = '••••••';
+    el.classList.add('monto-oculto');
+    card.title = 'Clic para ver';
+  }
+}
+
+// Autocompletado con historial
+function getHistorial(campo){
+  try {
+    return JSON.parse(localStorage.getItem('hist_'+campo)||'[]');
+  } catch { return []; }
+}
+function agregarHistorial(campo, valor){
+  if(!valor || valor.length < 2) return;
+  const h = getHistorial(campo);
+  const nuevo = [valor, ...h.filter(v=>v!==valor)].slice(0,20);
+  localStorage.setItem('hist_'+campo, JSON.stringify(nuevo));
+}
 function rTipo(tipo){
   const act=S.ops.filter(o=>o.status==='activo'&&o.tipo===tipo);
   const todos=S.ops.filter(o=>o.tipo===tipo);
@@ -705,19 +659,47 @@ function rDash(){
   const vcs=act.flatMap(o=>vcOp(o).map(c=>({...c,op:o})));
   const lim=new Date();lim.setDate(lim.getDate()+15);
   const prx=act.flatMap(o=>o.cuotas.filter(c=>!c.paga&&new Date(c.vto)>new Date()&&new Date(c.vto)<=lim).map(c=>({...c,op:o})));
-  const chv=car.filter(c=>dds(c.vencimiento,hoy())<=7);
+  const chv=car.filter(c=>{const d=dds(c.vencimiento,hoy());return d<=7&&d>=0;});
+  // Cheques para depositar: vencidos hace menos de 30 días
+  const paraDepositar=S.cheques.filter(c=>{
+    if(c.estado!=='en_cartera'&&c.estado!=='para_depositar') return false;
+    const d=dds(hoy(),c.vencimiento); // días desde vencimiento
+    return d>=0 && d<=30;
+  });
+  // Alertar 3 días antes de que venzan los 30 días para depositar
+  const porVencerDeposito=S.cheques.filter(c=>{
+    if(c.estado!=='en_cartera'&&c.estado!=='para_depositar') return false;
+    const diasDesdeVto=dds(hoy(),c.vencimiento);
+    return diasDesdeVto>=27 && diasDesdeVto<=30;
+  });
   return`
   <div class="ph"><div><div class="pt">Panel General</div><div class="ps">${new Date().toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div></div>
   ${vcs.length?`<div class="al al-r">⚠ ${vcs.length} cuota${vcs.length>1?'s':''} vencida — ${fmt(vcs.reduce((a,c)=>a+c.monto,0))} <button class="btn bxs bd" style="margin-left:auto" onclick="go('ops')">Ver →</button></div>`:''}
   ${prx.length?`<div class="al al-a">🕐 ${prx.length} cuota${prx.length>1?'s':''} vence en 15 días — ${fmt(prx.reduce((a,c)=>a+c.monto,0))} <button class="btn bxs bo" style="margin-left:auto" onclick="go('ops')">Ver →</button></div>`:''}
   ${chv.length?`<div class="al al-a">📋 ${chv.length} cheque${chv.length>1?'s':''} vence en 7 días <button class="btn bxs bo" style="margin-left:auto" onclick="go('cheques')">Ver →</button></div>`:''}
+  ${paraDepositar.length?`<div class="al al-g">🏦 ${paraDepositar.length} cheque${paraDepositar.length>1?'s':''} para depositar <button class="btn bxs bs" style="margin-left:auto" onclick="S.opsTab='cheques';go('ops')">Ver →</button></div>`:''}
+  ${porVencerDeposito.length?`<div class="al al-r">⚠ Cheques con plazo de depósito por vencer <button class="btn bxs bd" style="margin-left:auto" onclick="S.opsTab='cheques';go('ops')">¡Ver ahora!</button></div>`:''}
   ${(()=>{const deudas=S.cheques.filter(c=>c.destino?.tipo==='efectivo'&&c.destino?.pagadoEfectivo==='no'&&c.destino?.deudaVto);return deudas.length?`<div class="al al-r">💸 ${deudas.length} deuda${deudas.length>1?'s':''} de efectivo pendiente${deudas.length>1?'s':''} — ${fmt(deudas.reduce((a,c)=>a+(c.destino.montoEfectivo||0),0))} <button class="btn bxs bd" style="margin-left:auto" onclick="go('cheques')">Ver →</button></div>`:''})()}
   ${rResumenDia()}
   <div class="grid g4 mb12">
-    <div class="card"><div class="sv">${fmt(cap)}</div><div class="sl">Capital colocado</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${act.length} activas</div></div>
-    <div class="card"><div class="sv">${fmt(sldo)}</div><div class="sl">Saldo por cobrar</div></div>
-    <div class="card"><div class="sv">${fmt(ars)}</div><div class="sl">Total cajas ARS</div></div>
-    <div class="card"><div class="sv tgr">${fmt(ganCh)}</div><div class="sl">Ganancia cheques</div><div style="font-size:13px;color:var(--tx4);margin-top:2px">${car.length} cartera · ${S.cheques.filter(c=>c.estado==='cobrado').length} cobrados</div></div>
+    <div class="card ck" onclick="toggleMonto(this,'${fmt(cap)}')" style="cursor:pointer">
+      <div class="sv monto-oculto">••••••</div>
+      <div class="sl">Capital colocado</div>
+      <div style="font-size:13px;color:var(--tx4);margin-top:2px">${act.length} activas</div>
+    </div>
+    <div class="card ck" onclick="toggleMonto(this,'${fmt(sldo)}')" style="cursor:pointer">
+      <div class="sv monto-oculto">••••••</div>
+      <div class="sl">Saldo por cobrar</div>
+    </div>
+    <div class="card ck" onclick="toggleMonto(this,'${fmt(ars)}')" style="cursor:pointer">
+      <div class="sv monto-oculto">••••••</div>
+      <div class="sl">Total cajas ARS</div>
+    </div>
+    <div class="card ck" onclick="toggleMonto(this,'${fmt(ganCh)}')" style="cursor:pointer">
+      <div class="sv tgr monto-oculto">••••••</div>
+      <div class="sl">Ganancia cheques</div>
+      <div style="font-size:13px;color:var(--tx4);margin-top:2px">${car.length} cartera · ${S.cheques.filter(c=>c.estado==='cobrado').length} cobrados</div>
+    </div>
   </div>
   <div class="grid g3 mb12">
     ${['prestamo','hipotecario','prendario'].map(t=>{
@@ -919,9 +901,15 @@ function rChInline(){
   const fil=S.cheques.filter(c=>!q||cN(c.clienteId).toLowerCase().includes(q)||c.numero.includes(q)||c.banco.toLowerCase().includes(q));
   return`
   <div class="grid g4 mb12">
-    <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Valor nominal</div><div style="font-size:15px;color:var(--tx4);margin-top:2px">${car.length} en cartera</div></div>
+    <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Valor nominal</div><div style="font-size:13px;color:var(--tx4);margin-top:2px">${car.length} en cartera</div></div>
     <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.neto,0))}</div><div class="sl">Neto entregado</div></div>
-    <div class="card"><div class="sv ta">${fmt(car.reduce((a,c)=>a+c.impuesto,0))}</div><div class="sl">Impuesto cobrado</div></div>
+    <div class="card">
+      <div class="sv ta">${fmt(car.reduce((a,c)=>a+c.interes+c.impuesto,0))}</div>
+      <div class="sl">Intereses + Impuestos</div>
+      <div style="font-size:11px;color:var(--tx4);margin-top:4px">
+        Int: ${fmt(car.reduce((a,c)=>a+c.interes,0))} · Imp: ${fmt(car.reduce((a,c)=>a+c.impuesto,0))}
+      </div>
+    </div>
     <div class="card"><div class="sv tgr">${fmt(S.cheques.reduce((a,c)=>a+c.ganancia,0))}</div><div class="sl">Ganancia total</div><div style="font-size:13px;color:var(--tx4);margin-top:2px">hist. + cartera</div></div>
   </div>
   <div class="fx g8 mb12">
@@ -929,6 +917,36 @@ function rChInline(){
     <button class="btn bsm bo" onclick="expChPdf()">⬇ PDF</button>
     <button class="btn bg" onclick="abrirModal('nuevoCheque')">+ Ingresar cheque</button>
   </div>
+  ${(()=>{
+    const pd=S.cheques.filter(c=>{
+      if(c.estado!=='en_cartera') return false;
+      const d=dds(hoy(),c.vencimiento);
+      return d>=0&&d<=30;
+    });
+    if(!pd.length) return '';
+    return `<div class="card mb12" style="border-left:3px solid var(--gn)">
+      <div class="stl" style="color:var(--gn)">🏦 Cheques para depositar (${pd.length})</div>
+      <div style="font-size:11px;color:var(--tx4);margin-bottom:10px">Vencidos hace menos de 30 días — depositá antes de que pierdan vigencia</div>
+      <div style="overflow-x:auto"><table class="tbl">
+        <thead><tr><th>Número</th><th>Banco</th><th>Cliente</th><th>Monto</th><th>Vencimiento</th><th>Días vencido</th><th>Días restantes</th></tr></thead>
+        <tbody>
+          ${pd.sort((a,b)=>dds(hoy(),a.vencimiento)-dds(hoy(),b.vencimiento)).map(ch=>{
+            const diasVencido=dds(hoy(),ch.vencimiento);
+            const diasRestantes=30-diasVencido;
+            return`<tr class="ck" onclick="abrirCheque(${ch.id})">
+              <td>${ch.numero}</td>
+              <td>${ch.banco}</td>
+              <td>${cN(ch.clienteId)}</td>
+              <td class="tg">${fmt(ch.monto)}</td>
+              <td>${fD(ch.vencimiento)}</td>
+              <td style="color:var(--am)">${diasVencido}d</td>
+              <td style="color:${diasRestantes<=3?'var(--rd)':diasRestantes<=7?'var(--am)':'var(--gn)'}"><strong>${diasRestantes}d</strong> para depositar</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+  })()}
   <div class="srch"><span>⌕</span><input placeholder="Buscar número, banco, cliente..." value="${S.srch}" oninput="S.srch=this.value;render()"></div>
   <div class="card" style="padding:0;overflow-x:auto"><table class="tbl">
     <thead><tr><th>Número</th><th>Banco</th><th>Cliente/Titular</th><th>Nominal</th><th>Días</th><th>Interés</th><th>Imp.</th><th>Neto</th><th>Vto.</th><th>Tenencia</th><th>Destino</th><th>Estado</th><th></th></tr></thead>
@@ -1008,7 +1026,7 @@ function rCh(){
 function rCajas(){
   const t=S.cajas.filter(c=>c.currency==='ARS').reduce((a,c)=>a+c.balance,0);
   return`<div class="ph"><div><div class="pt">Cajas</div><div class="ps">Total ARS: ${fmt(t)}</div></div>
-    <div class="fx g8"><button class="btn bsm bo" onclick="expCajXls()">⬇ Excel</button><button class="btn bo" onclick="abrirModal('transf')">⇄ Transferir</button><button class="btn bg" onclick="abrirModal('nuevaCaja')">+ Nueva</button></div></div>
+    <div class="fx g8"><button class="btn bsm bo" onclick="expCajXls()">⬇ Excel</button><button class="btn bo" onclick="abrirModal('transf')">⇄ Transferir</button><button class="btn bsm bo" onclick="abrirAporteCapital()">💰 Aporte Capital</button><button class="btn bg" onclick="abrirModal('nuevaCaja')">+ Nueva</button></div></div>
   <div class="grid g3 mb12">
     ${S.cajas.map(c=>`<div class="cc" onclick="abrirCaja(${c.id})"><div class="ac" style="background:${c.color}"></div>
       <div class="fb mb10"><span style="font-size:18px;color:${c.color}">${c.icon}</span><span class="bdg" style="background:${c.color}22;color:${c.color};border:1px solid ${c.color}44;font-size:15px">${c.type.toUpperCase()}</span></div>
@@ -1020,8 +1038,9 @@ function rCajas(){
     </div>`).join('')}
   </div>
   <div class="card"><div class="stl">Últimos movimientos</div>
+    <div style="max-height:400px;overflow-y:auto">
     <table class="tbl"><thead><tr><th>Fecha</th><th>Caja</th><th>Tipo</th><th>Concepto</th><th>Monto</th></tr></thead>
-    <tbody>${S.movs.slice(-20).reverse().map(m=>`<tr>
+    <tbody>${S.movs.slice(-50).reverse().map(m=>`<tr>
       <td style="font-size:14px">${fD(m.fecha)}</td><td style="font-size:14px">${cajN(m.cajaId)}</td>
       <td><span class="bdg" style="background:${m.tipo==='ingreso'?'var(--gn)22':'var(--rd)22'};color:${m.tipo==='ingreso'?'var(--gn)':'var(--rd)'};border:1px solid ${m.tipo==='ingreso'?'var(--gn)':'var(--rd)'}44">${m.tipo.toUpperCase()}</span></td>
       <td>${m.concepto}</td><td style="color:${m.tipo==='ingreso'?'var(--gn)':'var(--rd)'}">${m.tipo==='ingreso'?'+':'-'}${fmt(m.monto)}</td>
@@ -1228,78 +1247,8 @@ function guardarMov(cajaId,tipo){
   cerrar();toast(`${tipo==='ingreso'?'Ingreso':'Egreso'} registrado`);render();
 }
 
-function mNuevoCheque(){
-  const cl=S.clientes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-  const cj=S.cajas.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-  return`${mH('Ingresar Cheque')}
-    <div class="tabs"><button class="tab on" onclick="chTab(this,'ch-d')">Datos</button><button class="tab" onclick="chTab(this,'ch-t')">Titular/Endoso</button><button class="tab" onclick="chTab(this,'ch-dst')">Destino</button><button class="tab" onclick="chTab(this,'ch-f')">Foto</button></div>
-    <div id="ch-d">
-      <div class="fg g2">
-      <div>
-        <label class="lb">Cliente (quién lo trajo) *</label>
-        <select id="fch-cli" style="margin-bottom:4px"><option value="">— Seleccionar —</option>${cl}</select>
-        <input id="fch-cli-nombre" placeholder="O escribí nombre nuevo..." style="font-size:12px" oninput="if(this.value)document.getElementById('fch-cli').value=''">
-        <input id="fch-cli-dni" placeholder="DNI (opcional)" style="font-size:12px;margin-top:4px">
-      </div><div><label class="lb">Número *</label><input id="fch-num" placeholder="00000000"></div></div>
-      <div class="fg g3 mt8"><div><label class="lb">Banco *</label><input id="fch-ban" placeholder="Banco Nación"></div><div><label class="lb">Valor nominal *</label><input id="fch-m" type="number" placeholder="0" oninput="prevCh()"></div><div><label class="lb">Tasa diaria %</label><input id="fch-t" type="number" step="0.01" value="${dR('descuento')}" oninput="prevCh()"></div></div>
-      <div class="fg g3 mt8"><div><label class="lb">Fecha ingreso</label><input id="fch-d" type="date" value="${hoy()}" oninput="prevCh()"></div><div><label class="lb">Vencimiento *</label><input id="fch-v" type="date" oninput="prevCh()"></div><div><label class="lb">Días (auto)</label><input id="fch-ds" type="number" readonly style="color:var(--tx3)"></div></div>
-      <div class="fg g3 mt8"><div><label class="lb">Impuesto %</label><input id="fch-i" type="number" step="0.01" value="${S.cfg.impCh}" oninput="prevCh()"></div><div><label class="lb">Gastos admin $</label><input id="fch-ga" type="number" value="0" oninput="prevCh()"></div><div></div></div>
-      <div class="fg g2 mt8"><div><label class="lb">Caja origen (sale el dinero) *</label><select id="fch-or"><option value="">—</option>${cj}</select></div><div><label class="lb">Caja tenencia (donde se guarda)</label><select id="fch-ten"><option value="">—</option>${cj}</select></div></div>
-      <div id="fch-prev" class="pvbox" style="display:none;margin-top:10px"></div>
-    </div>
-    <div id="ch-t" style="display:none">
-      <p style="font-size:15px;color:var(--tx3);margin-bottom:12px">Completá si el cheque pertenece a un tercero distinto al cliente.</p>
-      <div class="fg g2"><div><label class="lb">Nombre del titular de la cuenta</label><input id="fch-tit" placeholder="Empresa SA / Juan Pérez"></div><div><label class="lb">CBU</label><input id="fch-cbu" placeholder="0000000000000000000000"></div></div>
-      <div class="fg g2 mt8"><div><label class="lb">DNI / CUIT titular</label><input id="fch-tdn" placeholder="20-12345678-1"></div><div><label class="lb">Teléfono titular</label><input id="fch-tte" placeholder="2604-000000"></div></div>
-      <div class="mt8"><label class="lb">Endoso (a quién se endosó)</label><input id="fch-end" placeholder="Nombre · CUIT ..."></div>
-      <div class="mt8"><label class="lb">Notas</label><textarea id="fch-not" placeholder="Observaciones..."></textarea></div>
-    </div>
-    <div id="ch-dst" style="display:none">
-      <p style="font-size:13px;color:var(--tx3);margin-bottom:14px">Registrá qué hiciste con este cheque.</p>
-      <div class="fg g2">
-        <div><label class="lb">Entregado a</label><input id="fch-da" placeholder="Nombre persona o empresa"></div>
-        <div><label class="lb">Fecha de entrega</label><input id="fch-df" type="date"></div>
-      </div>
-      <div class="mt12"><label class="lb">Motivo</label><input id="fch-dm" placeholder="Ej: cambio por efectivo, pago materiales..."></div>
-      <div class="fg g2 mt12">
-        <div><label class="lb">Tipo de operación</label>
-          <select id="fch-dt" onchange="toggleDeudaCheque()">
-            <option value="">— Sin entregar aún —</option>
-            <option value="pago">Pago de deuda / mercadería / servicio</option>
-            <option value="efectivo">Cambio por efectivo</option>
-            <option value="endoso">Endosado a tercero</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-        <div><label class="lb">Comisión cobrada ($)</label><input id="fch-dc" type="number" value="0" placeholder="0"></div>
-      </div>
-      <div id="dst-efec-sec" style="display:none">
-        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--am);margin:16px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--br)">Cambio por efectivo — detalle</div>
-        <div class="fg g2">
-          <div><label class="lb">¿Te pagó en el momento?</label>
-            <select id="fch-pagado" onchange="togglePagadoAhora()">
-              <option value="si">Sí — me pagó en el momento</option>
-              <option value="no">No — me lo debe</option>
-            </select>
-          </div>
-          <div><label class="lb">Monto efectivo recibido / a recibir ($)</label>
-            <input id="fch-mefec" type="number" placeholder="0">
-          </div>
-        </div>
-        <div id="dst-deuda-sec" style="display:none">
-          <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--rd);margin:14px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--br)">⚠ Deuda pendiente de cobro</div>
-          <div class="fg g3">
-            <div><label class="lb">Fecha de pago acordada</label><input id="fch-dvto" type="date"></div>
-            <div><label class="lb">Teléfono del deudor</label><input id="fch-dtel" placeholder="2604-000000"></div>
-            <div><label class="lb">Garantía / observación</label><input id="fch-dgar" placeholder="Ej: dejó pagaré, DNI..."></div>
-          </div>
-        </div>
-      </div>
-      <div class="mt12"><label class="lb">Notas adicionales</label><textarea id="fch-dn" placeholder="Detalles..."></textarea></div>
-    </div>
-    <div class="mft"><button class="btn bo" onclick="cerrar()">Cancelar</button><button class="btn bg" onclick="guardarCheque()">Registrar</button></div>
-  </div>`;
-}
+// mNuevoCheque moved to modal-cheque-nuevo.js
+
 function chTab(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['ch-d','ch-t','ch-dst','ch-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';});}
 function cargaFoto(input,zoneId,hiddenId){
   const file=input.files[0];if(!file)return;
@@ -1396,6 +1345,208 @@ function autoFillCliente(){
     document.getElementById('fo-btn-nuevo').textContent='+ Crear cliente nuevo';
     document.getElementById('fo-cli').disabled=false;
   }
+}
+// ═══ MODAL NUEVO CHEQUE — REDISEÑADO ═══
+function mNuevoCheque(){
+  const cj = S.cajas.map(c=>`<option value="${c.id}">${c.name} (${fmt(c.balance)})</option>`).join('');
+  const cl = S.clientes.map(c=>`<option value="${c.id}">${c.name} — ${c.dni}</option>`).join('');
+  
+  // Autocompletado: bancos conocidos
+  const bancosConocidos = [...new Set([
+    'Banco Nación','Banco Galicia','Banco Santander','Banco BBVA','Banco Macro',
+    'Banco Credicoop','Banco HSBC','Banco Patagonia','Banco Ciudad','Banco Provincia',
+    ...S.cheques.map(c=>c.banco).filter(Boolean)
+  ])];
+
+  return `${mH('Ingresar Cheque')}
+    <!-- Botón IA -->
+    <div style="background:#0a0a1a;border:1px solid #d4a84744;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div>
+        <div style="font-size:13px;color:var(--go)">📷 Leer con IA</div>
+        <div style="font-size:10px;color:var(--tx4);margin-top:2px">Sacá una foto al cheque y la IA completa los datos automáticamente</div>
+      </div>
+      <button id="btn-ia-foto" class="btn bg bsm" onclick="capturarFotoIA('cheque')">📷 Leer con IA</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="chTab(this,'ch-doc')">📋 Documento</button>
+      <button class="tab" onclick="chTab(this,'ch-quien')">👤 Quien lo trae</button>
+      <button class="tab" onclick="chTab(this,'ch-op')">💰 Operación</button>
+      <button class="tab" onclick="chTab(this,'ch-f')">📷 Fotos</button>
+    </div>
+
+    <!-- TAB 1: DATOS DEL DOCUMENTO -->
+    <div id="ch-doc">
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--am);margin-bottom:12px">Datos del cheque / documento</div>
+      
+      <div class="fg g3">
+        <div><label class="lb">Banco *</label>
+          <input id="fch-ban" placeholder="Banco Nación" list="bancos-list" oninput="prevCh()">
+          <datalist id="bancos-list">${bancosConocidos.map(b=>`<option value="${b}">`).join('')}</datalist>
+        </div>
+        <div><label class="lb">Número de cheque *</label>
+          <input id="fch-num" placeholder="00000000">
+        </div>
+        <div><label class="lb">Tipo</label>
+          <select id="fch-tipo-doc">
+            <option value="comun">Cheque común</option>
+            <option value="diferido">Cheque diferido</option>
+            <option value="pagare">Pagaré</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="fg g2 mt12">
+        <div><label class="lb">Monto nominal *</label>
+          <input id="fch-m" type="number" placeholder="0" oninput="prevCh()">
+        </div>
+        <div><label class="lb">Número de cuenta / CBU</label>
+          <input id="fch-cbu" placeholder="CBU o N° de cuenta">
+        </div>
+      </div>
+
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin:14px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--br)">Titulares de la cuenta</div>
+      
+      <div class="fg g2">
+        <div><label class="lb">Titular 1 — Nombre</label>
+          <input id="fch-tit" placeholder="Nombre completo">
+        </div>
+        <div><label class="lb">Titular 1 — DNI/CUIT</label>
+          <input id="fch-tdn" placeholder="20-12345678-9">
+        </div>
+      </div>
+      <div class="fg g2 mt8">
+        <div><label class="lb">Titular 2 (si cotitular)</label>
+          <input id="fch-tit2" placeholder="Nombre completo">
+        </div>
+        <div><label class="lb">Titular 2 — DNI/CUIT</label>
+          <input id="fch-tdn2" placeholder="20-12345678-9">
+        </div>
+      </div>
+      <div class="fg g2 mt8">
+        <div><label class="lb">Teléfono titular</label>
+          <input id="fch-tte" placeholder="2604-000000">
+        </div>
+        <div></div>
+      </div>
+
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin:14px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--br)">Endoso (si lo hay)</div>
+      <div><label class="lb">Datos del endoso</label>
+        <input id="fch-end" placeholder="Nombre y datos de quien endosó">
+      </div>
+
+      <div class="mt12"><label class="lb">Notas del documento</label>
+        <textarea id="fch-not" placeholder="Observaciones sobre el cheque..."></textarea>
+      </div>
+    </div>
+
+    <!-- TAB 2: QUIEN LO TRAE -->
+    <div id="ch-quien" style="display:none">
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--am);margin-bottom:12px">¿Quién te trae este cheque?</div>
+      <div class="al al-a mb12" style="font-size:12px">Esta persona puede ser el titular del cheque o un tercero.</div>
+      
+      <div><label class="lb">Seleccionar cliente existente</label>
+        <select id="fch-cli" style="margin-bottom:8px" onchange="toggleNuevoCliCh()">
+          <option value="">— O crear nuevo abajo —</option>
+          ${cl}
+        </select>
+      </div>
+
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin:12px 0 8px">— O ingresar datos del nuevo contacto —</div>
+
+      <div id="ch-nuevo-cli">
+        <div class="fg g2">
+          <div><label class="lb">Nombre *</label>
+            <input id="fch-cli-nombre" placeholder="Nombre completo">
+          </div>
+          <div><label class="lb">DNI</label>
+            <input id="fch-cli-dni" placeholder="30.000.000">
+          </div>
+        </div>
+        <div class="fg g2 mt8">
+          <div><label class="lb">Teléfono</label>
+            <input id="fch-cli-tel" placeholder="2604-000000">
+          </div>
+          <div><label class="lb">Dirección</label>
+            <input id="fch-cli-dir" placeholder="Dirección...">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: OPERACIÓN -->
+    <div id="ch-op" style="display:none">
+      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--am);margin-bottom:12px">Datos de la operación de descuento</div>
+      
+      <div class="fg g3">
+        <div><label class="lb">Fecha de ingreso *</label>
+          <input id="fch-d" type="date" value="${hoy()}" oninput="prevCh()">
+        </div>
+        <div><label class="lb">Fecha de vencimiento *</label>
+          <input id="fch-v" type="date" oninput="prevCh()">
+        </div>
+        <div><label class="lb">Días (auto)</label>
+          <input id="fch-ds" type="number" readonly style="color:var(--tx3)">
+        </div>
+      </div>
+
+      <div class="fg g3 mt12">
+        <div><label class="lb">Tasa diaria %</label>
+          <input id="fch-t" type="number" step="0.01" value="${S.cfg.tasas?.find(t=>t.type==='descuento')?.rate||0.3}" oninput="prevCh()">
+        </div>
+        <div><label class="lb">Impuesto %</label>
+          <input id="fch-i" type="number" step="0.01" value="${S.cfg.impCh||1.2}" oninput="prevCh()">
+        </div>
+        <div><label class="lb">Gastos admin $</label>
+          <input id="fch-ga" type="number" value="0" oninput="prevCh()">
+        </div>
+      </div>
+
+      <div class="fg g2 mt12">
+        <div><label class="lb">Caja origen (sale el dinero) *</label>
+          <select id="fch-or"><option value="">—</option>${cj}</select>
+        </div>
+        <div><label class="lb">Caja tenencia (donde se guarda)</label>
+          <select id="fch-ten"><option value="">—</option>${cj}</select>
+        </div>
+      </div>
+
+      <div id="fch-prev" class="pvbox mt12" style="display:none"></div>
+    </div>
+
+    <!-- TAB 4: FOTOS -->
+    <div id="ch-f" style="display:none">
+      <div class="grid g2">
+        <div>
+          <div class="stl">Foto frente</div>
+          <div id="zona-foto-f" class="fz" onclick="document.getElementById('inp-ff').click()">
+            📷 Tocar para sacar foto o subir imagen
+          </div>
+          <input id="inp-ff" type="file" accept="image/*" capture="environment" style="display:none" onchange="cargaFoto(this,'zona-foto-f','dat-ff')">
+          <input id="dat-ff" type="hidden">
+        </div>
+        <div>
+          <div class="stl">Foto dorso</div>
+          <div id="zona-foto-d" class="fz" onclick="document.getElementById('inp-fd').click()">
+            📷 Tocar para sacar foto o subir imagen
+          </div>
+          <input id="inp-fd" type="file" accept="image/*" capture="environment" style="display:none" onchange="cargaFoto(this,'zona-foto-d','dat-fd')">
+          <input id="dat-fd" type="hidden">
+        </div>
+      </div>
+    </div>
+
+    <div class="mft">
+      <button class="btn bo" onclick="cerrar()">Cancelar</button>
+      <button class="btn bg" onclick="guardarCheque()">Registrar cheque</button>
+    </div>
+  </div>`;
+}
+
+function toggleNuevoCliCh(){
+  const v = document.getElementById('fch-cli')?.value;
+  const sec = document.getElementById('ch-nuevo-cli');
+  if(sec) sec.style.opacity = v ? '0.4' : '1';
 }
 function cobrarCh(id){const ch=S.cheques.find(c=>c.id===id);if(!ch)return;if(ch.cajaOrigenId){S.cajas=S.cajas.map(c=>c.id===ch.cajaOrigenId?{...c,balance:c.balance+ch.monto}:c);S.movs.push({id:uid(),cajaId:ch.cajaOrigenId,tipo:'ingreso',monto:ch.monto,concepto:`Cobro cheque ${ch.numero}`,fecha:hoy()});}S.cheques=S.cheques.map(c=>c.id===id?{...c,estado:'cobrado'}:c);toast('Cheque cobrado · '+fmt(ch.monto)+' acreditado');render();}
 
@@ -1570,7 +1721,7 @@ function abrirCliente(id){
       <div><div class="sv">${fmt(chs.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Val. cheques</div></div>
     </div>
   </div>
-  <div class="tabs"><button class="tab on" onclick="cliT(this,'ci-o')">Operaciones</button><button class="tab" onclick="cliT(this,'ci-c')">Cheques</button></div>
+  <div class="tabs"><button class="tab on" onclick="cliT(this,'ci-o')">Operaciones</button><button class="tab" onclick="cliT(this,'ci-c')">Cheques</button><button class="tab" onclick="cliT(this,'ci-cc')">Cuenta Corriente</button></div>
   <div id="ci-o">${!ops.length?'<p style="color:var(--tx4);font-size:15px">Sin operaciones</p>':''}
     ${ops.map(op=>`<div class="csm mb8 ck" onclick="cerrar();setTimeout(()=>abrirOp(${op.id}),80)">
       <div class="fb"><div>
@@ -1593,9 +1744,27 @@ function abrirCliente(id){
     <button class="btn bsm bd" style="background:#1a0808" onclick="eliminarCheque(${id})">🗑 Eliminar</button>
     <button class="btn bo" onclick="cerrar()">Cerrar</button>
   </div>
+  <div id="ci-cc" style="display:none" data-cli="${id}"></div>
+  <div class="mft">
+    <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>abrirEditarCliente(${id}),80)">✏ Editar</button>
+    <button class="btn bo" onclick="cerrar()">Cerrar</button>
+  </div>
   </div>`);
 }
-function cliT(btn,tab){btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');['ci-o','ci-c'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display=id===tab?'block':'none';});}
+function cliT(btn,tab){
+  btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  ['ci-o','ci-c','ci-cc'].forEach(id=>{
+    const e=document.getElementById(id);
+    if(e){
+      e.style.display=id===tab?'block':'none';
+      // Lazy load cuenta corriente
+      if(id===tab&&id==='ci-cc'&&e.dataset.cli&&!e.innerHTML.trim()){
+        e.innerHTML=rCuentaCorrienteCliente(parseInt(e.dataset.cli));
+      }
+    }
+  });
+}
 
 function abrirCaja(id){
   const cj=S.cajas.find(c=>c.id===id);if(!cj)return;
@@ -2295,15 +2464,7 @@ function subirLogo(input){
   r.readAsDataURL(file);
 }
 // ═══ SUPABASE CLIENT ═══
-const SB_URL = 'https://sbjvjwzvbeyqsvfgykcp.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNianZqd3p2YmV5cXN2Zmd5a2NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNjA3NDgsImV4cCI6MjA5MDkzNjc0OH0.eFJjyuYlo3j04ZJxfgM3Zwne830Am-xkp9jWPHv-yOA';
-
-const SB_HEADERS = {
-  'Content-Type': 'application/json',
-  'apikey': SB_KEY,
-  'Authorization': 'Bearer ' + SB_KEY,
-  'Prefer': 'return=representation'
-};
+// SB_URL, SB_KEY, SB_HEADERS defined in HTML
 
 async function sbGet(table, params=''){
   const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {headers: SB_HEADERS});
@@ -2332,7 +2493,7 @@ let DB_READY = false;
 async function loadFromDB(){
   showLoader('Conectando con M&A Inversiones...');
   try {
-    const [clientes, cajas, movs, ops, cuotas, cheques, cfg] = await Promise.all([
+    const [clientes, cajas, movs, ops, cuotas, cheques, cfg, cc] = await Promise.all([
       sbGet('clientes', 'order=id'),
       sbGet('cajas', 'order=id'),
       sbGet('movimientos', 'order=id'),
@@ -2340,6 +2501,7 @@ async function loadFromDB(){
       sbGet('cuotas', 'order=operacion_id,numero'),
       sbGet('cheques', 'order=id'),
       sbGet('configuracion'),
+      sbGet('cuenta_corriente', 'order=fecha.desc'),
     ]);
 
     // Mapear clientes
@@ -2404,11 +2566,26 @@ async function loadFromDB(){
       }
     });
 
+    // Mapear cuenta corriente
+    S.cuentaCorriente = cc.map(m => ({
+      id: m.id, clienteId: m.cliente_id, tipo: m.tipo,
+      monto: parseFloat(m.monto), fecha: m.fecha,
+      esIngreso: m.es_ingreso, concepto: m.concepto||'',
+    }));
+
     DB_READY = true;
     saveLocalBackup();
     hideLoader();
     buildNav(); render(); addLog('acceso','App abierta');
     startAutoBackup();
+    // Guardar sesión para reconexión automática
+    if(SEC.session && SEC.user){
+      localStorage.setItem('ma_session', JSON.stringify({
+        access_token: SEC.session,
+        user: SEC.user,
+        expires_at: Math.floor(Date.now()/1000) + 3600 // 1 hora
+      }));
+    }
   } catch(e) {
     console.error('Error cargando DB:', e);
     // Intentar cargar desde backup local
@@ -2423,7 +2600,7 @@ async function loadFromDB(){
         if(data.cheques) S.cheques = data.cheques;
         hideLoader();
         showBanner('⚠ Sin conexión — mostrando datos del backup local. Los cambios NO se guardarán hasta recuperar conexión.','amber');
-        buildNav(); render(); checkPin();
+        buildNav(); render();
       } catch(e2){
         hideLoader();
         showBanner('✕ Error de conexión y sin backup local disponible.','red');
@@ -3124,10 +3301,398 @@ function rResumenDia(){
     </div>
   </div>`;
 }
+// ═══ CUENTA CORRIENTE DE CLIENTES ═══
+
+const CC_TIPOS = {
+  entrega_efectivo: { label: 'Entrega de efectivo', color: 'var(--gn)', icono: '💵' },
+  a_cuenta:         { label: 'Pago a cuenta',       color: 'var(--gn)', icono: '💳' },
+  compra_dolares:   { label: 'Compra de dólares',   color: 'var(--am)', icono: '💱' },
+  pago_deuda:       { label: 'Pago de deuda',        color: 'var(--gn)', icono: '✓' },
+  prestamo:         { label: 'Préstamo entregado',   color: 'var(--rd)', icono: '📤' },
+  cheque:           { label: 'Cheque descontado',    color: 'var(--rd)', icono: '📋' },
+  interes:          { label: 'Interés cobrado',      color: 'var(--go)', icono: '⬆' },
+  otros:            { label: 'Otros',                color: 'var(--tx3)', icono: '◦' },
+};
+
+// Calcular saldo de cuenta corriente de un cliente
+function saldoCC(clienteId){
+  const movs = (S.cuentaCorriente||[]).filter(m=>m.clienteId===clienteId);
+  return movs.reduce((a,m)=> m.esIngreso ? a+m.monto : a-m.monto, 0);
+}
+
+// Vista de cuenta corriente dentro del detalle de cliente
+function rCuentaCorrienteCliente(clienteId){
+  const movs = (S.cuentaCorriente||[])
+    .filter(m=>m.clienteId===clienteId)
+    .sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const saldo = saldoCC(clienteId);
+
+  return `
+  <div class="stl mt16">Cuenta Corriente</div>
+  <div class="grid g3 mb12" style="gap:10px">
+    <div class="csm">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:${saldo>=0?'var(--gn)':'var(--rd)'}">${fmt(Math.abs(saldo))}</div>
+      <div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">${saldo>=0?'NOS DEBE':'LE DEBEMOS'}</div>
+    </div>
+    <div class="csm">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gn)">${fmt(movs.filter(m=>m.esIngreso).reduce((a,m)=>a+m.monto,0))}</div>
+      <div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">TOTAL INGRESOS</div>
+    </div>
+    <div class="csm">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--rd)">${fmt(movs.filter(m=>!m.esIngreso).reduce((a,m)=>a+m.monto,0))}</div>
+      <div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">TOTAL EGRESOS</div>
+    </div>
+  </div>
+  <button class="btn bg bsm mb12" onclick="abrirNuevoMovCC(${clienteId})">+ Registrar movimiento</button>
+  <div style="max-height:300px;overflow-y:auto">
+    <table class="tbl">
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Concepto</th><th>Monto</th><th>Saldo</th></tr></thead>
+      <tbody>
+        ${!movs.length ? '<tr><td colspan="5" style="text-align:center;color:var(--tx4);padding:20px">Sin movimientos registrados</td></tr>' : ''}
+        ${(()=>{
+          let saldoAcum = 0;
+          return [...movs].reverse().map(m=>{
+            saldoAcum += m.esIngreso ? m.monto : -m.monto;
+            const tipo = CC_TIPOS[m.tipo]||CC_TIPOS.otros;
+            const html = `<tr>
+              <td style="font-size:12px;white-space:nowrap">${fD(m.fecha)}</td>
+              <td><span style="font-size:10px;color:${tipo.color}">${tipo.icono} ${tipo.label}</span></td>
+              <td style="font-size:12px">${m.concepto||'—'}</td>
+              <td style="color:${m.esIngreso?'var(--gn)':'var(--rd)'};font-weight:700">${m.esIngreso?'+':'-'}${fmt(m.monto)}</td>
+              <td style="color:${saldoAcum>=0?'var(--gn)':'var(--rd)'};font-size:12px">${fmt(Math.abs(saldoAcum))}</td>
+            </tr>`;
+            return html;
+          }).reverse().join('');
+        })()}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+// Modal nuevo movimiento CC
+function abrirNuevoMovCC(clienteId){
+  const cl = S.clientes.find(c=>c.id===clienteId);
+  const tiposOpts = Object.entries(CC_TIPOS)
+    .map(([k,v])=>`<option value="${k}">${v.icono} ${v.label}</option>`).join('');
+  const cajasOpts = S.cajas.map(c=>`<option value="${c.id}">${c.name} (${fmt(c.balance)})</option>`).join('');
+
+  showOv(`<div class="modal">
+    <div class="mhd">
+      <div class="mtt">Movimiento — ${cl?.name}</div>
+      <button class="btn bsm bo" onclick="cerrar()">✕</button>
+    </div>
+    <div class="fg g2">
+      <div><label class="lb">Tipo de movimiento *</label>
+        <select id="cc-tipo" onchange="toggleCCDir()">${tiposOpts}</select>
+      </div>
+      <div><label class="lb">Fecha *</label>
+        <input id="cc-fecha" type="date" value="${hoy()}">
+      </div>
+    </div>
+    <div class="fg g2 mt12">
+      <div><label class="lb">Monto *</label>
+        <input id="cc-monto" type="number" placeholder="0">
+      </div>
+      <div id="cc-caja-wrap"><label class="lb">Caja (opcional)</label>
+        <select id="cc-caja"><option value="">— Sin afectar caja —</option>${cajasOpts}</select>
+      </div>
+    </div>
+    <div class="mt12"><label class="lb">Dirección del movimiento *</label>
+      <select id="cc-dir">
+        <option value="ingreso">➕ El cliente nos entregó / nos debe más</option>
+        <option value="egreso">➖ Nosotros entregamos / le debemos más</option>
+      </select>
+    </div>
+    <div class="mt12"><label class="lb">Concepto / detalle</label>
+      <input id="cc-concepto" placeholder="Descripción del movimiento...">
+    </div>
+    <div class="mft">
+      <button class="btn bo" onclick="cerrar()">Cancelar</button>
+      <button class="btn bg" onclick="guardarMovCC(${clienteId})">Guardar</button>
+    </div>
+  </div>`);
+}
+
+function toggleCCDir(){
+  const tipo = document.getElementById('cc-tipo')?.value;
+  const dir = document.getElementById('cc-dir');
+  if(!dir) return;
+  // Sugerir dirección según tipo
+  const esIngreso = ['a_cuenta','compra_dolares','pago_deuda','interes'].includes(tipo);
+  dir.value = esIngreso ? 'ingreso' : 'egreso';
+}
+
+async function guardarMovCC(clienteId){
+  const tipo = document.getElementById('cc-tipo')?.value;
+  const monto = parseFloat(document.getElementById('cc-monto')?.value||0);
+  const fecha = document.getElementById('cc-fecha')?.value||hoy();
+  const dir = document.getElementById('cc-dir')?.value;
+  const concepto = document.getElementById('cc-concepto')?.value||'';
+  const cajaId = parseInt(document.getElementById('cc-caja')?.value)||null;
+
+  if(!monto||!tipo) return toast('Completá tipo y monto','err');
+  const esIngreso = dir === 'ingreso';
+
+  const newMov = { clienteId, tipo, monto, fecha, esIngreso, concepto, cajaId };
+
+  try {
+    // Guardar en Supabase
+    const rows = await sbPost('cuenta_corriente', {
+      cliente_id: clienteId, tipo, monto, fecha,
+      es_ingreso: esIngreso, concepto,
+    });
+    newMov.id = rows[0].id;
+
+    // Si tiene caja, afectar saldo
+    if(cajaId){
+      const caja = S.cajas.find(c=>c.id===cajaId);
+      if(caja){
+        // Si el cliente nos entrega plata → ingresa a caja
+        // Si nosotros entregamos → sale de caja
+        const newBal = esIngreso ? caja.balance + monto : caja.balance - monto;
+        S.cajas = S.cajas.map(c=>c.id===cajaId?{...c,balance:newBal}:c);
+        await dbUpdateCajaBalance(cajaId, newBal);
+        const mov = {
+          cajaId, tipo: esIngreso?'ingreso':'egreso', monto,
+          concepto: `CC ${cN(clienteId)}: ${CC_TIPOS[tipo]?.label||tipo} — ${concepto}`,
+          fecha, tipo_movimiento: 'cuenta_corriente'
+        };
+        const dbM = await dbSaveMov(mov);
+        S.movs.push({...mov, id:dbM.id});
+      }
+    }
+
+    if(!S.cuentaCorriente) S.cuentaCorriente = [];
+    S.cuentaCorriente.push(newMov);
+    saveLocalBackup();
+    cerrar();
+    toast('Movimiento registrado');
+    render();
+  } catch(e){ toast('Error: '+e.message,'err'); console.error(e); }
+}
+
+// ═══ APORTE DE CAPITAL ═══
+function abrirAporteCapital(){
+  const cajasOpts = S.cajas.map(c=>`<option value="${c.id}">${c.name} (${fmt(c.balance)})</option>`).join('');
+  showOv(`<div class="modal">
+    <div class="mhd"><div class="mtt">Aporte / Retiro de Capital Propio</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>
+    <div class="al al-a mb12">Este movimiento NO afecta las ganancias — es capital propio ingresado o retirado.</div>
+    <div class="fg g2">
+      <div><label class="lb">Tipo</label>
+        <select id="ap-tipo">
+          <option value="aporte">➕ Aporte de capital</option>
+          <option value="retiro">➖ Retiro de capital</option>
+        </select>
+      </div>
+      <div><label class="lb">Caja *</label>
+        <select id="ap-caja"><option value="">—</option>${cajasOpts}</select>
+      </div>
+    </div>
+    <div class="fg g2 mt12">
+      <div><label class="lb">Monto *</label><input id="ap-monto" type="number" placeholder="0"></div>
+      <div><label class="lb">Fecha</label><input id="ap-fecha" type="date" value="${hoy()}"></div>
+    </div>
+    <div class="mt12"><label class="lb">Concepto</label>
+      <input id="ap-concepto" placeholder="Descripción...">
+    </div>
+    <div class="mft">
+      <button class="btn bo" onclick="cerrar()">Cancelar</button>
+      <button class="btn bg" onclick="guardarAporteCapital()">Guardar</button>
+    </div>
+  </div>`);
+}
+
+async function guardarAporteCapital(){
+  const tipo = document.getElementById('ap-tipo')?.value;
+  const cajaId = parseInt(document.getElementById('ap-caja')?.value);
+  const monto = parseFloat(document.getElementById('ap-monto')?.value||0);
+  const fecha = document.getElementById('ap-fecha')?.value||hoy();
+  const concepto = document.getElementById('ap-concepto')?.value||'Aporte de capital';
+
+  if(!monto||!cajaId) return toast('Completá caja y monto','err');
+  const esIngreso = tipo === 'aporte';
+  const caja = S.cajas.find(c=>c.id===cajaId);
+  if(!caja) return toast('Caja no encontrada','err');
+
+  try {
+    const newBal = esIngreso ? caja.balance + monto : caja.balance - monto;
+    S.cajas = S.cajas.map(c=>c.id===cajaId?{...c,balance:newBal}:c);
+    await dbUpdateCajaBalance(cajaId, newBal);
+
+    const mov = {
+      cajaId, tipo: esIngreso?'ingreso':'egreso', monto,
+      concepto: `${esIngreso?'APORTE':'RETIRO'} DE CAPITAL: ${concepto}`,
+      fecha, tipo_movimiento: esIngreso?'aporte_capital':'retiro_capital'
+    };
+    const dbM = await dbSaveMov(mov);
+    S.movs.push({...mov, id:dbM.id});
+    saveLocalBackup();
+    cerrar();
+    toast(`Capital ${esIngreso?'ingresado':'retirado'}: ${fmt(monto)}`);
+    render();
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+// ═══ LECTURA DE CHEQUES/PAGARÉS CON IA ═══
+
+async function leerFotoConIA(base64Data, tipo='cheque'){
+  const prompt = tipo === 'cheque'
+    ? `Analizá esta imagen de un cheque bancario argentino. Extraé TODOS los datos visibles y respondé SOLO con un JSON con esta estructura exacta (sin texto adicional, sin markdown):
+{
+  "banco": "nombre del banco",
+  "numero": "número del cheque (solo dígitos)",
+  "monto": 0,
+  "fecha_emision": "YYYY-MM-DD o null",
+  "fecha_vencimiento": "YYYY-MM-DD o null",
+  "titular": "nombre del titular de la cuenta",
+  "cuenta": "número de cuenta o CBU",
+  "cuit": "CUIT/DNI del titular o null",
+  "endoso": "datos del endoso si hay o null",
+  "es_diferido": true/false,
+  "notas": "cualquier dato adicional relevante"
+}`
+    : `Analizá esta imagen de un pagaré. Extraé los datos y respondé SOLO con JSON:
+{
+  "monto": 0,
+  "fecha_emision": "YYYY-MM-DD o null",
+  "fecha_vencimiento": "YYYY-MM-DD o null",
+  "deudor": "nombre del deudor",
+  "acreedor": "nombre del acreedor",
+  "lugar": "lugar de pago",
+  "notas": "cualquier dato adicional"
+}`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: 'image/jpeg', data: base64Data }
+          },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    })
+  });
+
+  const data = await response.json();
+  const text = data.content?.[0]?.text || '';
+  
+  // Limpiar y parsear JSON
+  const clean = text.replace(/```json|```/g, '').trim();
+  try {
+    return JSON.parse(clean);
+  } catch(e) {
+    console.error('Error parseando respuesta IA:', text);
+    return null;
+  }
+}
+
+// Capturar foto desde cámara o galería
+function capturarFotoIA(tipo='cheque'){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment'; // cámara trasera en celular
+  
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+
+    // Mostrar loader
+    const btn = document.getElementById('btn-ia-foto');
+    if(btn){ btn.textContent = '🔄 Analizando...'; btn.disabled = true; }
+    
+    // Comprimir imagen
+    const base64 = await comprimirImagen(file);
+    const base64Data = base64.split(',')[1]; // quitar "data:image/jpeg;base64,"
+
+    // Llamar a IA
+    const datos = await leerFotoConIA(base64Data, tipo);
+    
+    if(!datos){
+      toast('No se pudo leer el documento. Intentá con mejor iluminación.', 'err');
+      if(btn){ btn.textContent = '📷 Leer con IA'; btn.disabled = false; }
+      return;
+    }
+
+    // Completar formulario con los datos extraídos
+    llenarFormularioCheque(datos, base64);
+    
+    if(btn){ btn.textContent = '✓ Datos cargados'; btn.disabled = false; }
+    toast('✓ IA leyó el cheque — revisá los datos');
+  };
+  
+  input.click();
+}
+
+function comprimirImagen(file){
+  return new Promise((resolve)=>{
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e => {
+      img.onload = () => {
+        const maxW = 1200, maxH = 800;
+        let w = img.width, h = img.height;
+        if(w > maxW){ h = Math.round(h*maxW/w); w = maxW; }
+        if(h > maxH){ w = Math.round(w*maxH/h); h = maxH; }
+        canvas.width = w; canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function llenarFormularioCheque(datos, fotoBase64){
+  // Datos del cheque
+  if(datos.banco) setInput('fch-ban', datos.banco);
+  if(datos.numero) setInput('fch-num', datos.numero);
+  if(datos.monto) setInput('fch-m', datos.monto);
+  if(datos.fecha_vencimiento) setInput('fch-v', datos.fecha_vencimiento);
+  if(datos.fecha_emision) setInput('fch-d', datos.fecha_emision);
+  
+  // Datos del titular
+  if(datos.titular) setInput('fch-tit', datos.titular);
+  if(datos.cuenta) setInput('fch-cbu', datos.cuenta);
+  if(datos.cuit) setInput('fch-tdn', datos.cuit);
+  if(datos.endoso) setInput('fch-end', datos.endoso);
+  
+  // Guardar foto en campo oculto
+  if(fotoBase64){
+    const hf = document.getElementById('dat-ff');
+    if(hf) hf.value = fotoBase64;
+    const zone = document.getElementById('zona-foto-f');
+    if(zone) zone.innerHTML = `<img src="${fotoBase64}" style="max-width:100%;max-height:120px;object-fit:contain">`;
+  }
+  
+  // Actualizar preview de cálculo
+  if(typeof prevCh === 'function') prevCh();
+  
+  // Mostrar notas de IA
+  if(datos.notas){
+    const notasEl = document.getElementById('fch-not');
+    if(notasEl) notasEl.value = (notasEl.value ? notasEl.value + '\n' : '') + 'IA: ' + datos.notas;
+  }
+}
+
+function setInput(id, value){
+  const el = document.getElementById(id);
+  if(el) el.value = value;
+}
 function renderSearchDrop(){
   const el=document.getElementById('sdrop');
   if(!el)return;
   el.innerHTML=S.showSearch&&S.globalSrch.length>=2?renderGlobalSearch():'';
 }
-initSecurity();installPWA();registerSW();loadFromDB();
+initSecurity();installPWA();registerSW();
 </script></body></html>
