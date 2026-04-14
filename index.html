@@ -6,14 +6,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="M&A Inversiones">
+<meta name="apple-mobile-web-app-title" content="Financiera">
 <meta name="theme-color" content="#d4a847">
-<title>M&A Inversiones</title>
-<!-- v4.0 build 20260414_063123 -->
+<title>Financiera</title>
+<!-- v4.1 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-.monto-oculto{filter:blur(6px);transition:filter .3s;user-select:none;cursor:pointer}
+.monto-oculto{filter:blur(5px);transition:filter .3s;user-select:none}
 </style>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap');
@@ -196,7 +196,10 @@ textarea{resize:vertical;min-height:56px}
 .fi{animation:fi .2s ease}
 </style></head><body>
 <nav id="nav">
-  <div><div class="logo">◈ M&A INVERSIONES</div><div class="sub">Gestión de Inversiones</div></div>
+  <div>
+    <div class="logo">◈ FINANCIERA</div>
+    <div class="sub">Sistema de Gestión</div>
+  </div>
   <div class="fx g8" style="align-items:center">
     <div class="global-search" style="position:relative">
       <span>⌕</span>
@@ -215,9 +218,9 @@ textarea{resize:vertical;min-height:56px}
 <div id="toast"></div>
 <div id="ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;overflow-y:auto;padding:14px;flex-direction:column;align-items:center" onclick="if(event.target===this)cerrar()"></div>
 <script>
-const SB_URL = 'https://sbjvjwzvbeyqsvfgykcp.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNianZqd3p2YmV5cXN2Zmd5a2NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNjA3NDgsImV4cCI6MjA5MDkzNjc0OH0.eFJjyuYlo3j04ZJxfgM3Zwne830Am-xkp9jWPHv-yOA';
-const SB_HEADERS = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+const SB_URL='https://sbjvjwzvbeyqsvfgykcp.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNianZqd3p2YmV5cXN2Zmd5a2NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzNjA3NDgsImV4cCI6MjA5MDkzNjc0OH0.eFJjyuYlo3j04ZJxfgM3Zwne830Am-xkp9jWPHv-yOA';
+const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
 // ═══ AUTENTICACIÓN CON SUPABASE AUTH ═══
 const SEC = {
   TIMEOUT: 30 * 60 * 1000, // 30 minutos de inactividad
@@ -243,34 +246,25 @@ function autoLock(){
 
 // ═══ PANTALLA DE LOGIN ═══
 const LOGO_SVG = `
-<svg width="180" height="180" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+<svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1a1508"/>
-      <stop offset="100%" stop-color="#09090f"/>
-    </radialGradient>
-    <radialGradient id="gold-grad" cx="30%" cy="30%" r="70%">
-      <stop offset="0%" stop-color="#f0c84a"/>
-      <stop offset="50%" stop-color="#d4a847"/>
-      <stop offset="100%" stop-color="#7a5c0e"/>
-    </radialGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5d78e"/>
+      <stop offset="100%" stop-color="#b8860b"/>
+    </linearGradient>
   </defs>
-  <circle cx="110" cy="110" r="106" fill="url(#bg-grad)" stroke="#2a2210" stroke-width="1.5"/>
-  <circle cx="110" cy="110" r="95" fill="none" stroke="#d4a847" stroke-width="0.5" opacity="0.4"/>
-  <line x1="25" y1="110" x2="50" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
-  <line x1="170" y1="110" x2="195" y2="110" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
-  <line x1="110" y1="25" x2="110" y2="50" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
-  <line x1="110" y1="170" x2="110" y2="195" stroke="#d4a847" stroke-width="1" opacity="0.5"/>
-  <text x="110" y="118" font-family="Georgia, serif" font-size="64" font-weight="700"
-    fill="url(#gold-grad)" text-anchor="middle" filter="url(#glow)" letter-spacing="2">M&amp;A</text>
-  <line x1="52" y1="132" x2="168" y2="132" stroke="#d4a847" stroke-width="0.8" opacity="0.6"/>
-  <text x="110" y="152" font-family="'Courier Prime', monospace" font-size="13" fill="#d4a847"
-    text-anchor="middle" letter-spacing="6" opacity="0.9">INVERSIONES</text>
-  <polygon points="110,168 114,172 110,176 106,172" fill="#d4a847" opacity="0.5"/>
+  <!-- Fondo negro limpio -->
+  <rect width="160" height="160" fill="#09090f"/>
+  <!-- Marco exterior delgado -->
+  <rect x="8" y="8" width="144" height="144" fill="none" stroke="#d4a847" stroke-width="0.5" opacity="0.3"/>
+  <!-- Letra F grande y limpia -->
+  <text x="80" y="95" font-family="Georgia, serif" font-size="78" font-weight="700"
+    fill="url(#gold)" text-anchor="middle" letter-spacing="-2">F</text>
+  <!-- Línea decorativa -->
+  <line x1="32" y1="115" x2="128" y2="115" stroke="#d4a847" stroke-width="0.8" opacity="0.5"/>
+  <!-- Nombre -->
+  <text x="80" y="133" font-family="'Courier Prime', Courier, monospace" font-size="10"
+    fill="#d4a847" text-anchor="middle" letter-spacing="5" opacity="0.8">FINANCIERA</text>
 </svg>`;
 
 function showLoginScreen(msg){
@@ -386,7 +380,7 @@ function initSecurity(){
         SEC.user = s.user;
         SEC.session = s.access_token;
         SB_HEADERS['Authorization'] = 'Bearer ' + s.access_token;
-        showLoader('Conectando con M&A Inversiones...');
+        showLoader('Conectando con Financiera...');
         resetTimer();
         loadFromDB();
         return;
@@ -659,46 +653,60 @@ function rDash(){
   const vcs=act.flatMap(o=>vcOp(o).map(c=>({...c,op:o})));
   const lim=new Date();lim.setDate(lim.getDate()+15);
   const prx=act.flatMap(o=>o.cuotas.filter(c=>!c.paga&&new Date(c.vto)>new Date()&&new Date(c.vto)<=lim).map(c=>({...c,op:o})));
-  const chv=car.filter(c=>{const d=dds(c.vencimiento,hoy());return d<=7&&d>=0;});
-  // Cheques para depositar: vencidos hace menos de 30 días
+  // Cheques que vencen en 3 días o menos (antes del vencimiento)
+  const chv=car.filter(c=>{const d=dds(c.vencimiento,hoy());return d>=0&&d<=3;});
+  // Cheques ya vencidos (pasó la fecha) - tenés 30 días para depositarlos
   const paraDepositar=S.cheques.filter(c=>{
-    if(c.estado!=='en_cartera'&&c.estado!=='para_depositar') return false;
-    const d=dds(hoy(),c.vencimiento); // días desde vencimiento
-    return d>=0 && d<=30;
+    if(c.estado!=='en_cartera') return false;
+    const diasDesdeVto=dds(hoy(),c.vencimiento); // negativo = vencido hace X días
+    const d=new Date(hoy()) - new Date(c.vencimiento);
+    const diasPasados=Math.floor(d/864e5);
+    return diasPasados>=0 && diasPasados<=30;
   });
-  // Alertar 3 días antes de que venzan los 30 días para depositar
+  // Alerta: quedan 3 días hábiles para depositar (día 27-30 desde vencimiento)
   const porVencerDeposito=S.cheques.filter(c=>{
-    if(c.estado!=='en_cartera'&&c.estado!=='para_depositar') return false;
-    const diasDesdeVto=dds(hoy(),c.vencimiento);
-    return diasDesdeVto>=27 && diasDesdeVto<=30;
+    if(c.estado!=='en_cartera') return false;
+    const d=new Date(hoy()) - new Date(c.vencimiento);
+    const diasPasados=Math.floor(d/864e5);
+    return diasPasados>=27 && diasPasados<=30;
   });
   return`
   <div class="ph"><div><div class="pt">Panel General</div><div class="ps">${new Date().toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div></div>
   ${vcs.length?`<div class="al al-r">⚠ ${vcs.length} cuota${vcs.length>1?'s':''} vencida — ${fmt(vcs.reduce((a,c)=>a+c.monto,0))} <button class="btn bxs bd" style="margin-left:auto" onclick="go('ops')">Ver →</button></div>`:''}
   ${prx.length?`<div class="al al-a">🕐 ${prx.length} cuota${prx.length>1?'s':''} vence en 15 días — ${fmt(prx.reduce((a,c)=>a+c.monto,0))} <button class="btn bxs bo" style="margin-left:auto" onclick="go('ops')">Ver →</button></div>`:''}
-  ${chv.length?`<div class="al al-a">📋 ${chv.length} cheque${chv.length>1?'s':''} vence en 7 días <button class="btn bxs bo" style="margin-left:auto" onclick="go('cheques')">Ver →</button></div>`:''}
+  ${chv.length?`<div class="al al-a">⚠ ${chv.length} cheque${chv.length>1?'s':''} vence${chv.length>1?'n':''} en los próximos 3 días <button class="btn bxs bo" style="margin-left:auto" onclick="S.opsTab='cheques';go('ops')">Ver →</button></div>`:''}
   ${paraDepositar.length?`<div class="al al-g">🏦 ${paraDepositar.length} cheque${paraDepositar.length>1?'s':''} para depositar <button class="btn bxs bs" style="margin-left:auto" onclick="S.opsTab='cheques';go('ops')">Ver →</button></div>`:''}
   ${porVencerDeposito.length?`<div class="al al-r">⚠ Cheques con plazo de depósito por vencer <button class="btn bxs bd" style="margin-left:auto" onclick="S.opsTab='cheques';go('ops')">¡Ver ahora!</button></div>`:''}
   ${(()=>{const deudas=S.cheques.filter(c=>c.destino?.tipo==='efectivo'&&c.destino?.pagadoEfectivo==='no'&&c.destino?.deudaVto);return deudas.length?`<div class="al al-r">💸 ${deudas.length} deuda${deudas.length>1?'s':''} de efectivo pendiente${deudas.length>1?'s':''} — ${fmt(deudas.reduce((a,c)=>a+(c.destino.montoEfectivo||0),0))} <button class="btn bxs bd" style="margin-left:auto" onclick="go('cheques')">Ver →</button></div>`:''})()}
   ${rResumenDia()}
   <div class="grid g4 mb12">
-    <div class="card ck" onclick="toggleMonto(this,'${fmt(cap)}')" style="cursor:pointer">
-      <div class="sv monto-oculto">••••••</div>
+    <div class="card" style="cursor:pointer;position:relative" onclick="toggleMonto(this,'${fmt(cap)}')">
+      <div style="position:absolute;top:10px;right:12px;font-size:11px;color:var(--tx4)">👁</div>
+      <div class="sv monto-oculto" style="font-size:22px">$ ••••</div>
       <div class="sl">Capital colocado</div>
-      <div style="font-size:13px;color:var(--tx4);margin-top:2px">${act.length} activas</div>
+      <div style="font-size:12px;color:var(--tx4);margin-top:3px">${act.length} operaciones activas</div>
+      <button class="btn bxs bo mt8" onclick="event.stopPropagation();go('ops')" style="font-size:10px">Ver ops →</button>
     </div>
-    <div class="card ck" onclick="toggleMonto(this,'${fmt(sldo)}')" style="cursor:pointer">
-      <div class="sv monto-oculto">••••••</div>
+    <div class="card" style="cursor:pointer;position:relative" onclick="toggleMonto(this,'${fmt(sldo)}')">
+      <div style="position:absolute;top:10px;right:12px;font-size:11px;color:var(--tx4)">👁</div>
+      <div class="sv monto-oculto" style="font-size:22px">$ ••••</div>
       <div class="sl">Saldo por cobrar</div>
+      <div style="font-size:12px;color:var(--tx4);margin-top:3px">${vcs.length} cuotas vencidas</div>
+      <button class="btn bxs bo mt8" onclick="event.stopPropagation();go('ops')" style="font-size:10px">Ver cuotas →</button>
     </div>
-    <div class="card ck" onclick="toggleMonto(this,'${fmt(ars)}')" style="cursor:pointer">
-      <div class="sv monto-oculto">••••••</div>
+    <div class="card" style="cursor:pointer;position:relative" onclick="toggleMonto(this,'${fmt(ars)}')">
+      <div style="position:absolute;top:10px;right:12px;font-size:11px;color:var(--tx4)">👁</div>
+      <div class="sv monto-oculto" style="font-size:22px">$ ••••</div>
       <div class="sl">Total cajas ARS</div>
+      <div style="font-size:12px;color:var(--tx4);margin-top:3px">${S.cajas.length} cajas</div>
+      <button class="btn bxs bo mt8" onclick="event.stopPropagation();go('cajas')" style="font-size:10px">Ver cajas →</button>
     </div>
-    <div class="card ck" onclick="toggleMonto(this,'${fmt(ganCh)}')" style="cursor:pointer">
-      <div class="sv tgr monto-oculto">••••••</div>
+    <div class="card" style="cursor:pointer;position:relative" onclick="toggleMonto(this,'${fmt(ganCh)}')">
+      <div style="position:absolute;top:10px;right:12px;font-size:11px;color:var(--tx4)">👁</div>
+      <div class="sv tgr monto-oculto" style="font-size:22px">$ ••••</div>
       <div class="sl">Ganancia cheques</div>
-      <div style="font-size:13px;color:var(--tx4);margin-top:2px">${car.length} cartera · ${S.cheques.filter(c=>c.estado==='cobrado').length} cobrados</div>
+      <div style="font-size:12px;color:var(--tx4);margin-top:3px">${car.length} en cartera</div>
+      <button class="btn bxs bo mt8" onclick="event.stopPropagation();S.opsTab='cheques';go('ops')" style="font-size:10px">Ver cheques →</button>
     </div>
   </div>
   <div class="grid g3 mb12">
@@ -750,46 +758,35 @@ function rDash(){
     }).join('')}
   </div>
 
-  <!-- CHEQUES EN CARTERA -->
+  <!-- CHEQUES RESUMEN EN PANEL -->
   <div class="card mb12" style="border-left:3px solid var(--am)">
-    <div class="fb mb12">
-      <div class="fx g8" style="align-items:center">
+    <div class="fb">
+      <div>
         <span class="bdg" style="background:var(--am)22;color:var(--am);border:1px solid var(--am)44">Cheques en cartera</span>
-        <span style="font-size:20px;color:var(--am)">${car.length}</span>
+        <span style="font-size:22px;color:var(--am);margin-left:10px">${car.length}</span>
       </div>
-      <button class="btn bsm bg" onclick="S.opsTab='cheques';go('ops')">+ Ingresar cheque</button>
+      <button class="btn bg bsm" onclick="S.opsTab='cheques';go('ops')">Ver cheques →</button>
     </div>
-    ${car.length===0?'<div style="color:var(--tx4);font-size:13px;padding:8px 0;text-align:center">Sin cheques en cartera</div>':''}
-    ${car.length>0?`
-    <div class="grid g4 mb12" style="gap:10px">
-      <div class="csm"><div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--go)">${fmt(car.reduce((a,c)=>a+c.monto,0))}</div><div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">VALOR NOMINAL</div></div>
-      <div class="csm"><div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gn)">${fmt(car.reduce((a,c)=>a+c.neto,0))}</div><div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">NETO ENTREGADO</div></div>
-      <div class="csm"><div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--am)">${fmt(car.reduce((a,c)=>a+c.impuesto,0))}</div><div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">IMPUESTO COBRADO</div></div>
-      <div class="csm"><div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gn)">${fmt(ganCh)}</div><div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">GANANCIA TOTAL</div></div>
+    <div class="grid g4 mt12" style="gap:10px">
+      <div class="csm">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--go)">${car.length}</div>
+        <div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">EN CARTERA</div>
+      </div>
+      <div class="csm">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--rd)">${chv.length}</div>
+        <div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">VENCEN EN 3D</div>
+      </div>
+      <div class="csm">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gn)">${paraDepositar.length}</div>
+        <div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">PARA DEPOSITAR</div>
+      </div>
+      <div class="csm">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--gn)">${S.cheques.filter(c=>c.estado==='cobrado').length}</div>
+        <div style="font-size:9px;color:var(--tx4);letter-spacing:2px;margin-top:2px">COBRADOS</div>
+      </div>
     </div>
-    <div style="overflow-x:auto">
-    <table class="tbl">
-      <thead><tr><th>Número</th><th>Banco</th><th>Cliente</th><th>Nominal</th><th>Neto</th><th>Vencimiento</th><th>Estado</th><th></th></tr></thead>
-      <tbody>
-        ${car.sort((a,b)=>new Date(a.vencimiento)-new Date(b.vencimiento)).map(ch=>{
-          const d=dds(ch.vencimiento,hoy());
-          return`<tr class="ck" onclick="abrirCheque(${ch.id})">
-            <td style="font-size:12px">${ch.numero}</td>
-            <td style="font-size:12px">${ch.banco}</td>
-            <td><div style="font-size:13px">${cN(ch.clienteId)}</div>${ch.titularCuenta?`<div style="font-size:10px;color:var(--am)">${ch.titularCuenta}</div>`:''}</td>
-            <td class="tg">${fmt(ch.monto)}</td>
-            <td class="tgr">${fmt(ch.neto)}</td>
-            <td style="font-size:12px;color:${d<=7?'var(--rd)':d<=15?'var(--am)':'var(--tx2)'}">${fD(ch.vencimiento)} (${d}d)</td>
-            <td><span class="bdg chip-c">En cartera</span></td>
-            <td><button class="btn bxs bs" onclick="event.stopPropagation();cobrarCh(${ch.id})">Cobrar</button></td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>
-    </div>`:''}
   </div>
-
-  <div class="grid g2 mb12">
+    <div class="grid g2 mb12">
     <div class="card"><div class="stl">Cajas</div>
       ${S.cajas.map(c=>`<div class="fb" style="padding:6px 0;border-bottom:1px solid var(--br)">
         <div class="fx g8" style="align-items:center"><span style="color:${c.color}">${c.icon}</span>
@@ -1077,7 +1074,7 @@ function simT(t){document.getElementById('sw-c').style.display=t==='c'?'block':'
 function simC(){const c=parseFloat(document.getElementById('sc-c')?.value||0),r=parseFloat(document.getElementById('sc-r')?.value||0),p=parseInt(document.getElementById('sc-p')?.value||1),g=parseFloat(document.getElementById('sc-g')?.value||0);const el=document.getElementById('sc-res');if(!el)return;if(!c||!r){el.innerHTML=`<div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div></div>`;return;}const{it,tp,cuota}=calcC(c,r,p);el.innerHTML=`<div style="width:100%"><div class="stl">Sistema Directo</div><div class="pvbox" style="margin:0"><div class="pvr"><span class="lk">Capital</span><span class="tg">${fmt(c)}</span></div><div class="pvr"><span class="lk">${r}%×${p}m</span><span>${(r*p).toFixed(1)}% total</span></div><div class="pvr"><span class="lk">Interés total</span><span class="tr">${fmt(it)}</span></div>${g?`<div class="pvr"><span class="lk">Gastos admin</span><span class="ta">-${fmt(g)}</span></div>`:''}<div class="pvr"><span class="lk">Neto al cliente</span><span class="tgr">${fmt(c-g)}</span></div><div class="pvr"><span class="lk">Total a cobrar</span><span>${fmt(tp)}</span></div><div class="pvr"><span class="lk">Cuota mensual</span><span class="tg" style="font-size:17px">${fmt(cuota)}</span></div></div></div>`;}
 function simCh(){const m=parseFloat(document.getElementById('sch-m')?.value||0),t=parseFloat(document.getElementById('sch-t')?.value||0),i=parseFloat(document.getElementById('sch-i')?.value||0),g=parseFloat(document.getElementById('sch-g')?.value||0);const d1=document.getElementById('sch-d')?.value,d2=document.getElementById('sch-v')?.value,dm=parseInt(document.getElementById('sch-ds')?.value||0);const d=dm||(d1&&d2?dds(d2,d1):0);const el=document.getElementById('sch-res');if(!el)return;if(!m||!t||!d){el.innerHTML=`<div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div></div>`;return;}const r=calcCh(m,t,d,i,g);el.innerHTML=`<div style="width:100%"><div class="stl">Descuento Diario</div><div class="pvbox" style="margin:0"><div class="pvr"><span class="lk">Valor nominal</span><span class="tg">${fmt(m)}</span></div><div class="pvr"><span class="lk">${t}%×${d}d</span><span>${(t*d).toFixed(2)}% total</span></div><div class="pvr"><span class="lk">Interés</span><span class="tr">-${fmt(r.interes)}</span></div><div class="pvr"><span class="lk">Impuesto (${i}%)</span><span class="ta">-${fmt(r.impuesto)}</span></div>${g?`<div class="pvr"><span class="lk">Gastos admin</span><span style="color:var(--tx3)">-${fmt(r.gastos)}</span></div>`:''}<div class="pvr"><span class="lk">Neto a entregar</span><span class="tgr" style="font-size:17px">${fmt(r.neto)}</span></div><div class="pvr"><span class="lk">Ganancia</span><span class="tg">${fmt(r.ganancia)}</span></div></div></div>`;}
 
-function rCfg(){return`<div class="ph"><div class="pt">Configuración</div></div><div class="grid g2"><div class="card"><div class="stl">Tasas predefinidas</div>${S.cfg.tasas.map(r=>`<div class="fb" style="padding:8px 0;border-bottom:1px solid var(--br);align-items:center"><div><div style="font-size:15px">${r.label}</div><div style="font-size:14px;color:var(--tx4)">${r.type==='descuento'?'DIARIA':'MENSUAL'}</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${r.rate}" style="width:75px;text-align:center" onchange="S.cfg.tasas=S.cfg.tasas.map(t=>t.id===${r.id}?{...t,rate:parseFloat(this.value)||t.rate}:t);toast('Tasa actualizada')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div>`).join('')}<div class="fb mt12" style="align-items:center"><div><div style="font-size:15px">Impuesto al cheque</div><div style="font-size:14px;color:var(--tx4)">% sobre nominal</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${S.cfg.impCh}" style="width:75px;text-align:center" onchange="S.cfg.impCh=parseFloat(this.value)||1.2;toast('Actualizado')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div></div><div class="card"><div class="stl">Cajas</div>${S.cajas.map(c=>`<div class="fb" style="padding:7px 0;border-bottom:1px solid var(--br)"><div class="fx g8" style="align-items:center"><span style="color:${c.color}">${c.icon}</span><div><div style="font-size:15px">${c.name}</div><div style="font-size:14px;color:var(--tx4)">${c.type}·${c.currency}</div></div></div><div class="serif" style="font-size:14px;color:${c.color}">${c.currency==='USD'?'US$ '+c.balance.toLocaleString('es-AR'):fmt(c.balance)}</div></div>`).join('')}<button class="btn bo wf mt8" onclick="abrirModal('nuevaCaja')">+ Agregar caja</button></div></div><div class="card mt16">
+function rCfg(){const tasas=S.cfg.tasas||[];return`<div class="ph"><div class="pt">Configuración</div></div><div class="grid g2"><div class="card"><div class="stl">Tasas predefinidas</div>${tasas.map(r=>`<div class="fb" style="padding:8px 0;border-bottom:1px solid var(--br);align-items:center"><div><div style="font-size:15px">${r.label}</div><div style="font-size:14px;color:var(--tx4)">${r.type==='descuento'?'DIARIA':'MENSUAL'}</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${r.rate}" style="width:75px;text-align:center" onchange="S.cfg.tasas=S.cfg.tasas.map(t=>t.id===${r.id}?{...t,rate:parseFloat(this.value)||t.rate}:t);toast('Tasa actualizada')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div>`).join('')}<div class="fb mt12" style="align-items:center"><div><div style="font-size:15px">Impuesto al cheque</div><div style="font-size:14px;color:var(--tx4)">% sobre nominal</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${S.cfg.impCh}" style="width:75px;text-align:center" onchange="S.cfg.impCh=parseFloat(this.value)||1.2;toast('Actualizado')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div></div><div class="card"><div class="stl">Cajas</div>${S.cajas.map(c=>`<div class="fb" style="padding:7px 0;border-bottom:1px solid var(--br)"><div class="fx g8" style="align-items:center"><span style="color:${c.color}">${c.icon}</span><div><div style="font-size:15px">${c.name}</div><div style="font-size:14px;color:var(--tx4)">${c.type}·${c.currency}</div></div></div><div class="serif" style="font-size:14px;color:${c.color}">${c.currency==='USD'?'US$ '+c.balance.toLocaleString('es-AR'):fmt(c.balance)}</div></div>`).join('')}<button class="btn bo wf mt8" onclick="abrirModal('nuevaCaja')">+ Agregar caja</button></div></div><div class="card mt16">
     <div class="stl">Seguridad — PIN y auto-bloqueo</div>
     <div style="font-size:13px;color:var(--tx3);margin-bottom:14px">
       ${getPin()?'✓ PIN configurado — la app se bloquea tras 2 min. de inactividad':'Sin PIN configurado. La app abre directo.'}
@@ -1108,7 +1105,7 @@ function rCfg(){return`<div class="ph"><div class="pt">Configuración</div></div
   </div>
   <div class="card mt16">
     <div class="stl">Instalar como app en el celular</div>
-    <div style="font-size:15px;color:var(--tx3);margin-bottom:12px">Instala M&A Inversiones como app nativa en tu celular.</div>
+    <div style="font-size:15px;color:var(--tx3);margin-bottom:12px">Instala Financiera como app nativa en tu celular.</div>
     <button class="btn bg" onclick="instalarApp()">Instalar en celular</button>
     <div style="font-size:15px;color:var(--tx4);margin-top:8px">Si no funciona: menu del navegador > Agregar a pantalla de inicio</div>
   </div>`+'';}
@@ -1346,12 +1343,10 @@ function autoFillCliente(){
     document.getElementById('fo-cli').disabled=false;
   }
 }
-// ═══ MODAL NUEVO CHEQUE — REDISEÑADO ═══
+// ═══ MODAL NUEVO CHEQUE — REDISEÑADO CORRECTAMENTE ═══
 function mNuevoCheque(){
   const cj = S.cajas.map(c=>`<option value="${c.id}">${c.name} (${fmt(c.balance)})</option>`).join('');
   const cl = S.clientes.map(c=>`<option value="${c.id}">${c.name} — ${c.dni}</option>`).join('');
-  
-  // Autocompletado: bancos conocidos
   const bancosConocidos = [...new Set([
     'Banco Nación','Banco Galicia','Banco Santander','Banco BBVA','Banco Macro',
     'Banco Credicoop','Banco HSBC','Banco Patagonia','Banco Ciudad','Banco Provincia',
@@ -1359,29 +1354,27 @@ function mNuevoCheque(){
   ])];
 
   return `${mH('Ingresar Cheque')}
-    <!-- Botón IA -->
     <div style="background:#0a0a1a;border:1px solid #d4a84744;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
       <div>
         <div style="font-size:13px;color:var(--go)">📷 Leer con IA</div>
-        <div style="font-size:10px;color:var(--tx4);margin-top:2px">Sacá una foto al cheque y la IA completa los datos automáticamente</div>
+        <div style="font-size:11px;color:var(--tx4);margin-top:2px">Sacá una foto al cheque y la IA completa los datos automáticamente</div>
       </div>
       <button id="btn-ia-foto" class="btn bg bsm" onclick="capturarFotoIA('cheque')">📷 Leer con IA</button>
     </div>
 
     <div class="tabs">
-      <button class="tab on" onclick="chTab(this,'ch-doc')">📋 Documento</button>
-      <button class="tab" onclick="chTab(this,'ch-quien')">👤 Quien lo trae</button>
-      <button class="tab" onclick="chTab(this,'ch-op')">💰 Operación</button>
-      <button class="tab" onclick="chTab(this,'ch-f')">📷 Fotos</button>
+      <button class="tab on" onclick="chTab(this,'ch-1')">1. Cheque</button>
+      <button class="tab" onclick="chTab(this,'ch-2')">2. Titular/Endoso</button>
+      <button class="tab" onclick="chTab(this,'ch-3')">3. Quien lo trae</button>
+      <button class="tab" onclick="chTab(this,'ch-4')">4. Operación</button>
+      <button class="tab" onclick="chTab(this,'ch-5')">5. Fotos</button>
     </div>
 
-    <!-- TAB 1: DATOS DEL DOCUMENTO -->
-    <div id="ch-doc">
-      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--am);margin-bottom:12px">Datos del cheque / documento</div>
-      
+    <!-- TAB 1: DATOS DEL CHEQUE -->
+    <div id="ch-1">
       <div class="fg g3">
         <div><label class="lb">Banco *</label>
-          <input id="fch-ban" placeholder="Banco Nación" list="bancos-list" oninput="prevCh()">
+          <input id="fch-ban" placeholder="Banco Nación" list="bancos-list">
           <datalist id="bancos-list">${bancosConocidos.map(b=>`<option value="${b}">`).join('')}</datalist>
         </div>
         <div><label class="lb">Número de cheque *</label>
@@ -1395,7 +1388,6 @@ function mNuevoCheque(){
           </select>
         </div>
       </div>
-
       <div class="fg g2 mt12">
         <div><label class="lb">Monto nominal *</label>
           <input id="fch-m" type="number" placeholder="0" oninput="prevCh()">
@@ -1404,11 +1396,24 @@ function mNuevoCheque(){
           <input id="fch-cbu" placeholder="CBU o N° de cuenta">
         </div>
       </div>
+      <div class="fg g3 mt12">
+        <div><label class="lb">Fecha de libramiento (emisión)</label>
+          <input id="fch-emision" type="date">
+        </div>
+        <div><label class="lb">Fecha de vencimiento *</label>
+          <input id="fch-v" type="date" oninput="prevCh()">
+        </div>
+        <div><label class="lb">Días hasta vencimiento</label>
+          <input id="fch-dias-vto" type="number" readonly style="color:var(--tx3)" placeholder="auto">
+        </div>
+      </div>
+    </div>
 
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin:14px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--br)">Titulares de la cuenta</div>
-      
+    <!-- TAB 2: TITULAR Y ENDOSO -->
+    <div id="ch-2" style="display:none">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--am);margin-bottom:12px">Datos del/los titular/es de la cuenta bancaria</div>
       <div class="fg g2">
-        <div><label class="lb">Titular 1 — Nombre</label>
+        <div><label class="lb">Titular 1 — Nombre *</label>
           <input id="fch-tit" placeholder="Nombre completo">
         </div>
         <div><label class="lb">Titular 1 — DNI/CUIT</label>
@@ -1416,7 +1421,7 @@ function mNuevoCheque(){
         </div>
       </div>
       <div class="fg g2 mt8">
-        <div><label class="lb">Titular 2 (si cotitular)</label>
+        <div><label class="lb">Titular 2 (cotitular si hay)</label>
           <input id="fch-tit2" placeholder="Nombre completo">
         </div>
         <div><label class="lb">Titular 2 — DNI/CUIT</label>
@@ -1424,39 +1429,34 @@ function mNuevoCheque(){
         </div>
       </div>
       <div class="fg g2 mt8">
-        <div><label class="lb">Teléfono titular</label>
+        <div><label class="lb">Teléfono del titular</label>
           <input id="fch-tte" placeholder="2604-000000">
         </div>
         <div></div>
       </div>
-
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin:14px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--br)">Endoso (si lo hay)</div>
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--br)">Endoso (si el cheque fue endosado)</div>
       <div><label class="lb">Datos del endoso</label>
-        <input id="fch-end" placeholder="Nombre y datos de quien endosó">
+        <input id="fch-end" placeholder="Nombre, DNI/CUIT de quien endosó">
       </div>
-
-      <div class="mt12"><label class="lb">Notas del documento</label>
+      <div class="mt8"><label class="lb">Notas del documento</label>
         <textarea id="fch-not" placeholder="Observaciones sobre el cheque..."></textarea>
       </div>
     </div>
 
-    <!-- TAB 2: QUIEN LO TRAE -->
-    <div id="ch-quien" style="display:none">
-      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--am);margin-bottom:12px">¿Quién te trae este cheque?</div>
-      <div class="al al-a mb12" style="font-size:12px">Esta persona puede ser el titular del cheque o un tercero.</div>
-      
+    <!-- TAB 3: QUIEN LO TRAE -->
+    <div id="ch-3" style="display:none">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--am);margin-bottom:10px">¿Quién te trae este cheque?</div>
+      <div class="al al-a mb12" style="font-size:12px">Puede ser el mismo titular del cheque o un tercero diferente.</div>
       <div><label class="lb">Seleccionar cliente existente</label>
-        <select id="fch-cli" style="margin-bottom:8px" onchange="toggleNuevoCliCh()">
-          <option value="">— O crear nuevo abajo —</option>
+        <select id="fch-cli" onchange="toggleNuevoCliCh()">
+          <option value="">— Nuevo cliente (completar abajo) —</option>
           ${cl}
         </select>
       </div>
-
-      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin:12px 0 8px">— O ingresar datos del nuevo contacto —</div>
-
-      <div id="ch-nuevo-cli">
+      <div id="ch-nuevo-cli" class="mt12">
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--tx4);margin-bottom:8px">— Datos del nuevo contacto —</div>
         <div class="fg g2">
-          <div><label class="lb">Nombre *</label>
+          <div><label class="lb">Nombre completo *</label>
             <input id="fch-cli-nombre" placeholder="Nombre completo">
           </div>
           <div><label class="lb">DNI</label>
@@ -1474,22 +1474,18 @@ function mNuevoCheque(){
       </div>
     </div>
 
-    <!-- TAB 3: OPERACIÓN -->
-    <div id="ch-op" style="display:none">
-      <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--am);margin-bottom:12px">Datos de la operación de descuento</div>
-      
+    <!-- TAB 4: OPERACIÓN (cálculo del descuento) -->
+    <div id="ch-4" style="display:none">
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--am);margin-bottom:12px">Datos de la operación de descuento</div>
       <div class="fg g3">
-        <div><label class="lb">Fecha de ingreso *</label>
+        <div><label class="lb">Fecha de la operación *</label>
           <input id="fch-d" type="date" value="${hoy()}" oninput="prevCh()">
         </div>
-        <div><label class="lb">Fecha de vencimiento *</label>
-          <input id="fch-v" type="date" oninput="prevCh()">
+        <div><label class="lb">Días a descontar (auto)</label>
+          <input id="fch-ds" type="number" readonly style="color:var(--tx3)" placeholder="se calcula solo">
         </div>
-        <div><label class="lb">Días (auto)</label>
-          <input id="fch-ds" type="number" readonly style="color:var(--tx3)">
-        </div>
+        <div></div>
       </div>
-
       <div class="fg g3 mt12">
         <div><label class="lb">Tasa diaria %</label>
           <input id="fch-t" type="number" step="0.01" value="${S.cfg.tasas?.find(t=>t.type==='descuento')?.rate||0.3}" oninput="prevCh()">
@@ -1501,7 +1497,6 @@ function mNuevoCheque(){
           <input id="fch-ga" type="number" value="0" oninput="prevCh()">
         </div>
       </div>
-
       <div class="fg g2 mt12">
         <div><label class="lb">Caja origen (sale el dinero) *</label>
           <select id="fch-or"><option value="">—</option>${cj}</select>
@@ -1510,26 +1505,21 @@ function mNuevoCheque(){
           <select id="fch-ten"><option value="">—</option>${cj}</select>
         </div>
       </div>
-
       <div id="fch-prev" class="pvbox mt12" style="display:none"></div>
     </div>
 
-    <!-- TAB 4: FOTOS -->
-    <div id="ch-f" style="display:none">
+    <!-- TAB 5: FOTOS -->
+    <div id="ch-5" style="display:none">
       <div class="grid g2">
         <div>
           <div class="stl">Foto frente</div>
-          <div id="zona-foto-f" class="fz" onclick="document.getElementById('inp-ff').click()">
-            📷 Tocar para sacar foto o subir imagen
-          </div>
+          <div id="zona-foto-f" class="fz" onclick="document.getElementById('inp-ff').click()">📷 Tocar para sacar foto</div>
           <input id="inp-ff" type="file" accept="image/*" capture="environment" style="display:none" onchange="cargaFoto(this,'zona-foto-f','dat-ff')">
           <input id="dat-ff" type="hidden">
         </div>
         <div>
           <div class="stl">Foto dorso</div>
-          <div id="zona-foto-d" class="fz" onclick="document.getElementById('inp-fd').click()">
-            📷 Tocar para sacar foto o subir imagen
-          </div>
+          <div id="zona-foto-d" class="fz" onclick="document.getElementById('inp-fd').click()">📷 Tocar para sacar foto</div>
           <input id="inp-fd" type="file" accept="image/*" capture="environment" style="display:none" onchange="cargaFoto(this,'zona-foto-d','dat-fd')">
           <input id="dat-fd" type="hidden">
         </div>
@@ -1547,6 +1537,43 @@ function toggleNuevoCliCh(){
   const v = document.getElementById('fch-cli')?.value;
   const sec = document.getElementById('ch-nuevo-cli');
   if(sec) sec.style.opacity = v ? '0.4' : '1';
+}
+
+// Override prevCh to also calculate days from operation date to vencimiento
+const _origPrevCh = typeof prevCh !== 'undefined' ? prevCh : null;
+function prevCh(){
+  const m=parseFloat(document.getElementById('fch-m')?.value||0);
+  const t=parseFloat(document.getElementById('fch-t')?.value||0);
+  const i=parseFloat(document.getElementById('fch-i')?.value||0);
+  const ga=parseFloat(document.getElementById('fch-ga')?.value||0);
+  const d1=document.getElementById('fch-d')?.value; // fecha operacion
+  const d2=document.getElementById('fch-v')?.value; // vencimiento
+  const dd=d1&&d2?dds(d2,d1):0;
+
+  // Actualizar campo dias
+  const de=document.getElementById('fch-ds');
+  if(de&&dd) de.value=dd;
+
+  // Actualizar dias hasta vencimiento desde libramiento
+  const emision=document.getElementById('fch-emision')?.value;
+  const diasVto=document.getElementById('fch-dias-vto');
+  if(diasVto&&d2){
+    const base=emision||hoy();
+    diasVto.value=dds(d2,base);
+  }
+
+  const el=document.getElementById('fch-prev');
+  if(!el||!m||!t||!dd){if(el)el.style.display='none';return;}
+  const r=calcCh(m,t,dd,i,ga);
+  el.style.display='block';
+  el.innerHTML=`
+    <div class="pvr"><span class="lk">Valor nominal</span><span class="tg">${fmt(m)}</span></div>
+    <div class="pvr"><span class="lk">Días a descontar</span><span>${dd} días</span></div>
+    <div class="pvr"><span class="lk">Interés (${t}%×${dd}d)</span><span class="tr">-${fmt(r.interes)}</span></div>
+    <div class="pvr"><span class="lk">Impuesto (${i}%)</span><span class="ta">-${fmt(r.impuesto)}</span></div>
+    ${ga?`<div class="pvr"><span class="lk">Gastos admin</span><span style="color:var(--tx3)">-${fmt(r.gastos)}</span></div>`:''}
+    <div class="pvr"><span class="lk">Neto a entregar</span><span class="tgr" style="font-size:16px">${fmt(r.neto)}</span></div>
+    <div class="pvr"><span class="lk">Ganancia (interés + impuesto)</span><span class="tg">${fmt(r.ganancia)}</span></div>`;
 }
 function cobrarCh(id){const ch=S.cheques.find(c=>c.id===id);if(!ch)return;if(ch.cajaOrigenId){S.cajas=S.cajas.map(c=>c.id===ch.cajaOrigenId?{...c,balance:c.balance+ch.monto}:c);S.movs.push({id:uid(),cajaId:ch.cajaOrigenId,tipo:'ingreso',monto:ch.monto,concepto:`Cobro cheque ${ch.numero}`,fecha:hoy()});}S.cheques=S.cheques.map(c=>c.id===id?{...c,estado:'cobrado'}:c);toast('Cheque cobrado · '+fmt(ch.monto)+' acreditado');render();}
 
@@ -2491,7 +2518,7 @@ async function sbDelete(table, id){
 let DB_READY = false;
 
 async function loadFromDB(){
-  showLoader('Conectando con M&A Inversiones...');
+  showLoader('Conectando con Financiera...');
   try {
     const [clientes, cajas, movs, ops, cuotas, cheques, cfg, cc] = await Promise.all([
       sbGet('clientes', 'order=id'),
@@ -2772,7 +2799,7 @@ function showLoader(msg){
     document.body.appendChild(el);
   }
   el.innerHTML = `
-    <div style="font-family:Georgia,serif;font-size:22px;letter-spacing:4px;color:#d4a847">◈ M&A INVERSIONES</div>
+    <div style="font-family:Georgia,serif;font-size:22px;letter-spacing:4px;color:#d4a847">◈ FINANCIERA</div>
     <div style="font-size:10px;letter-spacing:3px;color:#3a3a4a;text-transform:uppercase">${msg}</div>
     <div style="width:200px;height:2px;background:#1e1e2e;border-radius:1px;overflow:hidden">
       <div style="height:100%;background:linear-gradient(90deg,#7a5c0e,#d4a847);animation:load 1.5s ease-in-out infinite" id="load-bar"></div>
@@ -3006,8 +3033,8 @@ function installPWA(){
     theme_color: "#d4a847",
     orientation: "portrait-primary",
     icons: [
-      {src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%2309090f'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='%23d4a847' font-family='Georgia'>◈</text></svg>`), sizes:"192x192", type:"image/svg+xml"},
-      {src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%2309090f'/><text x='256' y='360' font-size='280' text-anchor='middle' fill='%23d4a847' font-family='Georgia'>◈</text></svg>`), sizes:"512x512", type:"image/svg+xml"}
+      {src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%2309090f'/><text x='96' y='130' font-size='120' text-anchor='middle' fill='%23d4a847' font-family='Georgia'>F</text></svg>`), sizes:"192x192", type:"image/svg+xml"},
+      {src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%2309090f'/><text x='256' y='360' font-size='320' text-anchor='middle' fill='%23d4a847' font-family='Georgia'>F</text></svg>`), sizes:"512x512", type:"image/svg+xml"}
     ]
   };
   const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
