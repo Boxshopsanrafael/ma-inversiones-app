@@ -9,12 +9,10 @@
 <meta name="apple-mobile-web-app-title" content="Financiera">
 <meta name="theme-color" content="#d4a847">
 <title>Financiera</title>
-<!-- v4.2 -->
+<!-- v4.3 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-.monto-oculto{filter:blur(5px);transition:filter .3s;user-select:none}
-</style>
+<style>.monto-oculto{filter:blur(5px);transition:filter .3s;user-select:none}</style>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -891,7 +889,7 @@ function rChInline(){
   const car=S.cheques.filter(c=>c.estado==='en_cartera');
   const dstL={pago:'Pago deuda',efectivo:'Efectivo',endoso:'Endosado',otro:'Otro'};
   const q=S.srch.toLowerCase();
-  const fil=S.cheques.filter(c=>!q||cN(c.clienteId).toLowerCase().includes(q)||c.numero.includes(q)||c.banco.toLowerCase().includes(q));
+  const fil=S.cheques.filter(c=>!q||cN(c.clienteId).toLowerCase().includes(q)||c.numero.includes(q)||c.banco.toLowerCase().includes(q)).sort((a,b)=>new Date(a.vencimiento)-new Date(b.vencimiento));
   return`
   <div class="grid g4 mb12">
     <div class="card"><div class="sv">${fmt(car.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Valor nominal</div><div style="font-size:13px;color:var(--tx4);margin-top:2px">${car.length} en cartera</div></div>
@@ -1040,41 +1038,85 @@ function simT(t){document.getElementById('sw-c').style.display=t==='c'?'block':'
 function simC(){const c=parseFloat(document.getElementById('sc-c')?.value||0),r=parseFloat(document.getElementById('sc-r')?.value||0),p=parseInt(document.getElementById('sc-p')?.value||1),g=parseFloat(document.getElementById('sc-g')?.value||0);const el=document.getElementById('sc-res');if(!el)return;if(!c||!r){el.innerHTML=`<div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div></div>`;return;}const{it,tp,cuota}=calcC(c,r,p);el.innerHTML=`<div style="width:100%"><div class="stl">Sistema Directo</div><div class="pvbox" style="margin:0"><div class="pvr"><span class="lk">Capital</span><span class="tg">${fmt(c)}</span></div><div class="pvr"><span class="lk">${r}%×${p}m</span><span>${(r*p).toFixed(1)}% total</span></div><div class="pvr"><span class="lk">Interés total</span><span class="tr">${fmt(it)}</span></div>${g?`<div class="pvr"><span class="lk">Gastos admin</span><span class="ta">-${fmt(g)}</span></div>`:''}<div class="pvr"><span class="lk">Neto al cliente</span><span class="tgr">${fmt(c-g)}</span></div><div class="pvr"><span class="lk">Total a cobrar</span><span>${fmt(tp)}</span></div><div class="pvr"><span class="lk">Cuota mensual</span><span class="tg" style="font-size:17px">${fmt(cuota)}</span></div></div></div>`;}
 function simCh(){const m=parseFloat(document.getElementById('sch-m')?.value||0),t=parseFloat(document.getElementById('sch-t')?.value||0),i=parseFloat(document.getElementById('sch-i')?.value||0),g=parseFloat(document.getElementById('sch-g')?.value||0);const d1=document.getElementById('sch-d')?.value,d2=document.getElementById('sch-v')?.value,dm=parseInt(document.getElementById('sch-ds')?.value||0);const d=dm||(d1&&d2?dds(d2,d1):0);const el=document.getElementById('sch-res');if(!el)return;if(!m||!t||!d){el.innerHTML=`<div style="text-align:center;color:var(--tx4)"><div style="font-size:26px">◈</div></div>`;return;}const r=calcCh(m,t,d,i,g);el.innerHTML=`<div style="width:100%"><div class="stl">Descuento Diario</div><div class="pvbox" style="margin:0"><div class="pvr"><span class="lk">Valor nominal</span><span class="tg">${fmt(m)}</span></div><div class="pvr"><span class="lk">${t}%×${d}d</span><span>${(t*d).toFixed(2)}% total</span></div><div class="pvr"><span class="lk">Interés</span><span class="tr">-${fmt(r.interes)}</span></div><div class="pvr"><span class="lk">Impuesto (${i}%)</span><span class="ta">-${fmt(r.impuesto)}</span></div>${g?`<div class="pvr"><span class="lk">Gastos admin</span><span style="color:var(--tx3)">-${fmt(r.gastos)}</span></div>`:''}<div class="pvr"><span class="lk">Neto a entregar</span><span class="tgr" style="font-size:17px">${fmt(r.neto)}</span></div><div class="pvr"><span class="lk">Ganancia</span><span class="tg">${fmt(r.ganancia)}</span></div></div></div>`;}
 
-function rCfg(){const tasas=S.cfg.tasas||[];return`<div class="ph"><div class="pt">Configuración</div></div><div class="grid g2"><div class="card"><div class="stl">Tasas predefinidas</div>${tasas.map(r=>`<div class="fb" style="padding:8px 0;border-bottom:1px solid var(--br);align-items:center"><div><div style="font-size:15px">${r.label}</div><div style="font-size:14px;color:var(--tx4)">${r.type==='descuento'?'DIARIA':'MENSUAL'}</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${r.rate}" style="width:75px;text-align:center" onchange="S.cfg.tasas=S.cfg.tasas.map(t=>t.id===${r.id}?{...t,rate:parseFloat(this.value)||t.rate}:t);toast('Tasa actualizada')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div>`).join('')}<div class="fb mt12" style="align-items:center"><div><div style="font-size:15px">Impuesto al cheque</div><div style="font-size:14px;color:var(--tx4)">% sobre nominal</div></div><div class="fx g8" style="align-items:center"><input type="number" step="0.01" value="${S.cfg.impCh}" style="width:75px;text-align:center" onchange="S.cfg.impCh=parseFloat(this.value)||1.2;toast('Actualizado')"><span style="font-size:14px;color:var(--tx3)">%</span></div></div></div><div class="card"><div class="stl">Cajas</div>${S.cajas.map(c=>`<div class="fb" style="padding:7px 0;border-bottom:1px solid var(--br)"><div class="fx g8" style="align-items:center"><span style="color:${c.color}">${c.icon}</span><div><div style="font-size:15px">${c.name}</div><div style="font-size:14px;color:var(--tx4)">${c.type}·${c.currency}</div></div></div><div class="serif" style="font-size:14px;color:${c.color}">${c.currency==='USD'?'US$ '+c.balance.toLocaleString('es-AR'):fmt(c.balance)}</div></div>`).join('')}<button class="btn bo wf mt8" onclick="abrirModal('nuevaCaja')">+ Agregar caja</button></div></div><div class="card mt16">
-    <div class="stl">Seguridad — PIN y auto-bloqueo</div>
+function rCfg(){
+  const tasas = S.cfg.tasas || [];
+  const impCh = S.cfg.impCh || 1.2;
+  return `
+  <div class="ph"><div class="pt">Configuración</div></div>
+  
+  <div class="grid g2">
+    <div class="card">
+      <div class="stl">Tasas predefinidas</div>
+      ${tasas.map(r=>`
+        <div class="fb" style="padding:8px 0;border-bottom:1px solid var(--br);align-items:center">
+          <div>
+            <div style="font-size:14px">${r.label}</div>
+            <div style="font-size:11px;color:var(--tx4)">${r.type==='descuento'?'DIARIA':'MENSUAL'}</div>
+          </div>
+          <div class="fx g8" style="align-items:center">
+            <input type="number" step="0.01" value="${r.rate}"
+              style="width:70px;text-align:center"
+              onchange="S.cfg.tasas=S.cfg.tasas.map(t=>t.id===${r.id}?{...t,rate:parseFloat(this.value)||t.rate}:t);toast('Tasa actualizada')">
+            <span style="font-size:13px;color:var(--tx3)">%</span>
+          </div>
+        </div>`).join('')}
+      <div class="fb mt12" style="align-items:center">
+        <div>
+          <div style="font-size:14px">Impuesto al cheque</div>
+          <div style="font-size:11px;color:var(--tx4)">% sobre nominal</div>
+        </div>
+        <div class="fx g8" style="align-items:center">
+          <input type="number" step="0.01" value="${impCh}"
+            style="width:70px;text-align:center"
+            onchange="S.cfg.impCh=parseFloat(this.value)||1.2;toast('Actualizado')">
+          <span style="font-size:13px;color:var(--tx3)">%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stl">Cajas</div>
+      ${S.cajas.map(c=>`
+        <div class="fb" style="padding:7px 0;border-bottom:1px solid var(--br)">
+          <div class="fx g8" style="align-items:center">
+            <span style="color:${c.color}">${c.icon}</span>
+            <div>
+              <div style="font-size:14px">${c.name}</div>
+              <div style="font-size:11px;color:var(--tx4)">${c.type} · ${c.currency}</div>
+            </div>
+          </div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:${c.color}">
+            ${c.currency==='USD'?'US$ '+c.balance.toLocaleString('es-AR'):fmt(c.balance)}
+          </div>
+        </div>`).join('')}
+      <button class="btn bo wf mt8" onclick="abrirModal('nuevaCaja')">+ Agregar caja</button>
+    </div>
+  </div>
+
+  <div class="card mt16">
+    <div class="stl">Seguridad</div>
     <div style="font-size:13px;color:var(--tx3);margin-bottom:14px">
-      ${getPin()?'✓ PIN configurado — la app se bloquea tras 2 min. de inactividad':'Sin PIN configurado. La app abre directo.'}
+      Sesión activa. El sistema cierra sesión automáticamente por inactividad.
     </div>
-    <div class="fg g2">
-      <div><label class="lb">Nuevo PIN (4 dígitos)</label><input id="pin-new" type="password" maxlength="4" placeholder="••••" style="letter-spacing:8px;font-size:20px;text-align:center"></div>
-      <div><label class="lb">Confirmar PIN</label><input id="pin-conf" type="password" maxlength="4" placeholder="••••" style="letter-spacing:8px;font-size:20px;text-align:center"></div>
-    </div>
-    <div class="fx g8 mt12">
-      <button class="btn bg" onclick="guardarPin()">Guardar PIN</button>
-      ${getPin()?`<button class="btn bd" onclick="if(confirm('¿Eliminar PIN?')){localStorage.removeItem('ma_pin');toast('PIN eliminado');render()}">Eliminar PIN</button>`:''}
-    </div>
+    <button class="btn bd bsm" onclick="localStorage.removeItem('ma_session');location.reload()">Cerrar sesión</button>
   </div>
+
   <div class="card mt16">
-    <div class="stl">Datos y backups</div>
-    <div style="font-size:15px;color:var(--tx3);margin-bottom:12px">Datos guardados en Supabase en tiempo real. Backup automatico cada 1 hora.</div>
-    <div class="fx g8 mb12">
-      <button class="btn bg" onclick="saveRemoteBackup().then(()=>toast('Backup guardado'))">Backup ahora</button>
-      <button class="btn bo" onclick="exportarJSON()">Descargar JSON</button>
+    <div class="stl">Backup y datos</div>
+    <div class="fx g8 mt8">
+      <button class="btn bg bsm" onclick="saveRemoteBackup().then(()=>toast('Backup guardado'))">☁ Backup ahora</button>
+      <button class="btn bo bsm" onclick="exportarJSON()">⬇ Descargar JSON</button>
     </div>
+    <div style="font-size:11px;color:var(--tx4);margin-top:8px">Backup automático cada 1 hora</div>
   </div>
+
   <div class="card mt16">
-    <div class="stl">Logo personalizado</div>
-    <div class="fg g2 mt8" style="align-items:center">
-      <div id="logo-preview">${S.cfg.logo?'<img src="'+S.cfg.logo+'" style="max-height:60px;border:1px solid var(--br);padding:8px;background:white">':"<div style=\"color:var(--tx4)\">Sin logo</div>"}</div>
-      <div><label class="lb">Subir imagen PNG/JPG</label><input type="file" accept="image/*" onchange="subirLogo(this)"></div>
-    </div>
-  </div>
-  <div class="card mt16">
-    <div class="stl">Instalar como app en el celular</div>
-    <div style="font-size:15px;color:var(--tx3);margin-bottom:12px">Instala Financiera como app nativa en tu celular.</div>
-    <button class="btn bg" onclick="instalarApp()">Instalar en celular</button>
-    <div style="font-size:15px;color:var(--tx4);margin-top:8px">Si no funciona: menu del navegador > Agregar a pantalla de inicio</div>
-  </div>`+'';}
+    <div class="stl">Instalar en celular</div>
+    <div style="font-size:13px;color:var(--tx3);margin-bottom:10px">Instalá Financiera como app nativa.</div>
+    <button class="btn bg bsm" onclick="instalarApp()">📱 Instalar</button>
+    <div style="font-size:11px;color:var(--tx4);margin-top:6px">O: menú del navegador → Agregar a pantalla de inicio</div>
+  </div>`;
+}
 function mNuevaOp(){
   const co=S.cajas.map(c=>`<option value="${c.id}">${c.name} (${fmt(c.balance)})</option>`).join('');
   const cl=S.clientes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
@@ -1699,13 +1741,33 @@ function verFoto(src){const ov=document.getElementById('ov');const div=document.
 
 function abrirCliente(id){
   const cl=S.clientes.find(c=>c.id===id);if(!cl)return;
-  const ops=S.ops.filter(o=>o.clienteId===id),chs=S.cheques.filter(c=>c.clienteId===id);
-  const sl=ops.reduce((a,o)=>a+sal(o),0);
+  const ops=S.ops.filter(o=>o.clienteId===id);
+  const chs=S.cheques.filter(c=>c.clienteId===id);
+  const sl=ops.filter(o=>o.status==='activo').reduce((a,o)=>a+sal(o),0);
+  const mora=ops.some(o=>vcOp(o).length>0);
+
   showOv(`
-  <div class="modal"><div class="mhd"><div class="mtt">${cl.name}</div><button class="btn bsm bo" onclick="cerrar()">✕</button></div>
+  <div class="modal"><div class="mhd">
+    <div><div class="mtt">${cl.name}</div><div style="font-size:12px;color:var(--tx4)">${cl.dni}</div></div>
+    <button class="btn bsm bo" onclick="cerrar()">✕</button>
+  </div>
+
   <div class="grid g2 mb12">
-    <div class="csm">${[['DNI',cl.dni],['Teléfono',cl.phone],['Email',cl.email],['Dirección',cl.address]].filter(([,v])=>v).map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--br)"><span style="font-size:14px;color:var(--tx4)">${k}</span><span style="font-size:15px">${v}</span></div>`).join('')}
-      <div class="mt8"><label class="lb">Calificación</label><select onchange="S.clientes=S.clientes.map(c=>c.id===${id}?{...c,score:this.value}:c);toast('Actualizado')" style="width:auto"><option value="bueno" ${cl.score==='bueno'?'selected':''}>Bueno</option><option value="regular" ${cl.score==='regular'?'selected':''}>Regular</option><option value="moroso" ${cl.score==='moroso'?'selected':''}>Moroso</option></select></div>
+    <div class="csm">
+      ${[['DNI',cl.dni],['Teléfono',cl.phone],['Email',cl.email],['Dirección',cl.address]]
+        .filter(([,v])=>v)
+        .map(([k,v])=>`<div class="fb" style="padding:5px 0;border-bottom:1px solid var(--br)">
+          <span style="font-size:12px;color:var(--tx4)">${k}</span>
+          <span style="font-size:13px">${v}</span>
+        </div>`).join('')}
+      <div class="mt8">
+        <select onchange="S.clientes=S.clientes.map(c=>c.id===${id}?{...c,score:this.value}:c);toast('Actualizado')"
+          style="width:auto">
+          <option value="bueno" ${cl.score==='bueno'?'selected':''}>Bueno</option>
+          <option value="regular" ${cl.score==='regular'?'selected':''}>Regular</option>
+          <option value="moroso" ${cl.score==='moroso'?'selected':''}>Moroso</option>
+        </select>
+      </div>
     </div>
     <div class="csm grid g2">
       <div><div class="sv">${ops.length}</div><div class="sl">Operaciones</div></div>
@@ -1714,49 +1776,53 @@ function abrirCliente(id){
       <div><div class="sv">${fmt(chs.reduce((a,c)=>a+c.monto,0))}</div><div class="sl">Val. cheques</div></div>
     </div>
   </div>
-  <div class="tabs"><button class="tab on" onclick="cliT(this,'ci-o')">Operaciones</button><button class="tab" onclick="cliT(this,'ci-c')">Cheques</button><button class="tab" onclick="cliT(this,'ci-cc')">Cuenta Corriente</button></div>
-  <div id="ci-o">${!ops.length?'<p style="color:var(--tx4);font-size:15px">Sin operaciones</p>':''}
+
+  <div class="tabs">
+    <button class="tab on" onclick="cliT(this,'ci-o')">Operaciones</button>
+    <button class="tab" onclick="cliT(this,'ci-c')">Cheques</button>
+    <button class="tab" onclick="cliT(this,'ci-cc')">Cta. Corriente</button>
+  </div>
+
+  <div id="ci-o">
+    ${!ops.length?'<p style="color:var(--tx4);font-size:14px;padding:16px 0">Sin operaciones</p>':''}
     ${ops.map(op=>`<div class="csm mb8 ck" onclick="cerrar();setTimeout(()=>abrirOp(${op.id}),80)">
-      <div class="fb"><div>
-        <span class="bdg" style="background:${tC(op.tipo)}22;color:${tC(op.tipo)};border:1px solid ${tC(op.tipo)}44">${tL(op.tipo)}</span>
-        <div class="serif" style="font-size:20px;color:var(--go);margin:3px 0">${fmt(op.capital)}</div>
-        <div style="font-size:15px;color:var(--tx4)">${op.tasa}%·${op.plazo}m·${op.desc}</div>
-        ${op.tipo==='prendario'&&op.vehiculo?`<div style="font-size:15px;color:var(--pu);margin-top:1px">🚗 ${op.vehiculo.marca} ${op.vehiculo.modelo} ${op.vehiculo.anio}·${op.vehiculo.patente}</div>`:''}
-      </div><div style="text-align:right"><div style="font-size:15px">${op.cuotas.filter(c=>c.paga).length}/${op.plazo}</div><div style="font-size:15px;color:var(--tx4)">${fD(op.fi)}</div></div></div>
+      <div class="fb">
+        <div>
+          <span class="bdg" style="background:${tC(op.tipo)}22;color:${tC(op.tipo)};border:1px solid ${tC(op.tipo)}44;font-size:11px">${tL(op.tipo)}</span>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--go);margin:3px 0">${fmt(op.capital)}</div>
+          <div style="font-size:12px;color:var(--tx4)">${op.tasa}% · ${op.plazo}m · ${op.desc||''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px">${op.cuotas.filter(c=>c.paga).length}/${op.plazo}</div>
+          <div style="font-size:12px;color:var(--tx4)">${fD(op.fi)}</div>
+        </div>
+      </div>
     </div>`).join('')}
   </div>
-  <div id="ci-c" style="display:none">${!chs.length?'<p style="color:var(--tx4);font-size:15px">Sin cheques</p>':''}
+
+  <div id="ci-c" style="display:none">
+    ${!chs.length?'<p style="color:var(--tx4);font-size:14px;padding:16px 0">Sin cheques</p>':''}
     ${chs.map(ch=>`<div class="csm mb8 ck" onclick="cerrar();setTimeout(()=>abrirCheque(${ch.id}),80)">
-      <div class="fb"><div><div style="font-size:15px">${ch.banco}·Nº${ch.numero}</div><div style="font-size:15px;color:var(--tx4)">${ch.dias}d·${fD(ch.vencimiento)}</div></div>
-        <div style="text-align:right"><div class="tg">${fmt(ch.monto)}</div><div style="font-size:15px;color:var(--gn)">neto: ${fmt(ch.neto)}</div></div></div>
+      <div class="fb">
+        <div>
+          <div style="font-size:14px">${ch.banco} · Nº${ch.numero}</div>
+          <div style="font-size:12px;color:var(--tx4)">${ch.dias}d · ${fD(ch.vencimiento)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="tg" style="font-size:14px">${fmt(ch.monto)}</div>
+          <div style="font-size:12px;color:var(--gn)">neto: ${fmt(ch.neto)}</div>
+        </div>
+      </div>
     </div>`).join('')}
   </div>
-  <div class="mft">
-    ${ch.estado==='cobrado'?`<button class="btn bsm bd" onclick="revertirCheque(${id})">↩ Revertir</button>`:''}
-    <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>editarChequeFull(${id}),80)">✏ Editar</button>
-    <button class="btn bsm bd" style="background:#1a0808" onclick="eliminarCheque(${id})">🗑 Eliminar</button>
-    <button class="btn bo" onclick="cerrar()">Cerrar</button>
-  </div>
+
   <div id="ci-cc" style="display:none" data-cli="${id}"></div>
+
   <div class="mft">
     <button class="btn bsm bo" onclick="cerrar();setTimeout(()=>abrirEditarCliente(${id}),80)">✏ Editar</button>
     <button class="btn bo" onclick="cerrar()">Cerrar</button>
   </div>
   </div>`);
-}
-function cliT(btn,tab){
-  btn.closest('.modal').querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
-  btn.classList.add('on');
-  ['ci-o','ci-c','ci-cc'].forEach(id=>{
-    const e=document.getElementById(id);
-    if(e){
-      e.style.display=id===tab?'block':'none';
-      // Lazy load cuenta corriente
-      if(id===tab&&id==='ci-cc'&&e.dataset.cli&&!e.innerHTML.trim()){
-        e.innerHTML=rCuentaCorrienteCliente(parseInt(e.dataset.cli));
-      }
-    }
-  });
 }
 
 function abrirCaja(id){
